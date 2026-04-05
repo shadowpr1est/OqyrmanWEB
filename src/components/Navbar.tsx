@@ -13,10 +13,10 @@ import {
 } from "@/components/ui/resizable-navbar";
 
 const navLinks = [
-  { name: "Каталог",    link: "#books" },
-  { name: "Библиотеки", link: "#libraries" },
-  { name: "События",    link: "#events" },
-  { name: "О нас",      link: "#features" },
+  { name: "Возможности", link: "#features" },
+  { name: "Документация", link: "https://api.oqyrman.app/swagger/index.html" },
+  { name: "О нас",       link: "#about" },
+  { name: "Контакты",    link: "#contacts" },
 ];
 
 export const Navbar = () => {
@@ -50,11 +50,8 @@ export const Navbar = () => {
         <div className="relative z-20 flex items-center gap-2">
           {user ? (
             <>
-              <span className="text-sm text-muted-foreground hidden lg:block">
-                {user.name}
-              </span>
-              <NavbarButton variant="dark" as="button" onClick={handleSignOut}>
-                Выйти
+              <NavbarButton variant="gradient" as={Link} to="/catalog">
+                Каталог →
               </NavbarButton>
             </>
           ) : (
@@ -97,8 +94,8 @@ export const Navbar = () => {
           ))}
           <div className="flex w-full gap-3 pt-2 border-t border-border">
             {user ? (
-              <NavbarButton variant="dark" as="button" className="flex-1" onClick={handleSignOut}>
-                Выйти
+              <NavbarButton variant="gradient" as={Link} to="/catalog" className="flex-1">
+                Каталог →
               </NavbarButton>
             ) : (
               <>

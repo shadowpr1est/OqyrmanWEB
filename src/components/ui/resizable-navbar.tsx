@@ -96,7 +96,7 @@ export const NavBody = ({ children, className, visible }: NavBodyProps) => {
         ease: "easeInOut",
       }}
       className={cn(
-        "relative z-[60] mx-auto hidden w-full max-w-7xl flex-row items-center justify-between gap-4 self-start rounded-full px-6 py-3 lg:flex",
+        "relative z-[60] mx-auto hidden w-full max-w-7xl flex-row items-center justify-between self-start rounded-full px-6 py-3 lg:flex",
         className,
       )}
     >
@@ -112,7 +112,7 @@ export const NavItems = ({ items, className, onItemClick }: NavItemsProps) => {
     <div
       onMouseLeave={() => setHovered(null)}
       className={cn(
-        "hidden flex-row items-center justify-center gap-1 text-sm font-medium lg:flex",
+        "absolute left-1/2 -translate-x-1/2 hidden flex-row items-center justify-center gap-1 text-sm font-medium lg:flex",
         className,
       )}
     >
