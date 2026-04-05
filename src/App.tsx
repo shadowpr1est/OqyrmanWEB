@@ -20,8 +20,15 @@ import NotFound from "./pages/NotFound";
 // App pages (lazy loaded)
 const BooksCatalog = lazy(() => import("./pages/catalog/BooksCatalog"));
 const BookDetail = lazy(() => import("./pages/books/BookDetail"));
+const AuthorDetail = lazy(() => import("./pages/authors/AuthorDetail"));
+const Libraries = lazy(() => import("./pages/libraries/Libraries"));
+const LibraryDetail = lazy(() => import("./pages/libraries/LibraryDetail"));
+const Events = lazy(() => import("./pages/events/Events"));
+const EventDetail = lazy(() => import("./pages/events/EventDetail"));
 const Profile = lazy(() => import("./pages/profile/Profile"));
 const Wishlist = lazy(() => import("./pages/wishlist/Wishlist"));
+const Reservations = lazy(() => import("./pages/reservations/Reservations"));
+const Notifications = lazy(() => import("./pages/notifications/Notifications"));
 
 const queryClient = new QueryClient();
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string;
@@ -56,11 +63,18 @@ const App = () => (
                   {/* Public */}
                   <Route path="/catalog" element={<BooksCatalog />} />
                   <Route path="/books/:id" element={<BookDetail />} />
+                  <Route path="/authors/:id" element={<AuthorDetail />} />
+                  <Route path="/libraries" element={<Libraries />} />
+                  <Route path="/libraries/:id" element={<LibraryDetail />} />
+                  <Route path="/events" element={<Events />} />
+                  <Route path="/events/:id" element={<EventDetail />} />
 
                   {/* Protected */}
                   <Route element={<ProtectedRoute />}>
                     <Route path="/profile" element={<Profile />} />
                     <Route path="/wishlist" element={<Wishlist />} />
+                    <Route path="/reservations" element={<Reservations />} />
+                    <Route path="/notifications" element={<Notifications />} />
                   </Route>
                 </Route>
 

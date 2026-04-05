@@ -1,0 +1,178 @@
+import { useParams, Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { motion } from "framer-motion";
+import { IconUser, IconArrowLeft } from "@tabler/icons-react";
+import { authorsApi, booksApi } from "@/lib/api";
+import { BookCard } from "@/components/books/BookCard";
+import { BookGridSkeleton } from "@/components/books/BookCardSkeleton";
+import { EmptyState } from "@/components/shared/EmptyState";
+
+const AuthorDetail = () => {
+  const { id } = useParams<{ id: string }>();
+  const authorId = Number(id);
+
+  const { data: author, isLoading: authorLoading } = useQuery({
+    queryKey: ["authors", authorId],
+    queryFn: () => authorsApi.getById(authorId),
+    enabled: authorId > 0,
+  });
+
+  const { data: booksData, isLoading: booksLoading } = useQuery({
+    queryKey: ["books", "author", authorId],
+    queryFn: () => booksApi.getByAuthor(authorId, { limit: 50 }),
+    enabled: authorId > 0,
+  });
+
+  const books = booksData?.items || [];
+
+  if (authorLoading) {
+    return (
+      <div className="animate-pulse">
+        <div className="bg-muted/20 h-[250px]" />
+        <div className="container mx-auto px-4 lg:px-8 py-8 space-y-4">
+          <div className="h-8 bg-muted/40 rounded w-1/3" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!author) {
+    return (
+      <div className="container mx-auto px-4 py-20 text-center">
+        <p className="text-lg text-muted-foreground">Автор не найден</p>
+        <Link to="/catalog" className="text-primary hover:underline text-sm mt-2 inline-block">
+          Вернуться в каталог
+        </Link>
+      </div>
+    );
+  }
+
+  const formatLifespan = () => {
+    const parts: string[] = [];
+    if (author.birth_date) parts.push(new Date(author.birth_date).getFullYear().toString());
+    if (author.death_date) parts.push(new Date(author.death_date).getFullYear().toString());
+    else if (author.birth_date) parts.push("н.в.");
+    return parts.length > 0 ? parts.join(" — ") : null;
+  };
+
+  const lifespan = formatLifespan();
+
+  return (
+    <div>
+      {/* Hero */}
+      <div className="relative bg-gradient-to-b from-[#0a1f17] to-[#0d2b1f] overflow-hidden">
+        {author.photo_url && (
+          <div
+            className="absolute inset-0 opacity-[0.08] blur-[60px] scale-150"
+            style={{
+              backgroundImage: `url(${author.photo_url})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
+          />
+        )}
+
+        <div className="container mx-auto px-4 lg:px-8 py-12 md:py-16 relative">
+          <Link
+            to="/catalog"
+            className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-white transition-colors mb-6"
+          >
+            <IconArrowLeft size={16} /> Каталог
+          </Link>
+
+          <div className="flex items-start gap-6">
+            {/* Photo */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex-shrink-0"
+            >
+              {author.photo_url ? (
+                <img
+                  src={author.photo_url}
+                  alt={author.name}
+                  className="w-24 h-24 md:w-32 md:h-32 rounded-2xl object-cover shadow-2xl shadow-black/30 ring-2 ring-white/10"
+                />
+              ) : (
+                <div className="w-24 h-24 md:w-32 md:h-32 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-2xl">
+                  <IconUser size={40} className="text-white/60" />
+                </div>
+              )}
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
+                {author.name}
+              </h1>
+              {lifespan && (
+                <p className="text-white/40 text-sm mb-3">{lifespan}</p>
+              )}
+              {books.length > 0 && (
+                <p className="text-white/50 text-sm">
+                  {books.length} {books.length === 1 ? "книга" : books.length < 5 ? "книги" : "книг"} в каталоге
+                </p>
+              )}
+            </motion.div>
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 lg:px-8 py-10">
+        {/* Bio */}
+        {author.bio && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="mb-10 max-w-3xl"
+          >
+            <h2 className="text-lg font-semibold text-foreground mb-3">Биография</h2>
+            <p className="text-foreground/75 leading-relaxed whitespace-pre-line">
+              {author.bio}
+            </p>
+          </motion.div>
+        )}
+
+        {/* Books */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          <h2 className="text-lg font-semibold text-foreground mb-5">
+            Книги автора
+          </h2>
+
+          {booksLoading ? (
+            <BookGridSkeleton count={6} />
+          ) : books.length === 0 ? (
+            <EmptyState
+              icon={IconUser}
+              title="Нет книг"
+              description="Книги этого автора пока не добавлены в каталог"
+            />
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5 lg:gap-6">
+              {books.map((book, i) => (
+                <motion.div
+                  key={book.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.03 }}
+                >
+                  <BookCard book={book} />
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </motion.div>
+      </div>
+    </div>
+  );
+};
+
+export default AuthorDetail;
