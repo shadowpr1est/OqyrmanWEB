@@ -1,17 +1,13 @@
 import { IconHeart, IconHeartFilled } from "@tabler/icons-react";
 import { motion } from "framer-motion";
-import { useAuth } from "@/contexts/AuthContext";
 import { useWishlistExists, useToggleWishlist } from "@/hooks/useWishlist";
-import { useNavigate } from "react-router-dom";
 
 interface WishlistButtonProps {
-  bookId: number;
+  bookId: string | number;
   size?: "sm" | "md";
 }
 
 export const WishlistButton = ({ bookId, size = "md" }: WishlistButtonProps) => {
-  const { user } = useAuth();
-  const navigate = useNavigate();
   const { data } = useWishlistExists(bookId);
   const { add, remove } = useToggleWishlist(bookId);
   const isWished = data?.exists || false;
@@ -24,10 +20,6 @@ export const WishlistButton = ({ bookId, size = "md" }: WishlistButtonProps) => 
       : "p-2.5 rounded-xl";
 
   const handleClick = () => {
-    if (!user) {
-      navigate("/login");
-      return;
-    }
     if (isWished) remove.mutate();
     else add.mutate();
   };

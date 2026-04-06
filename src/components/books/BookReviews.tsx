@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 interface BookReviewsProps {
-  bookId: number;
+  bookId: string | number;
 }
 
 export const BookReviews = ({ bookId }: BookReviewsProps) => {
@@ -22,7 +22,7 @@ export const BookReviews = ({ bookId }: BookReviewsProps) => {
   const { data, isLoading } = useQuery({
     queryKey: ["reviews", bookId],
     queryFn: () => reviewsApi.getByBook(bookId),
-    enabled: bookId > 0,
+    enabled: !!bookId,
   });
 
   const createMutation = useMutation({

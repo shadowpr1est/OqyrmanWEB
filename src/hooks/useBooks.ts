@@ -9,11 +9,11 @@ export function useBooks(params: BooksParams = {}) {
   });
 }
 
-export function useBook(id: number) {
+export function useBook(id: string | number) {
   return useQuery({
     queryKey: ["books", id],
     queryFn: () => booksApi.getById(id),
-    enabled: id > 0,
+    enabled: !!id,
   });
 }
 
@@ -24,11 +24,11 @@ export function usePopularBooks(limit = 10) {
   });
 }
 
-export function useSimilarBooks(bookId: number, limit = 6) {
+export function useSimilarBooks(bookId: string | number, limit = 6) {
   return useQuery({
     queryKey: ["books", bookId, "similar", limit],
     queryFn: () => booksApi.getSimilar(bookId, limit),
-    enabled: bookId > 0,
+    enabled: !!bookId,
   });
 }
 

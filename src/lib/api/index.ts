@@ -1,5 +1,5 @@
 // Core
-export { apiFetch, apiUpload, tokenStorage, ApiException } from "./client";
+export { apiFetch, apiUpload, tokenStorage, ApiException, onSessionExpired } from "./client";
 export type { ApiError } from "./client";
 
 // Types

@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from "react";
-import { authApi, tokenStorage, userApi, AuthUser } from "@/lib/api";
+import { authApi, tokenStorage, userApi, onSessionExpired, AuthUser } from "@/lib/api";
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -36,6 +36,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(null);
       })
       .finally(() => setLoading(false));
+  }, []);
+
+  /* Listen for forced session expiry (refresh token failed) */
+  useEffect(() => {
+    return onSessionExpired(() => {
+      setUser(null);
+    });
   }, []);
 
   const setAuthData = useCallback(

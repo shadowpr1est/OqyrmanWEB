@@ -37,11 +37,27 @@ export class ApiException extends Error {
 // ─── Token refresh ──────────────────────────────────────────────────────────
 
 let isRefreshing = false;
-let refreshQueue: Array<(token: string) => void> = [];
+let refreshQueue: Array<{ resolve: (token: string) => void; reject: (err: unknown) => void }> = [];
 
-async function refreshTokens(): Promise<string | null> {
+/** Listeners that get notified when the session is forcefully expired. */
+const sessionExpiredListeners: Array<() => void> = [];
+
+export function onSessionExpired(cb: () => void) {
+  sessionExpiredListeners.push(cb);
+  return () => {
+    const idx = sessionExpiredListeners.indexOf(cb);
+    if (idx >= 0) sessionExpiredListeners.splice(idx, 1);
+  };
+}
+
+function notifySessionExpired() {
+  tokenStorage.clear();
+  sessionExpiredListeners.forEach((cb) => cb());
+}
+
+async function refreshTokens(): Promise<string> {
   const refreshToken = tokenStorage.getRefresh();
-  if (!refreshToken) return null;
+  if (!refreshToken) throw new Error("no_refresh_token");
 
   const res = await fetch(`${BASE_URL}/auth/refresh`, {
     method: "POST",
@@ -50,8 +66,7 @@ async function refreshTokens(): Promise<string | null> {
   });
 
   if (!res.ok) {
-    tokenStorage.clear();
-    return null;
+    throw new Error("refresh_failed");
   }
 
   const data = await res.json();
@@ -79,33 +94,34 @@ export async function apiFetch<T>(
   if (res.status === 401 && retry && !path.startsWith("/auth/")) {
     if (!isRefreshing) {
       isRefreshing = true;
-      const newToken = await refreshTokens();
-
-      if (!newToken) {
-        refreshQueue.forEach((cb) => cb(""));
+      try {
+        const newToken = await refreshTokens();
+        // Resolve all queued requests with the new token
+        refreshQueue.forEach((q) => q.resolve(newToken));
         refreshQueue = [];
         isRefreshing = false;
-        throw new ApiException(
-          { code: "unauthorized", message: "Session expired" },
+        return apiFetch<T>(path, options, false);
+      } catch {
+        // Refresh failed — reject all queued requests and notify session expired
+        const expiredError = new ApiException(
+          { code: "unauthorized", message: "Сессия истекла. Войдите заново." },
           401,
         );
+        refreshQueue.forEach((q) => q.reject(expiredError));
+        refreshQueue = [];
+        isRefreshing = false;
+        notifySessionExpired();
+        throw expiredError;
       }
-
-      refreshQueue.forEach((cb) => cb(newToken));
-      refreshQueue = [];
-      isRefreshing = false;
-      return apiFetch<T>(path, options, false);
     } else {
-      return new Promise((resolve, reject) => {
-        refreshQueue.push((newToken) => {
-          if (!newToken)
-            return reject(
-              new ApiException(
-                { code: "unauthorized", message: "Session expired" },
-                401,
-              ),
-            );
-          resolve(apiFetch<T>(path, options, false));
+      // Another request is already refreshing — wait in queue
+      return new Promise<T>((resolve, reject) => {
+        refreshQueue.push({
+          resolve: (newToken) => {
+            if (!newToken) return reject(new ApiException({ code: "unauthorized", message: "Сессия истекла." }, 401));
+            resolve(apiFetch<T>(path, options, false));
+          },
+          reject,
         });
       });
     }

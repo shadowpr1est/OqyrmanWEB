@@ -20,10 +20,10 @@ export const librariesApi = {
 
 export const libraryBooksApi = {
   getByLibrary: (libraryId: number) =>
-    apiFetch<LibraryBook[]>(`/library-books/library/${libraryId}`),
+    apiFetch<{ items: LibraryBook[] }>(`/library-books/library/${libraryId}`).then((r) => r.items || []),
 
-  getByBook: (bookId: number) =>
-    apiFetch<LibraryBook[]>(`/library-books/book/${bookId}`),
+  getByBook: (bookId: string | number) =>
+    apiFetch<{ items: LibraryBook[] }>(`/library-books/book/${bookId}`).then((r) => r.items || []),
 
   getById: (id: number) => apiFetch<LibraryBook>(`/library-books/${id}`),
 };

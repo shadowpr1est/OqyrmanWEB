@@ -2,27 +2,23 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { IconMapPin, IconCheck, IconX } from "@tabler/icons-react";
-import { libraryBooksApi } from "@/lib/api";
+import { libraryBooksApi, reservationsApi } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
-import { reservationsApi } from "@/lib/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
 
 interface BookAvailabilityProps {
-  bookId: number;
+  bookId: string | number;
 }
 
 export const BookAvailability = ({ bookId }: BookAvailabilityProps) => {
-  const { user } = useAuth();
-  const navigate = useNavigate();
   const qc = useQueryClient();
 
   const { data: libraryBooks, isLoading } = useQuery({
     queryKey: ["library-books", "book", bookId],
     queryFn: () => libraryBooksApi.getByBook(bookId),
-    enabled: bookId > 0,
+    enabled: !!bookId,
+    retry: false,
   });
 
   const reserveMutation = useMutation({
@@ -35,10 +31,6 @@ export const BookAvailability = ({ bookId }: BookAvailabilityProps) => {
   });
 
   const handleReserve = (libraryBookId: number) => {
-    if (!user) {
-      navigate("/login");
-      return;
-    }
     reserveMutation.mutate(libraryBookId);
   };
 
@@ -52,7 +44,9 @@ export const BookAvailability = ({ bookId }: BookAvailabilityProps) => {
     );
   }
 
-  if (!libraryBooks?.length) {
+  const items = libraryBooks || [];
+
+  if (!items.length) {
     return (
       <p className="text-sm text-muted-foreground text-center py-6">
         Книга пока недоступна в библиотеках
@@ -62,7 +56,7 @@ export const BookAvailability = ({ bookId }: BookAvailabilityProps) => {
 
   return (
     <div className="space-y-3">
-      {libraryBooks.map((lb, i) => {
+      {items.map((lb, i) => {
         const available = lb.available_copies > 0;
         return (
           <motion.div

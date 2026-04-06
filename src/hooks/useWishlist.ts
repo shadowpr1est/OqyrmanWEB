@@ -11,16 +11,16 @@ export function useWishlist() {
   });
 }
 
-export function useWishlistExists(bookId: number) {
+export function useWishlistExists(bookId: string | number) {
   const { user } = useAuth();
   return useQuery({
     queryKey: ["wishlist", bookId, "exists"],
     queryFn: () => wishlistApi.exists(bookId),
-    enabled: !!user && bookId > 0,
+    enabled: !!user && !!bookId,
   });
 }
 
-export function useToggleWishlist(bookId: number) {
+export function useToggleWishlist(bookId: string | number) {
   const qc = useQueryClient();
 
   const add = useMutation({

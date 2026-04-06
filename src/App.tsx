@@ -58,19 +58,16 @@ const App = () => (
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
 
-                {/* App pages */}
+                {/* App pages — all require auth */}
                 <Route element={<AppLayout />}>
-                  {/* Public */}
-                  <Route path="/catalog" element={<BooksCatalog />} />
-                  <Route path="/books/:id" element={<BookDetail />} />
-                  <Route path="/authors/:id" element={<AuthorDetail />} />
-                  <Route path="/libraries" element={<Libraries />} />
-                  <Route path="/libraries/:id" element={<LibraryDetail />} />
-                  <Route path="/events" element={<Events />} />
-                  <Route path="/events/:id" element={<EventDetail />} />
-
-                  {/* Protected */}
                   <Route element={<ProtectedRoute />}>
+                    <Route path="/catalog" element={<BooksCatalog />} />
+                    <Route path="/books/:id" element={<BookDetail />} />
+                    <Route path="/authors/:id" element={<AuthorDetail />} />
+                    <Route path="/libraries" element={<Libraries />} />
+                    <Route path="/libraries/:id" element={<LibraryDetail />} />
+                    <Route path="/events" element={<Events />} />
+                    <Route path="/events/:id" element={<EventDetail />} />
                     <Route path="/profile" element={<Profile />} />
                     <Route path="/wishlist" element={<Wishlist />} />
                     <Route path="/reservations" element={<Reservations />} />

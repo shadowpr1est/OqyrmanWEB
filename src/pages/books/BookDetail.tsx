@@ -1,18 +1,140 @@
-import { useParams, Link } from "react-router-dom";
+import { useState, Component, type ReactNode, type ErrorInfo } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { IconBook, IconCalendar, IconLanguage, IconFileText } from "@tabler/icons-react";
+import {
+  IconBook,
+  IconCalendar,
+  IconLanguage,
+  IconFileText,
+  IconArrowLeft,
+  IconDeviceDesktop,
+  IconBuildingBank,
+  IconStar,
+  IconBookmark,
+  IconCheck,
+} from "@tabler/icons-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { useBook } from "@/hooks/useBooks";
+import { useAuth } from "@/contexts/AuthContext";
 import { Rating } from "@/components/shared/Rating";
 import { GenreBadge } from "@/components/shared/GenreBadge";
-import { WishlistButton } from "@/components/books/WishlistButton";
-import { BookAvailability } from "@/components/books/BookAvailability";
 import { BookReviews } from "@/components/books/BookReviews";
 import { SimilarBooks } from "@/components/books/SimilarBooks";
+import { libraryBooksApi, reservationsApi, readingSessionsApi, wishlistApi, reviewsApi } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 const BookDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const bookId = Number(id);
+  const bookId = id!;
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const { data: book, isLoading } = useBook(bookId);
+  const qc = useQueryClient();
+
+  /* Reading session status */
+  const { data: session } = useQuery({
+    queryKey: ["reading-session", bookId],
+    queryFn: () => readingSessionsApi.getByBook(bookId),
+    enabled: !!bookId,
+    retry: false,
+  });
+
+  const isFinished = session?.status === "finished";
+
+  const upsertFinished = useMutation({
+    mutationFn: () =>
+      readingSessionsApi.upsert({ book_id: bookId, current_page: session?.current_page || 0, status: "finished" }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["reading-session", bookId] });
+      toast.success("Отмечено как прочитано!");
+    },
+    onError: () => toast.error("Не удалось обновить статус"),
+  });
+
+  const removeFinished = useMutation({
+    mutationFn: () => {
+      if (!session?.id) return Promise.resolve();
+      return readingSessionsApi.delete(session.id);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["reading-session", bookId] });
+      toast.success("Статус убран");
+    },
+    onError: () => toast.error("Не удалось обновить статус"),
+  });
+
+  /* Wishlist (Хочу прочитать) */
+  const { data: wishlistData } = useQuery({
+    queryKey: ["wishlist", bookId, "exists"],
+    queryFn: () => wishlistApi.exists(bookId),
+    enabled: !!bookId,
+  });
+
+  const inWishlist = wishlistData?.exists ?? false;
+
+  const addToWishlist = useMutation({
+    mutationFn: () => wishlistApi.add(bookId),
+    onSuccess: () => {
+      qc.setQueryData(["wishlist", bookId, "exists"], { exists: true });
+      qc.invalidateQueries({ queryKey: ["wishlist"] });
+      toast.success("Добавлено в «Хочу прочитать»");
+    },
+    onError: () => toast.error("Не удалось добавить"),
+  });
+
+  const removeFromWishlist = useMutation({
+    mutationFn: () => wishlistApi.remove(bookId),
+    onSuccess: () => {
+      qc.setQueryData(["wishlist", bookId, "exists"], { exists: false });
+      qc.invalidateQueries({ queryKey: ["wishlist"] });
+      toast.success("Убрано из «Хочу прочитать»");
+    },
+    onError: () => toast.error("Не удалось убрать"),
+  });
+
+  /* Review modal */
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewBody, setReviewBody] = useState("");
+
+  const createReview = useMutation({
+    mutationFn: () => reviewsApi.create({ book_id: bookId, rating: reviewRating, body: reviewBody }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["reviews", bookId] });
+      qc.invalidateQueries({ queryKey: ["books", bookId] });
+      setReviewOpen(false);
+      setReviewRating(0);
+      setReviewBody("");
+      toast.success("Отзыв добавлен!");
+    },
+    onError: () => toast.error("Не удалось добавить отзыв"),
+  });
+
+  /* Library availability */
+  const { data: libraryBooks } = useQuery({
+    queryKey: ["library-books", "book", bookId],
+    queryFn: () => libraryBooksApi.getByBook(bookId),
+    enabled: !!bookId,
+  });
+
+  const availableLibraryBooks = (libraryBooks || []).filter((lb) => lb.available_copies > 0);
+
+  const reserveMutation = useMutation({
+    mutationFn: (libraryBookId: number) => reservationsApi.create(libraryBookId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["library-books", "book", bookId] });
+      toast.success("Книга забронирована!");
+    },
+    onError: () => toast.error("Не удалось забронировать"),
+  });
 
   if (isLoading) {
     return (
@@ -38,172 +160,326 @@ const BookDetail = () => {
     );
   }
 
+  const handleReserve = (libraryBookId: number) => {
+    reserveMutation.mutate(libraryBookId);
+  };
+
   return (
-    <div>
-      {/* Hero section */}
-      <div className="relative bg-gradient-to-b from-[#0a1f17] to-[#0d2b1f] overflow-hidden">
-        {/* Background blur of cover */}
-        {book.cover_url && (
-          <div
-            className="absolute inset-0 opacity-[0.08] blur-[60px] scale-150"
-            style={{
-              backgroundImage: `url(${book.cover_url})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-            }}
-          />
-        )}
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 lg:px-8 py-6">
+        {/* Back button */}
+        <button
+          onClick={() => navigate(-1)}
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
+        >
+          <IconArrowLeft size={18} />
+          Назад
+        </button>
 
-        <div className="container mx-auto px-4 lg:px-8 py-10 md:py-16 relative">
-          <div className="flex flex-col md:flex-row gap-8 md:gap-12">
-            {/* Cover */}
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5 }}
-              className="flex-shrink-0 mx-auto md:mx-0"
-            >
-              <div className="w-[200px] md:w-[240px] aspect-[2/3] rounded-xl overflow-hidden shadow-2xl shadow-black/40 ring-1 ring-white/10">
-                {book.cover_url ? (
-                  <img
-                    src={book.cover_url}
-                    alt={book.title}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-emerald-800 to-teal-900 flex items-center justify-center">
-                    <IconBook size={48} className="text-white/30" />
-                  </div>
-                )}
-              </div>
-            </motion.div>
-
-            {/* Info */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="flex-1 text-center md:text-left"
-            >
-              <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-3">
-                {book.genre && (
-                  <GenreBadge name={book.genre.name} slug={book.genre.slug} />
-                )}
-              </div>
-
-              <h1 className="text-2xl md:text-4xl font-bold text-white mb-3 leading-tight">
-                {book.title}
-              </h1>
-
-              {book.author && (
-                <Link
-                  to={`/authors/${book.author_id}`}
-                  className="inline-block text-lg text-white/70 hover:text-emerald-400 transition-colors mb-4"
-                >
-                  {book.author.name}
-                </Link>
-              )}
-
-              {/* Rating */}
-              {book.avg_rating > 0 && (
-                <div className="flex items-center justify-center md:justify-start gap-3 mb-6">
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 backdrop-blur-sm">
-                    <Rating value={book.avg_rating} size={18} />
-                    <span className="text-white font-semibold">
-                      {book.avg_rating.toFixed(1)}
-                    </span>
-                  </div>
-                  <span className="text-white/40 text-sm">
-                    {book.ratings_count} оценок
-                  </span>
+        {/* ── Top section: Cover + Info ── */}
+        <div className="flex flex-col md:flex-row gap-8 md:gap-10 mb-10">
+          {/* Cover */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.4 }}
+            className="flex-shrink-0 mx-auto md:mx-0"
+          >
+            <div className="w-[200px] md:w-[220px] aspect-[2/3] rounded-xl overflow-hidden shadow-xl ring-1 ring-border/40">
+              {book.cover_url ? (
+                <img src={book.cover_url} alt={book.title} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-emerald-100 to-teal-50 flex items-center justify-center">
+                  <IconBook size={48} className="text-muted-foreground/30" />
                 </div>
               )}
+            </div>
+          </motion.div>
 
-              {/* Meta */}
-              <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-sm text-white/50">
-                {book.year > 0 && (
-                  <span className="flex items-center gap-1.5">
-                    <IconCalendar size={15} /> {book.year}
-                  </span>
-                )}
-                {book.total_pages > 0 && (
-                  <span className="flex items-center gap-1.5">
-                    <IconFileText size={15} /> {book.total_pages} стр.
-                  </span>
-                )}
-                {book.language && (
-                  <span className="flex items-center gap-1.5">
-                    <IconLanguage size={15} /> {book.language}
-                  </span>
-                )}
+          {/* Info */}
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="flex-1 min-w-0"
+          >
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1 leading-tight">
+              {book.title}
+            </h1>
+
+            {book.genre && (
+              <div className="mb-2">
+                <GenreBadge name={book.genre.name} slug={book.genre.slug} />
               </div>
-
-              {/* Actions */}
-              <div className="flex items-center justify-center md:justify-start gap-3 mt-6">
-                <WishlistButton bookId={book.id} />
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="container mx-auto px-4 lg:px-8 py-10">
-        <div className="grid lg:grid-cols-3 gap-10">
-          {/* Main content */}
-          <div className="lg:col-span-2 space-y-10">
-            {/* Description */}
-            {book.description && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.2 }}
-              >
-                <h3 className="text-lg font-semibold text-foreground mb-3">Описание</h3>
-                <p className="text-foreground/75 leading-relaxed whitespace-pre-line">
-                  {book.description}
-                </p>
-              </motion.div>
             )}
 
-            {/* Reviews */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.3 }}
-            >
-              <BookReviews bookId={book.id} />
-            </motion.div>
-          </div>
+            {book.author && (
+              <Link
+                to={`/authors/${book.author.id || book.author_id}`}
+                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                {book.author.name}
+              </Link>
+            )}
 
-          {/* Sidebar */}
-          <div className="space-y-8">
-            {/* Availability */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.25 }}
-            >
-              <h3 className="text-lg font-semibold text-foreground mb-4">
-                Наличие в библиотеках
-              </h3>
-              <BookAvailability bookId={book.id} />
-            </motion.div>
-          </div>
+            {/* Meta row */}
+            <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground mt-3 mb-5">
+              {book.year > 0 && (
+                <span className="flex items-center gap-1"><IconCalendar size={14} /> {book.year}</span>
+              )}
+              {book.total_pages > 0 && (
+                <span className="flex items-center gap-1"><IconFileText size={14} /> {book.total_pages} стр.</span>
+              )}
+              {book.language && (
+                <span className="flex items-center gap-1"><IconLanguage size={14} /> {book.language.toUpperCase()}</span>
+              )}
+              {book.avg_rating > 0 && (
+                <span className="flex items-center gap-2">
+                  <Rating value={book.avg_rating} size={14} />
+                  <span className="font-medium text-foreground">{book.avg_rating.toFixed(1)}</span>
+                </span>
+              )}
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex flex-wrap items-center gap-3 mb-4">
+              {/* Read online */}
+              {book.file?.file_url && (
+                <a
+                  href={book.file.file_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#1E5945] text-white text-sm font-semibold hover:bg-[#174a39] transition-colors shadow-sm"
+                >
+                  <IconDeviceDesktop size={16} />
+                  Читать онлайн
+                </a>
+              )}
+            </div>
+
+            {/* Wishlist + Finished + Rate buttons */}
+            <div className="flex flex-wrap gap-2 mb-5">
+              <button
+                onClick={() => inWishlist ? removeFromWishlist.mutate() : addToWishlist.mutate()}
+                disabled={addToWishlist.isPending || removeFromWishlist.isPending}
+                className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                  inWishlist
+                    ? "bg-primary/10 border-primary text-primary"
+                    : "border-border text-muted-foreground hover:border-primary hover:text-primary"
+                }`}
+              >
+                {inWishlist ? <IconCheck size={15} /> : <IconBookmark size={15} />}
+                Хочу прочитать
+              </button>
+              <button
+                onClick={() => isFinished ? removeFinished.mutate() : upsertFinished.mutate()}
+                disabled={upsertFinished.isPending || removeFinished.isPending}
+                className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                  isFinished
+                    ? "bg-emerald-50 border-emerald-500 text-emerald-700"
+                    : "border-border text-muted-foreground hover:border-emerald-500 hover:text-emerald-600"
+                }`}
+              >
+                {isFinished ? <IconCheck size={15} /> : <IconBook size={15} />}
+                Уже прочитано
+              </button>
+
+              <Dialog open={reviewOpen} onOpenChange={setReviewOpen}>
+                <DialogTrigger asChild>
+                  <button
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-border text-sm font-medium text-muted-foreground hover:border-amber-400 hover:text-amber-600 transition-colors"
+                  >
+                    <IconStar size={15} />
+                    Оценить книгу
+                  </button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Оценить книгу</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 pt-2">
+                    <div className="flex items-center gap-1">
+                      <span className="text-sm text-muted-foreground mr-2">Оценка:</span>
+                      {[1, 2, 3, 4, 5].map((v) => (
+                        <button
+                          key={v}
+                          onClick={() => setReviewRating(v)}
+                          className="p-0.5 hover:scale-110 transition-transform"
+                        >
+                          <IconStar
+                            size={24}
+                            fill={v <= reviewRating ? "currentColor" : "none"}
+                            className={v <= reviewRating ? "text-amber-400" : "text-muted-foreground/30"}
+                            stroke={1.5}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                    <textarea
+                      value={reviewBody}
+                      onChange={(e) => setReviewBody(e.target.value)}
+                      placeholder="Поделитесь впечатлениями..."
+                      className="w-full rounded-lg border border-border bg-white p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/30 min-h-[120px]"
+                    />
+                    <div className="flex gap-2 justify-end">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setReviewOpen(false);
+                          setReviewRating(0);
+                          setReviewBody("");
+                        }}
+                      >
+                        Отмена
+                      </Button>
+                      <Button
+                        size="sm"
+                        disabled={reviewRating === 0 || createReview.isPending}
+                        onClick={() => createReview.mutate()}
+                      >
+                        {createReview.isPending ? "Отправляем..." : "Отправить"}
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            {/* Library availability indicator */}
+            {availableLibraryBooks.length > 0 ? (
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2 text-sm text-emerald-700">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                  Эта книга есть в библиотеках вашего города
+                </div>
+                <button
+                  onClick={() => handleReserve(availableLibraryBooks[0].id)}
+                  disabled={reserveMutation.isPending}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border-2 border-[#1E5945] text-[#1E5945] text-sm font-semibold hover:bg-[#1E5945]/5 transition-colors w-fit"
+                >
+                  <IconBuildingBank size={16} />
+                  {reserveMutation.isPending ? "Бронируем..." : "Забронировать в библиотеке"}
+                </button>
+              </div>
+            ) : libraryBooks && libraryBooks.length === 0 ? (
+              <p className="text-xs text-muted-foreground">Книга пока недоступна в библиотеках</p>
+            ) : null}
+          </motion.div>
         </div>
 
-        {/* Similar books */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
+        {/* ── Description ── */}
+        {book.description && (
+          <motion.section
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
+            className="mb-10"
+          >
+            <h2 className="text-lg font-bold text-foreground mb-3">Описание</h2>
+            <p className="text-sm text-foreground/75 leading-relaxed whitespace-pre-line max-w-3xl">
+              {book.description}
+            </p>
+          </motion.section>
+        )}
+
+        {/* ── Author card ── */}
+        {book.author && (
+          <motion.section
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.25 }}
+            className="mb-10"
+          >
+            <Link
+              to={`/authors/${book.author.id || book.author_id}`}
+              className="flex items-center gap-4 p-5 rounded-2xl border border-border/60 bg-white hover:shadow-md transition-shadow group w-fit max-w-lg"
+            >
+              {book.author.photo_url ? (
+                <img
+                  src={book.author.photo_url}
+                  alt={book.author.name}
+                  className="w-16 h-16 rounded-xl object-cover flex-shrink-0"
+                />
+              ) : (
+                <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-emerald-100 to-teal-50 flex items-center justify-center flex-shrink-0">
+                  <span className="text-xl font-bold text-primary/40">{book.author.name[0]}</span>
+                </div>
+              )}
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+                  {book.author.name}
+                </p>
+                {book.author.bio && (
+                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{book.author.bio}</p>
+                )}
+              </div>
+            </Link>
+          </motion.section>
+        )}
+
+        {/* ── Similar books ── */}
+        <motion.section
+          initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.4 }}
-          className="mt-16"
+          transition={{ duration: 0.4, delay: 0.3 }}
+          className="mb-10"
         >
-          <SimilarBooks bookId={book.id} />
-        </motion.div>
+          <SimilarBooks bookId={bookId} />
+        </motion.section>
+
+        {/* ── Reviews ── */}
+        <motion.section
+          id="reviews-section"
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.35 }}
+          className="mb-10"
+        >
+          <BookReviews bookId={book.id} />
+        </motion.section>
+
       </div>
     </div>
   );
 };
 
-export default BookDetail;
+/* Temporary error boundary to catch render crashes */
+class BookDetailErrorBoundary extends Component<
+  { children: ReactNode },
+  { error: Error | null }
+> {
+  state: { error: Error | null } = { error: null };
+
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error("BookDetail crash:", error, info.componentStack);
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="container mx-auto px-4 py-20 text-center">
+          <p className="text-lg text-red-500 font-semibold mb-2">Ошибка при загрузке страницы</p>
+          <pre className="text-xs text-left bg-red-50 p-4 rounded-xl max-w-2xl mx-auto overflow-auto">
+            {this.state.error.message}
+            {"\n"}
+            {this.state.error.stack}
+          </pre>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+const BookDetailWithBoundary = () => (
+  <BookDetailErrorBoundary>
+    <BookDetail />
+  </BookDetailErrorBoundary>
+);
+
+export default BookDetailWithBoundary;

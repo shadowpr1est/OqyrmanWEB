@@ -42,6 +42,7 @@ export interface Book {
   genre_id: number;
   author?: Author;
   genre?: Genre;
+  file?: BookFile;
   created_at: string;
 }
 
