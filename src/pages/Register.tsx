@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect, useCallback } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import { authApi, ApiException } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
@@ -13,17 +13,41 @@ type Step = "form" | "verify";
 
 const Register = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { setAuthData } = useAuth();
 
-  const [step, setStep] = useState<Step>("form");
+  const verifyEmail = searchParams.get("verify");
+  const [step, setStep] = useState<Step>(verifyEmail ? "verify" : "form");
   const [name, setName] = useState("");
   const [surname, setSurname] = useState("");
   const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(verifyEmail || "");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  const calcCooldown = useCallback(() => {
+    const until = Number(localStorage.getItem("resend_code_until") || "0");
+    return Math.max(0, Math.ceil((until - Date.now()) / 1000));
+  }, []);
+
+  useEffect(() => {
+    setResendCooldown(calcCooldown());
+    const id = setInterval(() => {
+      const left = calcCooldown();
+      setResendCooldown(left);
+      if (left <= 0) clearInterval(id);
+    }, 1000);
+    return () => clearInterval(id);
+  }, [step, calcCooldown]);
+
+  const startCooldown = () => {
+    const until = Date.now() + 60_000;
+    localStorage.setItem("resend_code_until", String(until));
+    setResendCooldown(60);
+  };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,6 +55,7 @@ const Register = () => {
     try {
       await authApi.register({ name, surname, phone, email, password });
       setStep("verify");
+      startCooldown();
       toast.success("Код подтверждения отправлен на ваш email");
     } catch (err) {
       if (err instanceof ApiException) {
@@ -38,7 +63,11 @@ const Register = () => {
           const errCode = err.error?.code;
           if (errCode === "email_already_taken") toast.error("Этот email уже зарегистрирован");
           else if (errCode === "phone_taken") toast.error("Этот номер телефона уже зарегистрирован");
-          else if (errCode === "registration_pending") toast.error("Код уже отправлен. Проверьте email или подождите 3 минуты");
+          else if (errCode === "registration_pending") {
+            setStep("verify");
+            if (resendCooldown <= 0) startCooldown();
+            toast.error("Код уже отправлен. Проверьте email или подождите 3 минуты");
+          }
           else toast.error(err.error?.message || "Ошибка регистрации");
         } else {
           toast.error(err.error?.message || "Ошибка регистрации");
@@ -61,7 +90,17 @@ const Register = () => {
       navigate("/");
     } catch (err) {
       if (err instanceof ApiException) {
-        toast.error("Неверный или устаревший код. Попробуйте ещё раз");
+        const errCode = err.error?.code;
+        if (errCode === "already_verified") {
+          toast.error("Email уже подтверждён. Войдите в аккаунт");
+          navigate("/login");
+        } else if (errCode === "not_found") {
+          toast.error("Пользователь не найден");
+        } else if (errCode === "invalid_code") {
+          toast.error("Неверный или устаревший код. Попробуйте ещё раз");
+        } else {
+          toast.error(err.error?.message || "Ошибка подтверждения");
+        }
       } else {
         toast.error("Ошибка соединения с сервером");
       }
@@ -81,11 +120,25 @@ const Register = () => {
   };
 
   const handleResend = async () => {
+    if (resendCooldown > 0) return;
     try {
       await authApi.resendCode(email);
+      startCooldown();
       toast.success("Код повторно отправлен на ваш email");
-    } catch {
-      toast.error("Не удалось отправить код. Попробуйте позже");
+    } catch (err) {
+      if (err instanceof ApiException) {
+        const errCode = err.error?.code;
+        if (errCode === "already_verified") {
+          toast.error("Email уже подтверждён. Войдите в аккаунт");
+          navigate("/login");
+        } else if (errCode === "not_found") {
+          toast.error("Пользователь не найден");
+        } else {
+          toast.error(err.error?.message || "Не удалось отправить код");
+        }
+      } else {
+        toast.error("Ошибка соединения с сервером");
+      }
     }
   };
 
@@ -197,8 +250,8 @@ const Register = () => {
               <Button type="submit" className="w-full h-10 font-medium" disabled={loading || code.length !== 6}>
                 {loading ? "Проверяем..." : "Подтвердить"}
               </Button>
-              <Button type="button" variant="ghost" className="w-full text-sm" onClick={handleResend}>
-                Отправить код повторно
+              <Button type="button" variant="ghost" className="w-full text-sm" onClick={handleResend} disabled={resendCooldown > 0}>
+                {resendCooldown > 0 ? `Повторно через ${resendCooldown} сек` : "Отправить код повторно"}
               </Button>
               <button
                 type="button"

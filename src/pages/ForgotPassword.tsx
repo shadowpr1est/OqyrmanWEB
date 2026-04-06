@@ -41,7 +41,10 @@ const ForgotPassword = () => {
       navigate("/login");
     } catch (err) {
       if (err instanceof ApiException) {
-        toast.error("Неверный или устаревший код");
+        const errCode = err.error?.code;
+        if (errCode === "invalid_code") toast.error("Неверный или устаревший код");
+        else if (errCode === "validation_error") toast.error(err.error?.message || "Пароль должен содержать минимум 8 символов, заглавную букву и цифру");
+        else toast.error(err.error?.message || "Ошибка сброса пароля");
       } else {
         toast.error("Ошибка соединения с сервером");
       }

@@ -21,6 +21,7 @@ export const tokenStorage = {
 export interface ApiError {
   code: string;
   message: string;
+  fields?: Record<string, string>;
 }
 
 export class ApiException extends Error {
@@ -75,7 +76,7 @@ export async function apiFetch<T>(
 
   const res = await fetch(`${BASE_URL}${path}`, { ...options, headers });
 
-  if (res.status === 401 && retry) {
+  if (res.status === 401 && retry && !path.startsWith("/auth/")) {
     if (!isRefreshing) {
       isRefreshing = true;
       const newToken = await refreshTokens();

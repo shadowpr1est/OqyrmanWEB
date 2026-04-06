@@ -26,9 +26,15 @@ const Login = () => {
       navigate("/");
     } catch (err) {
       if (err instanceof ApiException) {
-        if (err.status === 403) toast.error("Подтвердите email перед входом");
-        else if (err.status === 429) toast.error("Аккаунт заблокирован. Попробуйте через 15 минут");
-        else toast.error("Неверный email или пароль");
+        const errCode = err.error?.code;
+        if (errCode === "email_not_verified") {
+          toast.error("Подтвердите email перед входом");
+          navigate(`/register?verify=${encodeURIComponent(email)}`);
+        }
+        else if (errCode === "too_many_requests") toast.error("Аккаунт заблокирован. Попробуйте через 15 минут");
+        else if (errCode === "invalid_credentials") toast.error("Неверный email или пароль");
+        else if (errCode === "validation_error") toast.error(err.error?.message || "Проверьте введённые данные");
+        else toast.error(err.error?.message || "Ошибка входа");
       } else {
         toast.error("Ошибка соединения с сервером");
       }
