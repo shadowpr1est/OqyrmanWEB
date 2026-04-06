@@ -2,7 +2,7 @@ import { apiFetch } from "./client";
 import type { ReadingSession } from "./types";
 
 export const readingSessionsApi = {
-  list: () => apiFetch<ReadingSession[]>("/reading-sessions"),
+  list: () => apiFetch<{ items: ReadingSession[] }>("/reading-sessions"),
 
   getByBook: (bookId: number) =>
     apiFetch<ReadingSession>(`/reading-sessions/book/${bookId}`),

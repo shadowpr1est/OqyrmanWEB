@@ -143,12 +143,20 @@ export interface WishlistItem {
 // ─── Reading Sessions ───────────────────────────────────────────────────────
 
 export interface ReadingSession {
-  id: number;
-  user_id: string;
-  book_id: number;
+  id: string;
+  user_id?: string;
+  book_id?: number;
   current_page: number;
   status: string;
+  updated_at?: string;
   finished_at?: string;
+  book?: {
+    id: string;
+    title: string;
+    cover_url?: string;
+    total_pages: number;
+    author_name?: string;
+  };
 }
 
 // ─── Notes ──────────────────────────────────────────────────────────────────

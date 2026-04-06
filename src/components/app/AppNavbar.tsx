@@ -8,9 +8,10 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 const navLinks = [
-  { label: "Каталог", to: "/catalog" },
+  { label: "Главная", to: "/catalog" },
   { label: "Библиотеки", to: "/libraries" },
-  { label: "Мероприятия", to: "/events" },
+  { label: "События", to: "/events" },
+  { label: "Полка", to: "/wishlist" },
 ];
 
 export const AppNavbar = () => {
