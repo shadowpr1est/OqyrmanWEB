@@ -14,7 +14,11 @@ type Step = "form" | "verify";
 const Register = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { setAuthData } = useAuth();
+  const { user, setAuthData } = useAuth();
+
+  useEffect(() => {
+    if (user) navigate("/catalog", { replace: true });
+  }, [user, navigate]);
 
   const verifyEmail = searchParams.get("verify");
   const [step, setStep] = useState<Step>(verifyEmail ? "verify" : "form");
@@ -87,7 +91,7 @@ const Register = () => {
       const data = await authApi.verifyEmail(email, code);
       setAuthData(data.user, data.access_token, data.refresh_token);
       toast.success("Email подтверждён! Добро пожаловать");
-      navigate("/");
+      navigate("/catalog");
     } catch (err) {
       if (err instanceof ApiException) {
         const errCode = err.error?.code;
@@ -113,7 +117,7 @@ const Register = () => {
     try {
       const data = await authApi.loginWithGoogle(credential);
       setAuthData(data.user, data.access_token, data.refresh_token);
-      navigate("/");
+      navigate("/catalog");
     } catch {
       toast.error("Ошибка входа через Google");
     }
@@ -170,7 +174,6 @@ const Register = () => {
                   theme="outline"
                   size="large"
                   text="signup_with"
-                  locale="ru"
                 />
               </div>
 
@@ -255,7 +258,14 @@ const Register = () => {
               </Button>
               <button
                 type="button"
-                onClick={() => { setStep("form"); setCode(""); }}
+                onClick={() => {
+                  if (verifyEmail) {
+                    navigate("/login");
+                  } else {
+                    setStep("form");
+                    setCode("");
+                  }
+                }}
                 className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors text-center"
               >
                 ← Назад

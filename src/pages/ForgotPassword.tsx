@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { authApi, ApiException } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +12,12 @@ type Step = "email" | "reset";
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [step, setStep] = useState<Step>("email");
+
+  useEffect(() => {
+    if (user) navigate("/catalog", { replace: true });
+  }, [user, navigate]);
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [newPassword, setNewPassword] = useState("");

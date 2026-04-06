@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import { authApi, ApiException } from "@/lib/api";
@@ -11,11 +11,15 @@ import { IconMail, IconLock, IconEye, IconEyeOff } from "@tabler/icons-react";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { setAuthData } = useAuth();
+  const { user, setAuthData } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (user) navigate("/catalog", { replace: true });
+  }, [user, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,7 +27,7 @@ const Login = () => {
     try {
       const data = await authApi.login(email, password);
       setAuthData(data.user, data.access_token, data.refresh_token);
-      navigate("/");
+      navigate("/catalog");
     } catch (err) {
       if (err instanceof ApiException) {
         const errCode = err.error?.code;
@@ -47,7 +51,7 @@ const Login = () => {
     try {
       const data = await authApi.loginWithGoogle(credential);
       setAuthData(data.user, data.access_token, data.refresh_token);
-      navigate("/");
+      navigate("/catalog");
     } catch {
       toast.error("Ошибка входа через Google");
     }
@@ -73,7 +77,6 @@ const Login = () => {
               theme="outline"
               size="large"
               text="signin_with"
-              locale="ru"
             />
           </div>
 
