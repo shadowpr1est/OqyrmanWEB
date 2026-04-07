@@ -19,27 +19,20 @@ export function useNotificationCount() {
   useEffect(() => {
     if (!user) return;
 
-    const es = notificationsApi.createStream();
-    if (!es) return;
-
-    es.onmessage = (event) => {
+    const cancel = notificationsApi.createStream((raw) => {
       try {
-        const payload = JSON.parse(event.data);
+        const payload = JSON.parse(raw);
         if (payload.unread_count !== undefined) {
           setSseCount(payload.unread_count);
         }
-        // Refresh the full list when new notification arrives
         qc.invalidateQueries({ queryKey: ["notifications"] });
       } catch {
         // ignore parse errors
       }
-    };
+    });
 
-    es.onerror = () => {
-      // SSE will auto-reconnect in most browsers
-    };
-
-    return () => es.close();
+    if (!cancel) return;
+    return cancel;
   }, [user, qc]);
 
   // Prefer SSE count, fallback to query count

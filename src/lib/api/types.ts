@@ -57,7 +57,7 @@ export interface BookFile {
 // ─── Authors ────────────────────────────────────────────────────────────────
 
 export interface Author {
-  id: number;
+  id: string;
   name: string;
   bio: string;
   birth_date?: string;
@@ -68,7 +68,7 @@ export interface Author {
 // ─── Genres ─────────────────────────────────────────────────────────────────
 
 export interface Genre {
-  id: number;
+  id: string;
   name: string;
   slug: string;
 }
@@ -110,13 +110,16 @@ export interface Event {
 // ─── Reviews ────────────────────────────────────────────────────────────────
 
 export interface Review {
-  id: number;
+  id: string;
   user_id: string;
-  book_id: number;
+  book_id: string;
+  book_title?: string;
   rating: number;
   body: string;
   created_at: string;
-  user?: { name: string; surname: string; avatar_url?: string };
+  user_name?: string;
+  user_surname?: string;
+  user_avatar_url?: string;
 }
 
 // ─── Reservations ───────────────────────────────────────────────────────────

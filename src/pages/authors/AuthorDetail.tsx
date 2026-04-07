@@ -1,4 +1,4 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { IconUser, IconArrowLeft } from "@tabler/icons-react";
@@ -9,18 +9,19 @@ import { EmptyState } from "@/components/shared/EmptyState";
 
 const AuthorDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const authorId = Number(id);
+  const authorId = id!;
+  const navigate = useNavigate();
 
   const { data: author, isLoading: authorLoading } = useQuery({
     queryKey: ["authors", authorId],
     queryFn: () => authorsApi.getById(authorId),
-    enabled: authorId > 0,
+    enabled: !!authorId,
   });
 
   const { data: booksData, isLoading: booksLoading } = useQuery({
     queryKey: ["books", "author", authorId],
     queryFn: () => booksApi.getByAuthor(authorId, { limit: 50 }),
-    enabled: authorId > 0,
+    enabled: !!authorId,
   });
 
   const books = booksData?.items || [];
@@ -73,12 +74,12 @@ const AuthorDetail = () => {
         )}
 
         <div className="container mx-auto px-4 lg:px-8 py-12 md:py-16 relative">
-          <Link
-            to="/catalog"
+          <button
+            onClick={() => navigate(-1)}
             className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-white transition-colors mb-6"
           >
-            <IconArrowLeft size={16} /> Каталог
-          </Link>
+            <IconArrowLeft size={16} /> Назад
+          </button>
 
           <div className="flex items-start gap-6">
             {/* Photo */}
@@ -156,7 +157,7 @@ const AuthorDetail = () => {
               description="Книги этого автора пока не добавлены в каталог"
             />
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5 lg:gap-6">
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-4">
               {books.map((book, i) => (
                 <motion.div
                   key={book.id}

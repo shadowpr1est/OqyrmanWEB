@@ -12,6 +12,7 @@ import {
   IconStar,
   IconBookmark,
   IconCheck,
+  IconProgress,
 } from "@tabler/icons-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -45,13 +46,19 @@ const BookDetail = () => {
     queryFn: () => readingSessionsApi.getByBook(bookId),
     enabled: !!bookId,
     retry: false,
+    throwOnError: false,
   });
 
   const isFinished = session?.status === "finished";
+  const isReading = session?.status === "reading";
 
   const upsertFinished = useMutation({
     mutationFn: () =>
-      readingSessionsApi.upsert({ book_id: bookId, current_page: session?.current_page || 0, status: "finished" }),
+      readingSessionsApi.upsert({
+        book_id: bookId,
+        current_page: book?.total_pages || session?.current_page || 1,
+        status: "finished",
+      }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["reading-session", bookId] });
       toast.success("Отмечено как прочитано!");
@@ -227,7 +234,7 @@ const BookDetail = () => {
               {book.year > 0 && (
                 <span className="flex items-center gap-1"><IconCalendar size={14} /> {book.year}</span>
               )}
-              {book.total_pages > 0 && (
+              {book.file && book.total_pages > 0 && (
                 <span className="flex items-center gap-1"><IconFileText size={14} /> {book.total_pages} стр.</span>
               )}
               {book.language && (
@@ -256,6 +263,17 @@ const BookDetail = () => {
                 </a>
               )}
             </div>
+
+            {/* Reading progress indicator */}
+            {isReading && session && (
+              <div className="flex items-center gap-2 mb-4 px-3 py-2 rounded-lg bg-blue-50 border border-blue-200 w-fit">
+                <IconProgress size={16} className="text-blue-600" />
+                <span className="text-sm text-blue-700 font-medium">
+                  Вы читаете • стр. {session.current_page}
+                  {book.total_pages > 0 && ` из ${book.total_pages}`}
+                </span>
+              </div>
+            )}
 
             {/* Wishlist + Finished + Rate buttons */}
             <div className="flex flex-wrap gap-2 mb-5">

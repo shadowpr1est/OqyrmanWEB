@@ -33,10 +33,10 @@ export const booksApi = {
   getSimilar: (id: string | number, limit = 6) =>
     apiFetch<{ items: Book[] }>(`/books/${id}/similar${toQuery({ limit })}`).then((res) => res.items || []),
 
-  getByAuthor: (authorId: number, params: BooksParams = {}) =>
+  getByAuthor: (authorId: string | number, params: BooksParams = {}) =>
     apiFetch<PaginatedResponse<Book>>(`/books/author/${authorId}${toQuery(params)}`),
 
-  getByGenre: (genreId: number, params: BooksParams = {}) =>
+  getByGenre: (genreId: string | number, params: BooksParams = {}) =>
     apiFetch<PaginatedResponse<Book>>(`/books/genre/${genreId}${toQuery(params)}`),
 
   getFiles: (bookId: string | number) =>

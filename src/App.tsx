@@ -20,6 +20,7 @@ import NotFound from "./pages/NotFound";
 // App pages (lazy loaded)
 const BooksCatalog = lazy(() => import("./pages/catalog/BooksCatalog"));
 const BookDetail = lazy(() => import("./pages/books/BookDetail"));
+const BooksSearch = lazy(() => import("./pages/books/BooksSearch"));
 const AuthorDetail = lazy(() => import("./pages/authors/AuthorDetail"));
 const Libraries = lazy(() => import("./pages/libraries/Libraries"));
 const LibraryDetail = lazy(() => import("./pages/libraries/LibraryDetail"));
@@ -62,6 +63,7 @@ const App = () => (
                 <Route element={<AppLayout />}>
                   <Route element={<ProtectedRoute />}>
                     <Route path="/catalog" element={<BooksCatalog />} />
+                    <Route path="/books" element={<BooksSearch />} />
                     <Route path="/books/:id" element={<BookDetail />} />
                     <Route path="/authors/:id" element={<AuthorDetail />} />
                     <Route path="/libraries" element={<Libraries />} />

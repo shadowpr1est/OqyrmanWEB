@@ -18,11 +18,40 @@ export const notificationsApi = {
   delete: (id: number) =>
     apiFetch<void>(`/notifications/${id}`, { method: "DELETE" }),
 
-  createStream: (): EventSource | null => {
+  createStream: (onMessage: (data: string) => void): (() => void) | null => {
     const token = tokenStorage.getAccess();
     if (!token) return null;
-    return new EventSource(
-      `${BASE_URL}/notifications/stream?token=${encodeURIComponent(token)}`,
-    );
+
+    const controller = new AbortController();
+
+    fetch(`${BASE_URL}/notifications/stream`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: "text/event-stream" },
+      signal: controller.signal,
+    })
+      .then((res) => {
+        if (!res.ok || !res.body) return;
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        const read = (): Promise<void> =>
+          reader.read().then(({ done, value }) => {
+            if (done) return;
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop() || "";
+            for (const line of lines) {
+              if (line.startsWith("data:")) {
+                onMessage(line.slice(5).trim());
+              }
+            }
+            return read();
+          });
+
+        read().catch(() => {});
+      })
+      .catch(() => {});
+
+    return () => controller.abort();
   },
 };

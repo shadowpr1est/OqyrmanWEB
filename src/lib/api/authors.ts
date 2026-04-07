@@ -13,5 +13,5 @@ export const authorsApi = {
   search: (q: string) =>
     apiFetch<PaginatedResponse<Author>>(`/authors/search?q=${encodeURIComponent(q)}`),
 
-  getById: (id: number) => apiFetch<Author>(`/authors/${id}`),
+  getById: (id: string | number) => apiFetch<Author>(`/authors/${id}`),
 };
