@@ -7,8 +7,8 @@ import {
   IconBook,
   IconArrowRight,
 } from "@tabler/icons-react";
-import { booksApi, genresApi, readingSessionsApi } from "@/lib/api";
-import type { Book, Genre, ReadingSession } from "@/lib/api";
+import { booksApi, readingSessionsApi } from "@/lib/api";
+import type { Book, ReadingSession } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { BookCard } from "@/components/books/BookCard";
 
@@ -38,7 +38,6 @@ const BooksCatalog = () => {
   const [sessions, setSessions] = useState<ReadingSession[]>([]);
   const [genreBooks, setGenreBooks] = useState<Record<string, Book[]>>({});
   const [authorBooks, setAuthorBooks] = useState<Record<string, Book[]>>({});
-  const [allGenres, setAllGenres] = useState<Genre[]>([]);
 
   /* Fetch reading sessions */
   useEffect(() => {
@@ -48,11 +47,6 @@ const BooksCatalog = () => {
       .then((res) => setSessions((res.items || []).filter((s) => s.status === "reading")))
       .catch(() => {});
   }, [user]);
-
-  /* Fetch genres list */
-  useEffect(() => {
-    genresApi.list().then(setAllGenres).catch(() => {});
-  }, []);
 
   /* Fetch books per genre */
   useEffect(() => {
@@ -200,23 +194,6 @@ const BooksCatalog = () => {
                       </div>
                     </div>
                   </div>
-                </Link>
-              ))}
-            </div>
-          </Section>
-        )}
-
-        {/* ── Genre chips ── */}
-        {allGenres.length > 0 && (
-          <Section title="Жанры">
-            <div className="flex flex-wrap gap-2">
-              {allGenres.map((g) => (
-                <Link
-                  key={g.id}
-                  to={`/books?genre=${g.id}`}
-                  className="px-4 py-2 rounded-xl border border-border/60 bg-white text-sm font-medium text-foreground/80 hover:border-primary hover:text-primary hover:bg-primary/5 transition-colors"
-                >
-                  {g.name}
                 </Link>
               ))}
             </div>

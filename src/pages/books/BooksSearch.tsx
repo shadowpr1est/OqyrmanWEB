@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
-import { IconSearch, IconFilter, IconSortDescending, IconUser } from "@tabler/icons-react";
+import { IconSearch, IconFilter, IconSortDescending, IconUser, IconCheck, IconX } from "@tabler/icons-react";
 import { booksApi, genresApi, authorsApi } from "@/lib/api";
 import type { Author, Book, Genre } from "@/lib/api";
 import { BookCard } from "@/components/books/BookCard";
@@ -8,26 +8,32 @@ import { BookCard } from "@/components/books/BookCard";
 /* ── Sort options ── */
 const SORT_OPTIONS = [
   { value: "", label: "По умолчанию" },
-  { value: "popular", label: "Популярные" },
   { value: "newest", label: "Новые" },
   { value: "rating", label: "По рейтингу" },
   { value: "title", label: "По названию" },
 ] as const;
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 24;
+
+/** Parse comma-separated IDs from URL param */
+const parseIds = (param: string | null): string[] =>
+  param ? param.split(",").filter(Boolean) : [];
+
+/** Serialize array of IDs to comma-separated string */
+const serializeIds = (ids: string[]): string => ids.join(",");
 
 const BooksSearch = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const initialQ = searchParams.get("q") || "";
-  const initialGenre = searchParams.get("genre") || "";
-  const initialAuthor = searchParams.get("author") || "";
+  const initialGenres = parseIds(searchParams.get("genre"));
+  const initialAuthors = parseIds(searchParams.get("author"));
   const initialSort = searchParams.get("sort") || "";
   const initialPage = Number(searchParams.get("page")) || 1;
 
   const [query, setQuery] = useState(initialQ);
-  const [genreId, setGenreId] = useState(initialGenre);
-  const [authorId, setAuthorId] = useState(initialAuthor);
+  const [genreIds, setGenreIds] = useState<string[]>(initialGenres);
+  const [authorIds, setAuthorIds] = useState<string[]>(initialAuthors);
   const [sort, setSort] = useState(initialSort);
   const [page, setPage] = useState(initialPage);
 
@@ -39,6 +45,8 @@ const BooksSearch = () => {
   const [genreOpen, setGenreOpen] = useState(false);
   const [authorOpen, setAuthorOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
+  const [genreSearch, setGenreSearch] = useState("");
+  const [authorSearch, setAuthorSearch] = useState("");
 
   /* Load genres & authors once */
   useEffect(() => {
@@ -52,8 +60,8 @@ const BooksSearch = () => {
       const next: Record<string, string> = {};
       const merged = {
         q: query,
-        genre: genreId,
-        author: authorId,
+        genre: serializeIds(genreIds),
+        author: serializeIds(authorIds),
         sort,
         page: String(page),
         ...overrides,
@@ -66,7 +74,7 @@ const BooksSearch = () => {
       if (merged.page && Number(merged.page) > 1) next.page = merged.page;
       setSearchParams(next, { replace: true });
     },
-    [query, genreId, authorId, sort, page, setSearchParams],
+    [query, genreIds, authorIds, sort, page, setSearchParams],
   );
 
   /* Fetch books */
@@ -75,41 +83,74 @@ const BooksSearch = () => {
     setLoading(true);
 
     const offset = (page - 1) * PAGE_SIZE;
+    const hasGenres = genreIds.length > 0;
+    const hasAuthors = authorIds.length > 0;
+    const genreSet = new Set(genreIds);
+    const authorSet = new Set(authorIds);
 
     const doFetch = async () => {
       try {
         let result: { items: Book[]; total: number };
 
         if (query.trim()) {
-          result = await booksApi.search(query.trim(), PAGE_SIZE);
-          // client-side filters for search (API search doesn't support them)
-          if (genreId) {
+          // Search API doesn't support genre/author filters — filter client-side
+          result = await booksApi.search(query.trim(), 200);
+          if (hasGenres) {
             result.items = result.items.filter(
-              (b) => b.genre?.id?.toString() === genreId,
+              (b) => genreSet.has(b.genre?.id?.toString() ?? ""),
             );
           }
-          if (authorId) {
+          if (hasAuthors) {
             result.items = result.items.filter(
-              (b) => b.author?.id?.toString() === authorId,
+              (b) => authorSet.has(b.author?.id?.toString() ?? ""),
             );
           }
           result.total = result.items.length;
-        } else if (authorId) {
-          result = await booksApi.getByAuthor(authorId, {
-            limit: PAGE_SIZE,
-            offset,
-          });
-          if (genreId) {
-            result.items = result.items.filter(
-              (b) => b.genre?.id?.toString() === genreId,
+        } else if (hasAuthors && !hasGenres && authorIds.length === 1) {
+          // Single author, no genre — use author endpoint directly
+          result = await booksApi.getByAuthor(authorIds[0], { limit: 200 });
+          result.total = result.items.length;
+        } else if (hasGenres && !hasAuthors && genreIds.length === 1) {
+          // Single genre, no author — use genre endpoint directly
+          result = await booksApi.getByGenre(genreIds[0], { limit: 200 });
+          result.total = result.items.length;
+        } else if (hasGenres || hasAuthors) {
+          // Multiple filters — fetch per-genre / per-author and merge
+          const allItems: Book[] = [];
+          const seen = new Set<number>();
+
+          if (hasGenres) {
+            const promises = genreIds.map((gid) =>
+              booksApi.getByGenre(gid, { limit: 200 }).catch(() => ({ items: [] as Book[], total: 0 })),
             );
-            result.total = result.items.length;
+            const results = await Promise.all(promises);
+            for (const r of results) {
+              for (const b of r.items) {
+                if (!seen.has(b.id)) { seen.add(b.id); allItems.push(b); }
+              }
+            }
+          } else {
+            // Only authors selected — fetch per author
+            const promises = authorIds.map((aid) =>
+              booksApi.getByAuthor(aid, { limit: 200 }).catch(() => ({ items: [] as Book[], total: 0 })),
+            );
+            const results = await Promise.all(promises);
+            for (const r of results) {
+              for (const b of r.items) {
+                if (!seen.has(b.id)) { seen.add(b.id); allItems.push(b); }
+              }
+            }
           }
-        } else if (genreId) {
-          result = await booksApi.getByGenre(genreId, {
-            limit: PAGE_SIZE,
-            offset,
-          });
+
+          // Cross-filter: if both genre & author selected
+          let filtered = allItems;
+          if (hasGenres && hasAuthors) {
+            filtered = allItems.filter(
+              (b) => authorSet.has(b.author?.id?.toString() ?? ""),
+            );
+          }
+
+          result = { items: filtered, total: filtered.length };
         } else {
           result = await booksApi.list({ limit: PAGE_SIZE, offset, sort });
         }
@@ -125,8 +166,16 @@ const BooksSearch = () => {
             sorted.sort((a, b) => a.title.localeCompare(b.title, "ru"));
           }
 
+          // Client-side pagination when filters are active
+          if (hasGenres || hasAuthors || query.trim()) {
+            const totalFiltered = sorted.length;
+            sorted = sorted.slice(offset, offset + PAGE_SIZE);
+            setTotal(totalFiltered);
+          } else {
+            setTotal(result.total);
+          }
+
           setBooks(sorted);
-          setTotal(result.total);
         }
       } catch {
         if (!cancelled) {
@@ -142,14 +191,21 @@ const BooksSearch = () => {
     return () => {
       cancelled = true;
     };
-  }, [query, genreId, authorId, sort, page]);
+  }, [query, genreIds, authorIds, sort, page]);
 
   /* Derived */
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const currentSortLabel =
     SORT_OPTIONS.find((o) => o.value === sort)?.label ?? "По умолчанию";
-  const selectedGenre = genres.find((g) => g.id?.toString() === genreId);
-  const selectedAuthor = authors.find((a) => a.id?.toString() === authorId);
+
+  const filteredGenres = useMemo(
+    () => genreSearch ? genres.filter((g) => g.name.toLowerCase().includes(genreSearch.toLowerCase())) : genres,
+    [genres, genreSearch],
+  );
+  const filteredAuthors = useMemo(
+    () => authorSearch ? authors.filter((a) => a.name.toLowerCase().includes(authorSearch.toLowerCase())) : authors,
+    [authors, authorSearch],
+  );
 
   /* Handlers */
   const handleSearch = (value: string) => {
@@ -158,20 +214,36 @@ const BooksSearch = () => {
     updateParams({ q: value, page: "1" });
   };
 
-  const handleGenre = (id: string) => {
-    const next = genreId === id ? "" : id;
-    setGenreId(next);
+  const toggleGenre = (id: string) => {
+    const next = genreIds.includes(id)
+      ? genreIds.filter((g) => g !== id)
+      : [...genreIds, id];
+    setGenreIds(next);
     setPage(1);
-    setGenreOpen(false);
-    updateParams({ genre: next, page: "1" });
+    updateParams({ genre: serializeIds(next), page: "1" });
   };
 
-  const handleAuthor = (id: string) => {
-    const next = authorId === id ? "" : id;
-    setAuthorId(next);
+  const clearGenres = () => {
+    setGenreIds([]);
+    setPage(1);
+    setGenreOpen(false);
+    updateParams({ genre: "", page: "1" });
+  };
+
+  const toggleAuthor = (id: string) => {
+    const next = authorIds.includes(id)
+      ? authorIds.filter((a) => a !== id)
+      : [...authorIds, id];
+    setAuthorIds(next);
+    setPage(1);
+    updateParams({ author: serializeIds(next), page: "1" });
+  };
+
+  const clearAuthors = () => {
+    setAuthorIds([]);
     setPage(1);
     setAuthorOpen(false);
-    updateParams({ author: next, page: "1" });
+    updateParams({ author: "", page: "1" });
   };
 
   const handleSort = (value: string) => {
@@ -229,93 +301,139 @@ const BooksSearch = () => {
           />
         </div>
 
-        <div className="flex items-center gap-3 ml-auto">
-          {/* Genre filter */}
+        <div className="flex items-center gap-3 ml-auto flex-wrap">
+          {/* Genre filter (multi-select) */}
           <div className="relative">
             <button
               onClick={() => {
                 setGenreOpen(!genreOpen);
                 setAuthorOpen(false);
                 setSortOpen(false);
+                setGenreSearch("");
               }}
               className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl border text-sm transition-colors ${
-                genreId
+                genreIds.length > 0
                   ? "border-primary bg-primary/5 text-primary font-medium"
                   : "border-border hover:bg-muted/50"
               }`}
             >
               <IconFilter size={16} />
-              {selectedGenre?.name || "Жанры"}
+              {genreIds.length > 0
+                ? `Жанры (${genreIds.length})`
+                : "Жанры"}
             </button>
 
             {genreOpen && (
-              <div className="absolute top-full left-0 mt-1 w-56 max-h-72 overflow-y-auto rounded-xl border border-border bg-background shadow-lg z-50">
-                <button
-                  onClick={() => handleGenre("")}
-                  className={`w-full text-left px-4 py-2 text-sm hover:bg-muted/50 transition-colors ${
-                    !genreId ? "text-primary font-medium" : ""
-                  }`}
-                >
-                  Все жанры
-                </button>
-                {genres.map((g) => (
+              <div className="absolute top-full left-0 mt-1 w-64 rounded-xl border border-border bg-background shadow-lg z-50">
+                {/* Search within genres */}
+                <div className="p-2 border-b border-border">
+                  <input
+                    type="text"
+                    placeholder="Поиск жанра..."
+                    value={genreSearch}
+                    onChange={(e) => setGenreSearch(e.target.value)}
+                    className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-1 focus:ring-primary/30"
+                    autoFocus
+                  />
+                </div>
+                {genreIds.length > 0 && (
                   <button
-                    key={g.id}
-                    onClick={() => handleGenre(g.id?.toString())}
-                    className={`w-full text-left px-4 py-2 text-sm hover:bg-muted/50 transition-colors ${
-                      genreId === g.id?.toString()
-                        ? "text-primary font-medium bg-primary/5"
-                        : ""
-                    }`}
+                    onClick={clearGenres}
+                    className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors flex items-center gap-2 border-b border-border"
                   >
-                    {g.name}
+                    <IconX size={14} />
+                    Сбросить все
                   </button>
-                ))}
+                )}
+                <div className="max-h-60 overflow-y-auto">
+                  {filteredGenres.map((g) => {
+                    const isSelected = genreIds.includes(g.id?.toString());
+                    return (
+                      <button
+                        key={g.id}
+                        onClick={() => toggleGenre(g.id?.toString())}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-muted/50 transition-colors flex items-center gap-2 ${
+                          isSelected ? "text-primary font-medium bg-primary/5" : ""
+                        }`}
+                      >
+                        <span className={`flex-shrink-0 w-4 h-4 rounded border flex items-center justify-center ${
+                          isSelected ? "bg-primary border-primary" : "border-border"
+                        }`}>
+                          {isSelected && <IconCheck size={12} className="text-white" />}
+                        </span>
+                        {g.name}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             )}
           </div>
 
-          {/* Author filter */}
+          {/* Author filter (multi-select) */}
           <div className="relative">
             <button
               onClick={() => {
                 setAuthorOpen(!authorOpen);
                 setGenreOpen(false);
                 setSortOpen(false);
+                setAuthorSearch("");
               }}
               className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl border text-sm transition-colors ${
-                authorId
+                authorIds.length > 0
                   ? "border-primary bg-primary/5 text-primary font-medium"
                   : "border-border hover:bg-muted/50"
               }`}
             >
               <IconUser size={16} />
-              {selectedAuthor?.name || "Авторы"}
+              {authorIds.length > 0
+                ? `Авторы (${authorIds.length})`
+                : "Авторы"}
             </button>
 
             {authorOpen && (
-              <div className="absolute top-full left-0 mt-1 w-64 max-h-72 overflow-y-auto rounded-xl border border-border bg-background shadow-lg z-50">
-                <button
-                  onClick={() => handleAuthor("")}
-                  className={`w-full text-left px-4 py-2 text-sm hover:bg-muted/50 transition-colors ${
-                    !authorId ? "text-primary font-medium" : ""
-                  }`}
-                >
-                  Все авторы
-                </button>
-                {authors.map((a) => (
+              <div className="absolute top-full left-0 mt-1 w-72 rounded-xl border border-border bg-background shadow-lg z-50">
+                {/* Search within authors */}
+                <div className="p-2 border-b border-border">
+                  <input
+                    type="text"
+                    placeholder="Поиск автора..."
+                    value={authorSearch}
+                    onChange={(e) => setAuthorSearch(e.target.value)}
+                    className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-1 focus:ring-primary/30"
+                    autoFocus
+                  />
+                </div>
+                {authorIds.length > 0 && (
                   <button
-                    key={a.id}
-                    onClick={() => handleAuthor(a.id?.toString())}
-                    className={`w-full text-left px-4 py-2 text-sm hover:bg-muted/50 transition-colors ${
-                      authorId === a.id?.toString()
-                        ? "text-primary font-medium bg-primary/5"
-                        : ""
-                    }`}
+                    onClick={clearAuthors}
+                    className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors flex items-center gap-2 border-b border-border"
                   >
-                    {a.name}
+                    <IconX size={14} />
+                    Сбросить все
                   </button>
-                ))}
+                )}
+                <div className="max-h-60 overflow-y-auto">
+                  {filteredAuthors.map((a) => {
+                    const isSelected = authorIds.includes(a.id?.toString());
+                    return (
+                      <button
+                        key={a.id}
+                        onClick={() => toggleAuthor(a.id?.toString())}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-muted/50 transition-colors flex items-center gap-2 ${
+                          isSelected ? "text-primary font-medium bg-primary/5" : ""
+                        }`}
+                      >
+                        <span className={`flex-shrink-0 w-4 h-4 rounded border flex items-center justify-center ${
+                          isSelected ? "bg-primary border-primary" : "border-border"
+                        }`}>
+                          {isSelected && <IconCheck size={12} className="text-white" />}
+                        </span>
+                        {a.name}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             )}
           </div>
@@ -365,6 +483,60 @@ const BooksSearch = () => {
             setSortOpen(false);
           }}
         />
+      )}
+
+      {/* Active filter chips */}
+      {(genreIds.length > 0 || authorIds.length > 0) && (
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          {genreIds.map((gid) => {
+            const genre = genres.find((g) => g.id?.toString() === gid);
+            if (!genre) return null;
+            return (
+              <span
+                key={`gc-${gid}`}
+                className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium"
+              >
+                {genre.name}
+                <button
+                  onClick={() => toggleGenre(gid)}
+                  className="hover:bg-primary/20 rounded-full p-0.5 transition-colors"
+                >
+                  <IconX size={12} />
+                </button>
+              </span>
+            );
+          })}
+          {authorIds.map((aid) => {
+            const author = authors.find((a) => a.id?.toString() === aid);
+            if (!author) return null;
+            return (
+              <span
+                key={`ac-${aid}`}
+                className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-500/10 text-blue-600 text-xs font-medium"
+              >
+                {author.name}
+                <button
+                  onClick={() => toggleAuthor(aid)}
+                  className="hover:bg-blue-500/20 rounded-full p-0.5 transition-colors"
+                >
+                  <IconX size={12} />
+                </button>
+              </span>
+            );
+          })}
+          <button
+            onClick={() => {
+              setGenreIds([]);
+              setAuthorIds([]);
+              setPage(1);
+              updateParams({ genre: "", author: "", page: "1" });
+            }}
+            className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-red-50 text-red-500 text-xs font-medium hover:bg-red-100 transition-colors"
+          >
+            <IconX size={12} />
+            Сбросить все
+          </button>
+        </div>
       )}
 
       {/* Grid */}
