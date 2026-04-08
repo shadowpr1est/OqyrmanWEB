@@ -81,7 +81,7 @@ const AuthorDetail = () => {
             <IconArrowLeft size={16} /> Назад
           </button>
 
-          <div className="flex items-start gap-6">
+          <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
             {/* Photo */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
@@ -92,11 +92,11 @@ const AuthorDetail = () => {
                 <img
                   src={author.photo_url}
                   alt={author.name}
-                  className="w-24 h-24 md:w-32 md:h-32 rounded-2xl object-cover shadow-2xl shadow-black/30 ring-2 ring-white/10"
+                  className="w-40 h-40 md:w-52 md:h-52 rounded-2xl object-cover shadow-2xl shadow-black/30 ring-2 ring-white/10"
                 />
               ) : (
-                <div className="w-24 h-24 md:w-32 md:h-32 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-2xl">
-                  <IconUser size={40} className="text-white/60" />
+                <div className="w-40 h-40 md:w-52 md:h-52 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-2xl">
+                  <IconUser size={64} className="text-white/60" />
                 </div>
               )}
             </motion.div>
@@ -105,6 +105,7 @@ const AuthorDetail = () => {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
+              className="text-center md:text-left"
             >
               <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
                 {author.name}
@@ -113,9 +114,18 @@ const AuthorDetail = () => {
                 <p className="text-white/40 text-sm mb-3">{lifespan}</p>
               )}
               {books.length > 0 && (
-                <p className="text-white/50 text-sm">
+                <p className="text-white/50 text-sm mb-5">
                   {books.length} {books.length === 1 ? "книга" : books.length < 5 ? "книги" : "книг"} в каталоге
                 </p>
+              )}
+
+              {/* Bio inside hero */}
+              {author.bio && (
+                <div className="mt-2 max-w-2xl">
+                  <p className="text-white/60 text-sm leading-relaxed whitespace-pre-line">
+                    {author.bio}
+                  </p>
+                </div>
               )}
             </motion.div>
           </div>
@@ -123,21 +133,6 @@ const AuthorDetail = () => {
       </div>
 
       <div className="container mx-auto px-4 lg:px-8 py-10">
-        {/* Bio */}
-        {author.bio && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="mb-10 max-w-3xl"
-          >
-            <h2 className="text-lg font-semibold text-foreground mb-3">Биография</h2>
-            <p className="text-foreground/75 leading-relaxed whitespace-pre-line">
-              {author.bio}
-            </p>
-          </motion.div>
-        )}
-
         {/* Books */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
