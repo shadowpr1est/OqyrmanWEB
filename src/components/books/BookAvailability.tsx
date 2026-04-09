@@ -1,18 +1,19 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { IconMapPin, IconCheck, IconX } from "@tabler/icons-react";
-import { libraryBooksApi, reservationsApi } from "@/lib/api";
+import { libraryBooksApi } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { ReservationModal } from "@/components/books/ReservationModal";
 
 interface BookAvailabilityProps {
   bookId: string | number;
+  bookTitle?: string;
 }
 
-export const BookAvailability = ({ bookId }: BookAvailabilityProps) => {
-  const qc = useQueryClient();
+export const BookAvailability = ({ bookId, bookTitle }: BookAvailabilityProps) => {
+  const [reserveOpen, setReserveOpen] = useState(false);
 
   const { data: libraryBooks, isLoading } = useQuery({
     queryKey: ["library-books", "book", bookId],
@@ -20,19 +21,6 @@ export const BookAvailability = ({ bookId }: BookAvailabilityProps) => {
     enabled: !!bookId,
     retry: false,
   });
-
-  const reserveMutation = useMutation({
-    mutationFn: (libraryBookId: number) => reservationsApi.create(libraryBookId),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["library-books", "book", bookId] });
-      toast.success("Книга забронирована!");
-    },
-    onError: () => toast.error("Не удалось забронировать"),
-  });
-
-  const handleReserve = (libraryBookId: number) => {
-    reserveMutation.mutate(libraryBookId);
-  };
 
   if (isLoading) {
     return (
@@ -45,6 +33,7 @@ export const BookAvailability = ({ bookId }: BookAvailabilityProps) => {
   }
 
   const items = libraryBooks || [];
+  const available = items.filter((lb) => lb.available_copies > 0);
 
   if (!items.length) {
     return (
@@ -57,7 +46,7 @@ export const BookAvailability = ({ bookId }: BookAvailabilityProps) => {
   return (
     <div className="space-y-3">
       {items.map((lb, i) => {
-        const available = lb.available_copies > 0;
+        const hasAvailable = lb.available_copies > 0;
         return (
           <motion.div
             key={lb.id}
@@ -67,9 +56,9 @@ export const BookAvailability = ({ bookId }: BookAvailabilityProps) => {
             className="flex items-center gap-4 rounded-xl border border-border/60 p-4 bg-white"
           >
             <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-              available ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-400"
+              hasAvailable ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-400"
             }`}>
-              {available ? <IconCheck size={18} stroke={2} /> : <IconX size={18} stroke={2} />}
+              {hasAvailable ? <IconCheck size={18} stroke={2} /> : <IconX size={18} stroke={2} />}
             </div>
 
             <div className="flex-1 min-w-0">
@@ -81,18 +70,17 @@ export const BookAvailability = ({ bookId }: BookAvailabilityProps) => {
                 {lb.library?.name || `Библиотека #${lb.library_id}`}
               </Link>
               <p className="text-xs text-muted-foreground">
-                {available
+                {hasAvailable
                   ? `${lb.available_copies} из ${lb.total_copies} доступно`
                   : "Нет свободных экземпляров"}
               </p>
             </div>
 
-            {available && (
+            {hasAvailable && (
               <Button
                 size="sm"
                 variant="outline"
-                disabled={reserveMutation.isPending}
-                onClick={() => handleReserve(lb.id)}
+                onClick={() => setReserveOpen(true)}
                 className="flex-shrink-0"
               >
                 Забронировать
@@ -101,6 +89,15 @@ export const BookAvailability = ({ bookId }: BookAvailabilityProps) => {
           </motion.div>
         );
       })}
+
+      {available.length > 0 && (
+        <ReservationModal
+          open={reserveOpen}
+          onOpenChange={setReserveOpen}
+          libraryBooks={available}
+          bookTitle={bookTitle || ""}
+        />
+      )}
     </div>
   );
 };

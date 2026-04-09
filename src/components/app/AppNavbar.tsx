@@ -20,7 +20,7 @@ export const AppNavbar = () => {
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-white/90 backdrop-blur-md">
-      <div className="container mx-auto px-4 lg:px-8">
+      <div className="container mx-auto px-5 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Left: Logo + nav */}
           <div className="flex items-center gap-8">

@@ -12,10 +12,10 @@ export const notificationsApi = {
     );
   },
 
-  markRead: (id: number) =>
+  markRead: (id: string) =>
     apiFetch<void>(`/notifications/${id}/read`, { method: "PATCH" }),
 
-  delete: (id: number) =>
+  delete: (id: string) =>
     apiFetch<void>(`/notifications/${id}`, { method: "DELETE" }),
 
   createStream: (onMessage: (data: string) => void): (() => void) | null => {

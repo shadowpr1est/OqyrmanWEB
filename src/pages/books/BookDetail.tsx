@@ -22,7 +22,9 @@ import { Rating } from "@/components/shared/Rating";
 import { GenreBadge } from "@/components/shared/GenreBadge";
 import { BookReviews } from "@/components/books/BookReviews";
 import { SimilarBooks } from "@/components/books/SimilarBooks";
-import { libraryBooksApi, reservationsApi, readingSessionsApi, wishlistApi, reviewsApi } from "@/lib/api";
+import { libraryBooksApi, readingSessionsApi, wishlistApi, reviewsApi, reservationsApi } from "@/lib/api";
+import { ReservationModal } from "@/components/books/ReservationModal";
+import { ReservationInfoCard } from "@/components/books/ReservationInfoCard";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -78,31 +80,41 @@ const BookDetail = () => {
     onError: () => toast.error("Не удалось обновить статус"),
   });
 
-  /* Wishlist (Хочу прочитать) */
+  /* Wishlist status */
   const { data: wishlistData } = useQuery({
     queryKey: ["wishlist", bookId, "exists"],
     queryFn: () => wishlistApi.exists(bookId),
     enabled: !!bookId,
   });
 
-  const inWishlist = wishlistData?.exists ?? false;
+  const shelfStatus = wishlistData?.status ?? null;
 
-  const addToWishlist = useMutation({
-    mutationFn: () => wishlistApi.add(bookId),
-    onSuccess: () => {
-      qc.setQueryData(["wishlist", bookId, "exists"], { exists: true });
+  const addToShelf = useMutation({
+    mutationFn: (status: "want_to_read" | "reading" | "finished") =>
+      wishlistApi.add(bookId, status),
+    onSuccess: (_data, status) => {
+      qc.setQueryData(["wishlist", bookId, "exists"], { exists: true, status });
       qc.invalidateQueries({ queryKey: ["wishlist"] });
-      toast.success("Добавлено в «Хочу прочитать»");
     },
     onError: () => toast.error("Не удалось добавить"),
   });
 
-  const removeFromWishlist = useMutation({
+  const updateShelfStatus = useMutation({
+    mutationFn: (status: "want_to_read" | "reading" | "finished") =>
+      wishlistApi.updateStatus(bookId, status),
+    onSuccess: (_data, status) => {
+      qc.setQueryData(["wishlist", bookId, "exists"], { exists: true, status });
+      qc.invalidateQueries({ queryKey: ["wishlist"] });
+    },
+    onError: () => toast.error("Не удалось обновить статус"),
+  });
+
+  const removeFromShelf = useMutation({
     mutationFn: () => wishlistApi.remove(bookId),
     onSuccess: () => {
-      qc.setQueryData(["wishlist", bookId, "exists"], { exists: false });
+      qc.setQueryData(["wishlist", bookId, "exists"], { exists: false, status: null });
       qc.invalidateQueries({ queryKey: ["wishlist"] });
-      toast.success("Убрано из «Хочу прочитать»");
+      toast.success("Убрано с полки");
     },
     onError: () => toast.error("Не удалось убрать"),
   });
@@ -134,14 +146,19 @@ const BookDetail = () => {
 
   const availableLibraryBooks = (libraryBooks || []).filter((lb) => lb.available_copies > 0);
 
-  const reserveMutation = useMutation({
-    mutationFn: (libraryBookId: number) => reservationsApi.create(libraryBookId),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["library-books", "book", bookId] });
-      toast.success("Книга забронирована!");
-    },
-    onError: () => toast.error("Не удалось забронировать"),
+  /* Active reservation for this book */
+  const { data: userReservations } = useQuery({
+    queryKey: ["reservations"],
+    queryFn: () => reservationsApi.list(),
+    enabled: !!user,
   });
+
+  const activeReservation = (userReservations || []).find(
+    (r) => r.book.id === bookId && (r.status === "pending" || r.status === "active"),
+  );
+
+  /* Reservation modal */
+  const [reserveOpen, setReserveOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -166,10 +183,6 @@ const BookDetail = () => {
       </div>
     );
   }
-
-  const handleReserve = (libraryBookId: number) => {
-    reserveMutation.mutate(libraryBookId);
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -252,15 +265,21 @@ const BookDetail = () => {
             <div className="flex flex-wrap items-center gap-3 mb-4">
               {/* Read online */}
               {book.file?.file_url && (
-                <a
-                  href={book.file.file_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  onClick={() => {
+                    window.open(book.file!.file_url, "_blank");
+                    // upsert на полку со статусом "reading"
+                    addToShelf.mutate("reading");
+                    // создать reading_session если нет
+                    if (!session) {
+                      readingSessionsApi.upsert({ book_id: bookId, current_page: 0, status: "in_progress" });
+                    }
+                  }}
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#1E5945] text-white text-sm font-semibold hover:bg-[#174a39] transition-colors shadow-sm"
                 >
                   <IconDeviceDesktop size={16} />
                   Читать онлайн
-                </a>
+                </button>
               )}
             </div>
 
@@ -278,27 +297,46 @@ const BookDetail = () => {
             {/* Wishlist + Finished + Rate buttons */}
             <div className="flex flex-wrap gap-2 mb-5">
               <button
-                onClick={() => inWishlist ? removeFromWishlist.mutate() : addToWishlist.mutate()}
-                disabled={addToWishlist.isPending || removeFromWishlist.isPending}
+                onClick={() => {
+                  if (shelfStatus === "want_to_read") {
+                    removeFromShelf.mutate();
+                  } else if (shelfStatus) {
+                    updateShelfStatus.mutate("want_to_read");
+                  } else {
+                    addToShelf.mutate("want_to_read");
+                  }
+                }}
+                disabled={addToShelf.isPending || removeFromShelf.isPending || updateShelfStatus.isPending}
                 className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
-                  inWishlist
+                  shelfStatus === "want_to_read"
                     ? "bg-primary/10 border-primary text-primary"
                     : "border-border text-muted-foreground hover:border-primary hover:text-primary"
                 }`}
               >
-                {inWishlist ? <IconCheck size={15} /> : <IconBookmark size={15} />}
+                {shelfStatus === "want_to_read" ? <IconCheck size={15} /> : <IconBookmark size={15} />}
                 Хочу прочитать
               </button>
               <button
-                onClick={() => isFinished ? removeFinished.mutate() : upsertFinished.mutate()}
-                disabled={upsertFinished.isPending || removeFinished.isPending}
+                onClick={() => {
+                  if (shelfStatus === "finished") {
+                    removeFromShelf.mutate();
+                    removeFinished.mutate();
+                  } else if (shelfStatus) {
+                    updateShelfStatus.mutate("finished");
+                    upsertFinished.mutate();
+                  } else {
+                    addToShelf.mutate("finished");
+                    upsertFinished.mutate();
+                  }
+                }}
+                disabled={addToShelf.isPending || removeFromShelf.isPending || updateShelfStatus.isPending || upsertFinished.isPending}
                 className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
-                  isFinished
+                  shelfStatus === "finished"
                     ? "bg-emerald-50 border-emerald-500 text-emerald-700"
                     : "border-border text-muted-foreground hover:border-emerald-500 hover:text-emerald-600"
                 }`}
               >
-                {isFinished ? <IconCheck size={15} /> : <IconBook size={15} />}
+                {shelfStatus === "finished" ? <IconCheck size={15} /> : <IconBook size={15} />}
                 Уже прочитано
               </button>
 
@@ -364,21 +402,28 @@ const BookDetail = () => {
               </Dialog>
             </div>
 
-            {/* Library availability indicator */}
-            {availableLibraryBooks.length > 0 ? (
+            {/* Library availability / reservation status */}
+            {activeReservation ? (
+              <ReservationInfoCard reservation={activeReservation} />
+            ) : availableLibraryBooks.length > 0 ? (
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-2 text-sm text-emerald-700">
                   <div className="w-2 h-2 rounded-full bg-emerald-500" />
                   Эта книга есть в библиотеках вашего города
                 </div>
                 <button
-                  onClick={() => handleReserve(availableLibraryBooks[0].id)}
-                  disabled={reserveMutation.isPending}
+                  onClick={() => setReserveOpen(true)}
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border-2 border-[#1E5945] text-[#1E5945] text-sm font-semibold hover:bg-[#1E5945]/5 transition-colors w-fit"
                 >
                   <IconBuildingBank size={16} />
-                  {reserveMutation.isPending ? "Бронируем..." : "Забронировать в библиотеке"}
+                  Забронировать в библиотеке
                 </button>
+                <ReservationModal
+                  open={reserveOpen}
+                  onOpenChange={setReserveOpen}
+                  libraryBooks={availableLibraryBooks}
+                  bookTitle={book.title}
+                />
               </div>
             ) : libraryBooks && libraryBooks.length === 0 ? (
               <p className="text-xs text-muted-foreground">Книга пока недоступна в библиотеках</p>
@@ -474,7 +519,9 @@ class BookDetailErrorBoundary extends Component<
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error("BookDetail crash:", error, info.componentStack);
+    if (import.meta.env.DEV) {
+      console.error("BookDetail crash:", error, info.componentStack);
+    }
   }
 
   render() {
@@ -482,11 +529,7 @@ class BookDetailErrorBoundary extends Component<
       return (
         <div className="container mx-auto px-4 py-20 text-center">
           <p className="text-lg text-red-500 font-semibold mb-2">Ошибка при загрузке страницы</p>
-          <pre className="text-xs text-left bg-red-50 p-4 rounded-xl max-w-2xl mx-auto overflow-auto">
-            {this.state.error.message}
-            {"\n"}
-            {this.state.error.stack}
-          </pre>
+          <p className="text-sm text-muted-foreground">Попробуйте обновить страницу</p>
         </div>
       );
     }

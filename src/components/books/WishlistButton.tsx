@@ -21,7 +21,7 @@ export const WishlistButton = ({ bookId, size = "md" }: WishlistButtonProps) => 
 
   const handleClick = () => {
     if (isWished) remove.mutate();
-    else add.mutate();
+    else add.mutate("want_to_read");
   };
 
   return (

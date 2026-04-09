@@ -1,18 +1,19 @@
 import { useEffect, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { notificationsApi } from "@/lib/api";
+import type { Notification } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 
-export function useNotificationCount() {
+export function useNotifications() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [sseCount, setSseCount] = useState<number | null>(null);
 
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["notifications"],
     queryFn: () => notificationsApi.list({ limit: 50 }),
     enabled: !!user,
-    refetchInterval: 60_000, // fallback poll every minute
+    refetchInterval: 60_000,
   });
 
   // SSE stream for real-time updates
@@ -35,7 +36,30 @@ export function useNotificationCount() {
     return cancel;
   }, [user, qc]);
 
-  // Prefer SSE count, fallback to query count
-  const queryCount = data?.items?.filter((n) => !n.read).length ?? 0;
-  return sseCount ?? queryCount;
+  const notifications: Notification[] = data?.items ?? [];
+  const queryCount = notifications.filter((n) => !n.is_read).length;
+  const unreadCount = sseCount ?? queryCount;
+
+  const markReadMutation = useMutation({
+    mutationFn: (id: string) => notificationsApi.markRead(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["notifications"] }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => notificationsApi.delete(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["notifications"] }),
+  });
+
+  return {
+    notifications,
+    unreadCount,
+    isLoading,
+    markRead: markReadMutation.mutate,
+    deleteNotification: deleteMutation.mutate,
+  };
+}
+
+export function useNotificationCount() {
+  const { unreadCount } = useNotifications();
+  return unreadCount;
 }

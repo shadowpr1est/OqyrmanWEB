@@ -1,12 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { wishlistApi } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
+import type { ShelfStatus } from "@/lib/api/types";
 
-export function useWishlist() {
+export function useWishlist(status?: ShelfStatus) {
   const { user } = useAuth();
   return useQuery({
-    queryKey: ["wishlist"],
-    queryFn: () => wishlistApi.list(),
+    queryKey: ["wishlist", status ?? "all"],
+    queryFn: () => wishlistApi.list(status),
     enabled: !!user,
   });
 }
@@ -24,9 +25,10 @@ export function useToggleWishlist(bookId: string | number) {
   const qc = useQueryClient();
 
   const add = useMutation({
-    mutationFn: () => wishlistApi.add(bookId),
-    onSuccess: () => {
-      qc.setQueryData(["wishlist", bookId, "exists"], { exists: true });
+    mutationFn: (status: ShelfStatus = "want_to_read") =>
+      wishlistApi.add(bookId, status),
+    onSuccess: (_data, status) => {
+      qc.setQueryData(["wishlist", bookId, "exists"], { exists: true, status });
       qc.invalidateQueries({ queryKey: ["wishlist"] });
     },
   });
@@ -34,10 +36,19 @@ export function useToggleWishlist(bookId: string | number) {
   const remove = useMutation({
     mutationFn: () => wishlistApi.remove(bookId),
     onSuccess: () => {
-      qc.setQueryData(["wishlist", bookId, "exists"], { exists: false });
+      qc.setQueryData(["wishlist", bookId, "exists"], { exists: false, status: null });
       qc.invalidateQueries({ queryKey: ["wishlist"] });
     },
   });
 
-  return { add, remove };
+  const updateStatus = useMutation({
+    mutationFn: (status: ShelfStatus) =>
+      wishlistApi.updateStatus(bookId, status),
+    onSuccess: (_data, status) => {
+      qc.setQueryData(["wishlist", bookId, "exists"], { exists: true, status });
+      qc.invalidateQueries({ queryKey: ["wishlist"] });
+    },
+  });
+
+  return { add, remove, updateStatus };
 }

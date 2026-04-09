@@ -142,6 +142,7 @@ export async function apiFetch<T>(
 export async function apiUpload<T>(
   path: string,
   formData: FormData,
+  retry = true,
 ): Promise<T> {
   const headers: Record<string, string> = {};
   const token = tokenStorage.getAccess();
@@ -152,6 +153,36 @@ export async function apiUpload<T>(
     headers,
     body: formData,
   });
+
+  if (res.status === 401 && retry) {
+    if (!isRefreshing) {
+      isRefreshing = true;
+      try {
+        await refreshTokens();
+        refreshQueue.forEach((q) => q.resolve(""));
+        refreshQueue = [];
+        isRefreshing = false;
+        return apiUpload<T>(path, formData, false);
+      } catch {
+        const expiredError = new ApiException(
+          { code: "unauthorized", message: "Сессия истекла. Войдите заново." },
+          401,
+        );
+        refreshQueue.forEach((q) => q.reject(expiredError));
+        refreshQueue = [];
+        isRefreshing = false;
+        notifySessionExpired();
+        throw expiredError;
+      }
+    } else {
+      return new Promise<T>((resolve, reject) => {
+        refreshQueue.push({
+          resolve: () => resolve(apiUpload<T>(path, formData, false)),
+          reject,
+        });
+      });
+    }
+  }
 
   if (!res.ok) {
     let err: ApiError = { code: "unknown", message: "Unknown error" };

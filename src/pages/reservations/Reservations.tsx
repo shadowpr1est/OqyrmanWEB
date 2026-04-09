@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { IconBookmark, IconX, IconClock, IconCheck, IconAlertTriangle } from "@tabler/icons-react";
+import { IconBookmark, IconX, IconClock, IconCheck } from "@tabler/icons-react";
 import { reservationsApi } from "@/lib/api";
 import type { Reservation } from "@/lib/api";
 import { EmptyState } from "@/components/shared/EmptyState";
@@ -10,10 +10,9 @@ import { toast } from "sonner";
 
 const statusConfig: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   pending: { label: "Ожидает", color: "bg-amber-100 text-amber-700", icon: IconClock },
-  active: { label: "Активна", color: "bg-emerald-100 text-emerald-700", icon: IconCheck },
-  returned: { label: "Возвращена", color: "bg-gray-100 text-gray-600", icon: IconCheck },
+  active: { label: "На руках", color: "bg-emerald-100 text-emerald-700", icon: IconCheck },
+  completed: { label: "Возвращена", color: "bg-gray-100 text-gray-600", icon: IconCheck },
   cancelled: { label: "Отменена", color: "bg-red-100 text-red-600", icon: IconX },
-  overdue: { label: "Просрочена", color: "bg-red-100 text-red-700", icon: IconAlertTriangle },
 };
 
 const formatDate = (iso: string) =>
@@ -42,10 +41,10 @@ const ReservationCard = ({ reservation }: { reservation: Reservation }) => {
     onError: () => toast.error("Не удалось продлить"),
   });
 
-  const book = reservation.library_book?.book;
-  const library = reservation.library_book?.library;
-  const canCancel = reservation.status === "pending" || reservation.status === "active";
-  const canExtend = reservation.status === "active";
+  const book = reservation.book;
+  const library = reservation.library;
+  const canCancel = reservation.status === "pending";
+  const canExtend = reservation.status === "active" && reservation.extended_count === 0;
 
   return (
     <motion.div

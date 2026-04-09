@@ -125,23 +125,38 @@ export interface Review {
 // ─── Reservations ───────────────────────────────────────────────────────────
 
 export interface Reservation {
-  id: number;
-  user_id: string;
-  library_book_id: number;
-  status: "pending" | "active" | "returned" | "cancelled" | "overdue";
+  id: string;
+  status: "pending" | "active" | "completed" | "cancelled";
   reserved_at: string;
   due_date: string;
   returned_at?: string;
-  library_book?: LibraryBook;
+  extended_count: number;
+  library_book_id: string;
+  book: { id: string; title: string; cover_url?: string };
+  library: { id: string; name: string; address?: string };
 }
 
 // ─── Wishlist ───────────────────────────────────────────────────────────────
 
+export type ShelfStatus = "want_to_read" | "reading" | "finished";
+
 export interface WishlistItem {
-  id: number;
-  book_id: number;
-  book?: Book;
-  created_at: string;
+  id: string;
+  status: ShelfStatus;
+  added_at: string;
+  book: {
+    id: string;
+    title: string;
+    isbn?: string;
+    cover_url: string;
+    description?: string;
+    language?: string;
+    year?: number;
+    total_pages?: number;
+    avg_rating: number;
+    author: { id: string; name: string };
+    genre: { id: string; name: string; slug?: string };
+  };
 }
 
 // ─── Reading Sessions ───────────────────────────────────────────────────────
@@ -176,13 +191,23 @@ export interface ReadingNote {
 
 // ─── Notifications ──────────────────────────────────────────────────────────
 
+export type NotificationType =
+  | "reservation_success"
+  | "pickup_success"
+  | "reservation_deadline"
+  | "return_deadline"
+  | "reservation_expired"
+  | "return_overdue"
+  | "general";
+
 export interface Notification {
-  id: number;
-  type: string;
+  id: string;
+  type: NotificationType;
   title: string;
-  message: string;
-  read: boolean;
+  body: string;
+  is_read: boolean;
   created_at: string;
+  read_at?: string;
 }
 
 // ─── User Stats ─────────────────────────────────────────────────────────────
