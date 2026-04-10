@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   IconUser,
   IconBookmark,
+  IconId,
   IconLogout,
   IconChevronDown,
 } from "@tabler/icons-react";
@@ -14,6 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ReaderCard } from "./ReaderCard";
 
 const menuItems = [
   { icon: IconUser, label: "Профиль", to: "/profile" },
@@ -23,6 +26,7 @@ const menuItems = [
 export const UserMenu = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const [cardOpen, setCardOpen] = useState(false);
 
   if (!user) return null;
 
@@ -34,6 +38,7 @@ export const UserMenu = () => {
   };
 
   return (
+  <>
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className="flex items-center gap-2 px-2 py-1.5 rounded-xl hover:bg-muted/60 transition-colors outline-none">
@@ -80,6 +85,14 @@ export const UserMenu = () => {
           </DropdownMenuItem>
         ))}
 
+        <DropdownMenuItem
+          onClick={() => setCardOpen(true)}
+          className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground/80 focus:bg-primary/10 focus:text-foreground cursor-pointer"
+        >
+          <IconId size={18} stroke={1.5} className="text-muted-foreground" />
+          Читательский билет
+        </DropdownMenuItem>
+
         <DropdownMenuSeparator />
 
         <DropdownMenuItem
@@ -91,5 +104,8 @@ export const UserMenu = () => {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+
+    <ReaderCard open={cardOpen} onOpenChange={setCardOpen} />
+  </>
   );
 };

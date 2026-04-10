@@ -11,6 +11,7 @@ import {
 import { eventsApi } from "@/lib/api";
 import type { Event } from "@/lib/api";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { optimizedUrl } from "@/lib/imageProxy";
 
 const Events = () => {
   const [selected, setSelected] = useState<Event | null>(null);
@@ -71,20 +72,20 @@ const Events = () => {
               className="group cursor-pointer"
               onClick={() => setSelected(event)}
             >
-              <div className="relative rounded-2xl border border-border bg-white overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-black/[0.04]">
+              <div className="relative h-full rounded-2xl border border-border bg-white overflow-hidden transition-all duration-300 hover:border-primary/30 hover:shadow-xl hover:shadow-black/[0.04]">
                 {/* Cover */}
                 {event.cover_url ? (
                   <div className="aspect-[16/9] overflow-hidden">
                     <img
-                      src={event.cover_url}
+                      src={optimizedUrl(event.cover_url, 500)}
                       alt={event.title}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                       loading="lazy"
                     />
                   </div>
                 ) : (
-                  <div className="aspect-[16/9] bg-gradient-to-br from-[#0d2b1f] to-[#13382a] flex items-center justify-center">
-                    <IconCalendarEvent size={40} className="text-white/20" />
+                  <div className="aspect-[16/9] bg-gradient-to-br from-primary/10 to-primary-light/10 flex items-center justify-center">
+                    <IconCalendarEvent size={40} className="text-primary/30" stroke={1.5} />
                   </div>
                 )}
 
@@ -138,32 +139,26 @@ const Events = () => {
                 className="bg-white rounded-2xl shadow-2xl flex flex-col w-full max-w-lg max-h-[85vh] overflow-hidden pointer-events-auto"
                 onClick={(e) => e.stopPropagation()}
               >
-                {/* Cover */}
-                {selected.cover_url ? (
-                  <div className="relative aspect-[16/9] flex-shrink-0">
+                {/* Hero image */}
+                <div className="relative">
+                  {selected.cover_url ? (
                     <img
-                      src={selected.cover_url}
+                      src={optimizedUrl(selected.cover_url, 800)}
                       alt={selected.title}
-                      className="w-full h-full object-cover"
+                      className="w-full h-48 object-cover"
                     />
-                    <button
-                      onClick={() => setSelected(null)}
-                      className="absolute top-3 right-3 p-1.5 rounded-lg bg-black/40 hover:bg-black/60 transition-colors text-white"
-                    >
-                      <IconX size={20} />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="relative aspect-[16/9] flex-shrink-0 bg-gradient-to-br from-[#0d2b1f] to-[#13382a] flex items-center justify-center">
-                    <IconCalendarEvent size={48} className="text-white/20" />
-                    <button
-                      onClick={() => setSelected(null)}
-                      className="absolute top-3 right-3 p-1.5 rounded-lg bg-black/40 hover:bg-black/60 transition-colors text-white"
-                    >
-                      <IconX size={20} />
-                    </button>
-                  </div>
-                )}
+                  ) : (
+                    <div className="w-full h-48 bg-gradient-to-br from-primary to-primary-light flex items-center justify-center">
+                      <IconCalendarEvent size={48} className="text-white/40" stroke={1.5} />
+                    </div>
+                  )}
+                  <button
+                    onClick={() => setSelected(null)}
+                    className="absolute top-3 right-3 p-1.5 rounded-full bg-black/40 hover:bg-black/60 transition-colors text-white"
+                  >
+                    <IconX size={18} />
+                  </button>
+                </div>
 
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto p-6 space-y-4">
@@ -173,8 +168,8 @@ const Events = () => {
 
                   {/* Date & Time */}
                   <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30">
-                    <div className="w-9 h-9 rounded-lg bg-emerald-100 flex items-center justify-center">
-                      <IconClock size={18} className="text-emerald-600" />
+                    <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <IconClock size={18} className="text-primary" />
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground">Дата и время</p>
@@ -187,24 +182,21 @@ const Events = () => {
 
                   {/* Location */}
                   {selected.location && (
-                    <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30">
-                      <div className="w-9 h-9 rounded-lg bg-blue-100 flex items-center justify-center">
-                        <IconMapPin size={18} className="text-blue-600" />
+                    <a
+                      href={`https://2gis.kz/almaty/search/${encodeURIComponent(selected.location)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <IconMapPin size={18} className="text-primary" />
                       </div>
                       <div className="flex-1">
                         <p className="text-xs text-muted-foreground">Место проведения</p>
                         <p className="text-sm font-medium text-foreground">{selected.location}</p>
                       </div>
-                      <a
-                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selected.location)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-2 rounded-lg hover:bg-muted/50 transition-colors text-primary"
-                        title="Открыть в Google Maps"
-                      >
-                        <IconExternalLink size={16} />
-                      </a>
-                    </div>
+                      <IconExternalLink size={16} className="text-primary" />
+                    </a>
                   )}
 
                   {/* Description */}

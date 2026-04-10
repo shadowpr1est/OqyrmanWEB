@@ -94,7 +94,7 @@ const BooksSearch = () => {
 
         if (query.trim()) {
           // Search API doesn't support genre/author filters — filter client-side
-          result = await booksApi.search(query.trim(), 200);
+          result = await booksApi.search(query.trim(), 50);
           if (hasGenres) {
             result.items = result.items.filter(
               (b) => genreSet.has(b.genre?.id?.toString() ?? ""),

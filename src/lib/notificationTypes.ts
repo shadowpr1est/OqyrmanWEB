@@ -40,6 +40,12 @@ export const notificationTypeConfig: Record<
     bg: "bg-red-50",
     label: "Просрочен возврат",
   },
+  event_reminder: {
+    icon: "IconCalendarEvent",
+    color: "text-primary",
+    bg: "bg-primary/10",
+    label: "Мероприятие",
+  },
   general: {
     icon: "IconBell",
     color: "text-foreground/70",

@@ -56,7 +56,7 @@ const LibraryDetail = () => {
             animate={{ opacity: 1, y: 0 }}
             className="flex items-start gap-5"
           >
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-xl shadow-emerald-900/30 flex-shrink-0">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary-light flex items-center justify-center shadow-xl shadow-primary/30 flex-shrink-0">
               <IconBuilding size={28} className="text-white" stroke={1.5} />
             </div>
             <div>
@@ -70,7 +70,7 @@ const LibraryDetail = () => {
                 {library.phone && (
                   <p className="text-white/60 flex items-center gap-2">
                     <IconPhone size={16} />
-                    <a href={`tel:${library.phone}`} className="hover:text-emerald-400 transition-colors">
+                    <a href={`tel:${library.phone}`} className="hover:text-primary-light transition-colors">
                       {library.phone}
                     </a>
                   </p>

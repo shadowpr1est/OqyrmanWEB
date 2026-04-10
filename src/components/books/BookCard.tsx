@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Rating } from "@/components/shared/Rating";
 import { GenreBadge } from "@/components/shared/GenreBadge";
+import { OptimizedImage } from "@/components/shared/OptimizedImage";
 import type { Book } from "@/lib/api";
 
 interface BookCardProps {
@@ -18,11 +19,10 @@ export const BookCard = ({ book }: BookCardProps) => (
       {/* Cover */}
       <div className="relative aspect-[2/3] rounded-xl overflow-hidden mb-3 bg-muted/40">
         {book.cover_url ? (
-          <img
+          <OptimizedImage
             src={book.cover_url}
             alt={book.title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            loading="lazy"
+            className="w-full h-full object-cover transition-[transform,opacity] duration-500 group-hover:scale-105"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">

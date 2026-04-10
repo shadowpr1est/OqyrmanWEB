@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AnimateIn } from "@/components/AnimateIn";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { optimizedUrl } from "@/lib/imageProxy";
 
 interface Book {
   id: number;
@@ -52,10 +53,11 @@ export const BooksSection = () => {
                 <div className="group">
                   <div className="aspect-[2/3] rounded-xl overflow-hidden bg-surface mb-3">
                     <img
-                      src={book.cover_url}
+                      src={optimizedUrl(book.cover_url, 400)}
                       alt={book.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       loading="lazy"
+                      decoding="async"
                     />
                   </div>
                   <h3 className="font-semibold text-foreground text-sm line-clamp-2">{book.title}</h3>

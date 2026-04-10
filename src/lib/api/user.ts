@@ -14,7 +14,7 @@ export const userApi = {
 
   uploadAvatar: (file: File) => {
     const fd = new FormData();
-    fd.append("avatar", file);
+    fd.append("file", file);
     return apiUpload<AuthUser>("/users/me/avatar", fd);
   },
 

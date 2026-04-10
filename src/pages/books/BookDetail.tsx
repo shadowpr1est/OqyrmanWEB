@@ -26,6 +26,7 @@ import { libraryBooksApi, readingSessionsApi, wishlistApi, reviewsApi, reservati
 import { ReservationModal } from "@/components/books/ReservationModal";
 import { ReservationInfoCard } from "@/components/books/ReservationInfoCard";
 import { Button } from "@/components/ui/button";
+import { optimizedUrl } from "@/lib/imageProxy";
 import {
   Dialog,
   DialogContent,
@@ -207,9 +208,9 @@ const BookDetail = () => {
           >
             <div className="w-[200px] md:w-[220px] aspect-[2/3] rounded-xl overflow-hidden shadow-xl ring-1 ring-border/40">
               {book.cover_url ? (
-                <img src={book.cover_url} alt={book.title} className="w-full h-full object-cover" />
+                <img src={optimizedUrl(book.cover_url, 440)} alt={book.title} className="w-full h-full object-cover" loading="lazy" decoding="async" />
               ) : (
-                <div className="w-full h-full bg-gradient-to-br from-emerald-100 to-teal-50 flex items-center justify-center">
+                <div className="w-full h-full bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
                   <IconBook size={48} className="text-muted-foreground/30" />
                 </div>
               )}
@@ -460,12 +461,14 @@ const BookDetail = () => {
             >
               {book.author.photo_url ? (
                 <img
-                  src={book.author.photo_url}
+                  src={optimizedUrl(book.author.photo_url, 128)}
                   alt={book.author.name}
                   className="w-16 h-16 rounded-xl object-cover flex-shrink-0"
+                  loading="lazy"
+                  decoding="async"
                 />
               ) : (
-                <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-emerald-100 to-teal-50 flex items-center justify-center flex-shrink-0">
+                <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center flex-shrink-0">
                   <span className="text-xl font-bold text-primary/40">{book.author.name[0]}</span>
                 </div>
               )}

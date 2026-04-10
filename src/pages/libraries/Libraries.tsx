@@ -7,7 +7,6 @@ import {
   IconBuilding,
   IconX,
   IconExternalLink,
-  IconNavigation,
 } from "@tabler/icons-react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
@@ -15,6 +14,7 @@ import "leaflet/dist/leaflet.css";
 import { librariesApi } from "@/lib/api";
 import type { Library } from "@/lib/api";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { optimizedUrl } from "@/lib/imageProxy";
 
 /* Fix default marker icons for leaflet + bundler */
 const defaultIcon = new L.Icon({
@@ -26,6 +26,10 @@ const defaultIcon = new L.Icon({
   popupAnchor: [1, -34],
   shadowSize: [41, 41],
 });
+
+function twoGisUrl(lat: number, lng: number) {
+  return `https://2gis.kz/almaty/geo/${lng},${lat}`;
+}
 
 const Libraries = () => {
   const [selected, setSelected] = useState<Library | null>(null);
@@ -57,7 +61,7 @@ const Libraries = () => {
       {isLoading ? (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {Array.from({ length: 6 }, (_, i) => (
-            <div key={i} className="animate-pulse h-48 rounded-2xl bg-muted/40" />
+            <div key={i} className="animate-pulse rounded-2xl bg-muted/40 h-72" />
           ))}
         </div>
       ) : libraries.length === 0 ? (
@@ -78,32 +82,42 @@ const Libraries = () => {
               className="group cursor-pointer"
               onClick={() => setSelected(lib)}
             >
-              <div className="relative h-full rounded-2xl border border-border bg-white p-6 overflow-hidden transition-all duration-300 hover:border-transparent hover:shadow-xl hover:shadow-black/[0.04]">
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500 -z-10 blur-[1px] scale-[1.02]" />
-                <div className="absolute inset-[1px] rounded-[15px] bg-white -z-10" />
+              <div className="relative h-full rounded-2xl border border-border bg-white overflow-hidden transition-all duration-300 hover:border-primary/30 hover:shadow-xl hover:shadow-black/[0.04]">
+                {/* Image */}
+                {lib.image_url ? (
+                  <div className="aspect-[16/9] overflow-hidden">
+                    <img
+                      src={optimizedUrl(lib.image_url, 500)}
+                      alt={lib.name}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                  </div>
+                ) : (
+                  <div className="aspect-[16/9] bg-gradient-to-br from-primary/10 to-primary-light/10 flex items-center justify-center">
+                    <IconBuilding size={40} className="text-primary/30" stroke={1.5} />
+                  </div>
+                )}
 
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center mb-4 shadow-lg shadow-emerald-900/10">
-                  <IconBuilding size={22} className="text-white" stroke={1.5} />
-                </div>
+                {/* Content */}
+                <div className="p-5">
+                  <h3 className="text-base font-semibold text-foreground mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+                    {lib.name}
+                  </h3>
 
-                <h3 className="text-base font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">
-                  {lib.name}
-                </h3>
-
-                <div className="space-y-1.5">
-                  <p className="text-sm text-muted-foreground flex items-center gap-1.5">
-                    <IconMapPin size={14} stroke={1.5} />
-                    {lib.address}
-                  </p>
-                  {lib.phone && (
-                    <p className="text-sm text-muted-foreground flex items-center gap-1.5">
-                      <IconPhone size={14} stroke={1.5} />
-                      {lib.phone}
+                  <div className="space-y-1.5 text-sm text-muted-foreground">
+                    <p className="flex items-start gap-1.5">
+                      <IconMapPin size={14} stroke={1.5} className="mt-0.5 shrink-0" />
+                      {lib.address}
                     </p>
-                  )}
+                    {lib.phone && (
+                      <p className="flex items-center gap-1.5">
+                        <IconPhone size={14} stroke={1.5} />
+                        {lib.phone}
+                      </p>
+                    )}
+                  </div>
                 </div>
-
-                <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-emerald-500 to-teal-500 opacity-0 group-hover:opacity-60 transition-opacity duration-500" />
               </div>
             </motion.div>
           ))}
@@ -114,7 +128,6 @@ const Libraries = () => {
       <AnimatePresence>
         {selected && (
           <>
-            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -123,7 +136,6 @@ const Libraries = () => {
               onClick={() => setSelected(null)}
             />
 
-            {/* Modal */}
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -135,96 +147,95 @@ const Libraries = () => {
                 className="bg-white rounded-2xl shadow-2xl flex flex-col w-full max-w-lg max-h-[85vh] overflow-hidden pointer-events-auto"
                 onClick={(e) => e.stopPropagation()}
               >
-              {/* Header */}
-              <div className="flex items-start justify-between p-6 pb-4 border-b border-border">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-900/10 flex-shrink-0">
-                    <IconBuilding size={22} className="text-white" stroke={1.5} />
-                  </div>
+                {/* Hero image */}
+                <div className="relative">
+                  {selected.image_url ? (
+                    <img
+                      src={optimizedUrl(selected.image_url, 800)}
+                      alt={selected.name}
+                      className="w-full h-48 object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-48 bg-gradient-to-br from-primary to-primary-light flex items-center justify-center">
+                      <IconBuilding size={48} className="text-white/40" stroke={1.5} />
+                    </div>
+                  )}
+                  <button
+                    onClick={() => setSelected(null)}
+                    className="absolute top-3 right-3 p-1.5 rounded-full bg-black/40 hover:bg-black/60 transition-colors text-white"
+                  >
+                    <IconX size={18} />
+                  </button>
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 overflow-y-auto p-6 space-y-5">
                   <div>
                     <h2 className="text-lg font-bold text-foreground">{selected.name}</h2>
-                    <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
-                      <IconMapPin size={14} />
+                    <p className="text-sm text-muted-foreground flex items-start gap-1.5 mt-1">
+                      <IconMapPin size={14} className="mt-0.5 shrink-0" />
                       {selected.address}
                     </p>
                   </div>
-                </div>
-                <button
-                  onClick={() => setSelected(null)}
-                  className="p-1.5 rounded-lg hover:bg-muted/50 transition-colors text-muted-foreground"
-                >
-                  <IconX size={20} />
-                </button>
-              </div>
 
-              {/* Content */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-5">
-                {/* Info */}
-                <div className="space-y-3">
-                  {selected.phone && (
-                    <a
-                      href={`tel:${selected.phone}`}
-                      className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="w-9 h-9 rounded-lg bg-emerald-100 flex items-center justify-center">
-                        <IconPhone size={18} className="text-emerald-600" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Телефон</p>
-                        <p className="text-sm font-medium text-foreground">{selected.phone}</p>
-                      </div>
-                    </a>
-                  )}
+                  {/* Info cards */}
+                  <div className="space-y-3">
+                    {selected.phone && (
+                      <a
+                        href={`tel:${selected.phone}`}
+                        className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <IconPhone size={18} className="text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Телефон</p>
+                          <p className="text-sm font-medium text-foreground">{selected.phone}</p>
+                        </div>
+                      </a>
+                    )}
 
-                  <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30">
-                    <div className="w-9 h-9 rounded-lg bg-blue-100 flex items-center justify-center">
-                      <IconNavigation size={18} className="text-blue-600" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-xs text-muted-foreground">Координаты</p>
-                      <p className="text-sm font-medium text-foreground">
-                        {selected.lat.toFixed(4)}, {selected.lng.toFixed(4)}
-                      </p>
-                    </div>
                     <a
-                      href={`https://www.google.com/maps/search/?api=1&query=${selected.lat},${selected.lng}`}
+                      href={twoGisUrl(selected.lat, selected.lng)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-2 rounded-lg hover:bg-muted/50 transition-colors text-primary"
-                      title="Открыть в Google Maps"
+                      className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors"
                     >
-                      <IconExternalLink size={16} />
+                      <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <IconExternalLink size={18} className="text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-xs text-muted-foreground">Маршрут</p>
+                        <p className="text-sm font-medium text-foreground">Открыть в 2ГИС</p>
+                      </div>
                     </a>
                   </div>
+
+                  {/* Map */}
+                  {selected.lat !== 0 && selected.lng !== 0 && (
+                    <div className="rounded-xl overflow-hidden border border-border h-64">
+                      <MapContainer
+                        key={selected.id}
+                        center={[selected.lat, selected.lng]}
+                        zoom={15}
+                        scrollWheelZoom={false}
+                        className="h-full w-full"
+                      >
+                        <TileLayer
+                          attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+                          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+                        />
+                        <Marker position={[selected.lat, selected.lng]} icon={defaultIcon}>
+                          <Popup>
+                            <strong>{selected.name}</strong>
+                            <br />
+                            {selected.address}
+                          </Popup>
+                        </Marker>
+                      </MapContainer>
+                    </div>
+                  )}
                 </div>
-
-                {/* Map */}
-                {selected.lat !== 0 && selected.lng !== 0 && (
-                  <div className="rounded-xl overflow-hidden border border-border h-64">
-                    <MapContainer
-                      key={selected.id}
-                      center={[selected.lat, selected.lng]}
-                      zoom={15}
-                      scrollWheelZoom={false}
-                      className="h-full w-full"
-                    >
-                      <TileLayer
-                        attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-                        url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-                      />
-                      <Marker position={[selected.lat, selected.lng]} icon={defaultIcon}>
-                        <Popup>
-                          <strong>{selected.name}</strong>
-                          <br />
-                          {selected.address}
-                        </Popup>
-                      </Marker>
-                    </MapContainer>
-                  </div>
-                )}
-
-
-              </div>
               </div>
             </motion.div>
           </>

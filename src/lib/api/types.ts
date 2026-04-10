@@ -17,6 +17,7 @@ export interface AuthUser {
   phone?: string;
   avatar_url?: string;
   role: string;
+  has_password: boolean;
 }
 
 export interface TokenResponse {
@@ -82,6 +83,7 @@ export interface Library {
   lat: number;
   lng: number;
   phone: string;
+  image_url: string;
 }
 
 export interface LibraryBook {
@@ -198,6 +200,7 @@ export type NotificationType =
   | "return_deadline"
   | "reservation_expired"
   | "return_overdue"
+  | "event_reminder"
   | "general";
 
 export interface Notification {
