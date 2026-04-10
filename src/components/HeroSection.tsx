@@ -22,7 +22,8 @@ export const HeroSection = () => (
 
         <AnimateIn delay={0.1}>
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-tight">
-            Читайте больше.{" "}
+            Читайте больше.
+            <br />
             <span className="text-emerald-400">Живите ярче.</span>
           </h1>
         </AnimateIn>

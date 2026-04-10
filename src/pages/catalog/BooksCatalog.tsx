@@ -87,10 +87,10 @@ const BooksCatalog = () => {
         </div>
 
         <div className="container mx-auto px-4 lg:px-8 relative z-10">
-          <div className="flex flex-col md:flex-row items-center gap-8 py-12 md:py-16">
+          <div className="flex flex-col lg:flex-row items-center gap-8 py-12 lg:py-16">
             {/* Left text */}
             <motion.div
-              className="flex-1 text-center md:text-left"
+              className="flex-1 text-center lg:text-left"
               initial={{ opacity: 0, x: -30 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5 }}
@@ -99,7 +99,7 @@ const BooksCatalog = () => {
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 200+ книг доступно
               </div>
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-white leading-[1.15] mb-4 tracking-tight">
+              <h1 className="text-3xl lg:text-4xl xl:text-5xl font-extrabold text-white leading-[1.15] mb-4 tracking-tight">
                 Читай. Открывай.
                 <br />
                 <span className="bg-gradient-to-r from-emerald-300 to-teal-200 bg-clip-text text-transparent">
@@ -113,7 +113,7 @@ const BooksCatalog = () => {
 
             {/* Right — floating book covers */}
             <motion.div
-              className="flex-1 hidden md:flex items-center justify-center"
+              className="flex-1 hidden lg:flex items-center justify-center"
               initial={{ opacity: 0, x: 30 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.15 }}

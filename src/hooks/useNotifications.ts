@@ -13,7 +13,8 @@ export function useNotifications() {
     queryKey: ["notifications"],
     queryFn: () => notificationsApi.list({ limit: 50 }),
     enabled: !!user,
-    refetchInterval: 60_000,
+    staleTime: 30_000,
+    refetchInterval: 30_000,
   });
 
   // SSE stream for real-time updates

@@ -1,22 +1,34 @@
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { SearchBar } from "./SearchBar";
 import { NotificationBell } from "./NotificationBell";
 import { UserMenu } from "./UserMenu";
-import { IconMenu2, IconX } from "@tabler/icons-react";
-import { useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import {
+  IconMenu2,
+  IconX,
+  IconHome,
+  IconBuildingArch,
+  IconCalendarEvent,
+  IconBookmarks,
+} from "@tabler/icons-react";
+import { useEffect, useState } from "react";
 
 const navLinks = [
-  { label: "Главная", to: "/catalog" },
-  { label: "Библиотеки", to: "/libraries" },
-  { label: "События", to: "/events" },
-  { label: "Полка", to: "/wishlist" },
+  { label: "Главная", to: "/catalog", icon: IconHome },
+  { label: "Библиотеки", to: "/libraries", icon: IconBuildingArch },
+  { label: "События", to: "/events", icon: IconCalendarEvent },
+  { label: "Полка", to: "/wishlist", icon: IconBookmarks },
 ];
 
 export const AppNavbar = () => {
   const { user } = useAuth();
+  const { pathname } = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Close mobile menu on ANY route change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-white/90 backdrop-blur-md">
@@ -36,7 +48,7 @@ export const AppNavbar = () => {
               <span className="text-lg font-bold text-primary">Oqyrman</span>
             </Link>
 
-            <nav className="hidden md:flex items-center gap-1">
+            <nav className="hidden lg:flex items-center gap-1">
               {navLinks.map((l) => (
                 <NavLink
                   key={l.to}
@@ -56,7 +68,7 @@ export const AppNavbar = () => {
           </div>
 
           {/* Center: Search (desktop) */}
-          <div className="hidden md:block">
+          <div className="hidden lg:block">
             <SearchBar />
           </div>
 
@@ -68,7 +80,7 @@ export const AppNavbar = () => {
                 <UserMenu />
               </>
             ) : (
-              <div className="hidden md:flex items-center gap-2">
+              <div className="hidden lg:flex items-center gap-2">
                 <Link
                   to="/login"
                   className="px-4 py-2 text-sm font-medium text-foreground/70 hover:text-foreground transition-colors"
@@ -86,7 +98,7 @@ export const AppNavbar = () => {
 
             {/* Mobile toggle */}
             <button
-              className="md:hidden p-2 rounded-lg hover:bg-muted/50 transition-colors"
+              className="lg:hidden p-2 rounded-lg hover:bg-muted/50 transition-colors"
               onClick={() => setMobileOpen(!mobileOpen)}
             >
               {mobileOpen ? (
@@ -100,55 +112,72 @@ export const AppNavbar = () => {
       </div>
 
       {/* Mobile menu */}
-      <AnimatePresence>
-        {mobileOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2 }}
-            className="md:hidden border-t border-border/60 bg-white overflow-hidden"
-          >
-            <div className="container mx-auto px-4 py-4 space-y-3">
-              {navLinks.map((l) => (
-                <NavLink
-                  key={l.to}
-                  to={l.to}
-                  onClick={() => setMobileOpen(false)}
-                  className={({ isActive }) =>
-                    `block px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                      isActive
-                        ? "bg-primary/10 text-primary"
-                        : "text-foreground/70 hover:bg-muted/50"
-                    }`
-                  }
-                >
-                  {l.label}
-                </NavLink>
-              ))}
+      {mobileOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="lg:hidden fixed inset-0 top-16 bg-black/20 backdrop-blur-sm z-40"
+            onClick={() => setMobileOpen(false)}
+          />
 
+          {/* Panel */}
+          <div className="lg:hidden absolute inset-x-0 top-16 z-50 border-t border-border/60 bg-white/95 backdrop-blur-xl shadow-xl">
+            <div className="container mx-auto px-5 sm:px-6 py-3">
+              {/* Nav links */}
+              <nav className="space-y-1">
+                {navLinks.map((l) => {
+                  const Icon = l.icon;
+                  return (
+                    <NavLink
+                      key={l.to}
+                      to={l.to}
+                      onClick={() => setMobileOpen(false)}
+                      className={({ isActive }) =>
+                        `flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-medium transition-all ${
+                          isActive
+                            ? "bg-primary/10 text-primary"
+                            : "text-foreground/70 active:bg-muted/60"
+                        }`
+                      }
+                    >
+                      {({ isActive }) => (
+                        <>
+                          <Icon
+                            size={20}
+                            stroke={1.6}
+                            className={isActive ? "text-primary" : "text-foreground/40"}
+                          />
+                          {l.label}
+                        </>
+                      )}
+                    </NavLink>
+                  );
+                })}
+              </nav>
+
+              {/* Auth buttons for guests */}
               {!user && (
-                <div className="flex gap-2 pt-2 border-t border-border/60">
+                <div className="flex gap-2.5 mt-3 pt-3 border-t border-border/60">
                   <Link
                     to="/login"
                     onClick={() => setMobileOpen(false)}
-                    className="flex-1 text-center px-4 py-2.5 rounded-lg text-sm font-medium border border-border text-foreground/70"
+                    className="flex-1 text-center px-4 py-2.5 rounded-xl text-sm font-medium border border-border text-foreground/70 active:bg-muted/60 transition-colors"
                   >
                     Войти
                   </Link>
                   <Link
                     to="/register"
                     onClick={() => setMobileOpen(false)}
-                    className="flex-1 text-center px-4 py-2.5 rounded-lg text-sm font-bold text-white bg-gradient-to-b from-emerald-500 to-emerald-700"
+                    className="flex-1 text-center px-4 py-2.5 rounded-xl text-sm font-bold text-white bg-gradient-to-b from-primary-light to-primary shadow-[0px_2px_0px_0px_rgba(255,255,255,0.15)_inset]"
                   >
                     Регистрация
                   </Link>
                 </div>
               )}
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+        </>
+      )}
     </header>
   );
 };

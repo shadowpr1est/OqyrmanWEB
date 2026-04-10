@@ -230,7 +230,7 @@ const BookDetail = () => {
 
             {book.genre && (
               <div className="mb-2">
-                <GenreBadge name={book.genre.name} slug={book.genre.slug} />
+                <GenreBadge name={book.genre.name} id={book.genre.id} />
               </div>
             )}
 

@@ -22,36 +22,14 @@ export const notificationsApi = {
     const token = tokenStorage.getAccess();
     if (!token) return null;
 
-    const controller = new AbortController();
+    const url = `${BASE_URL}/notifications/stream?token=${encodeURIComponent(token)}`;
+    const es = new EventSource(url);
 
-    fetch(`${BASE_URL}/notifications/stream`, {
-      headers: { Authorization: `Bearer ${token}`, Accept: "text/event-stream" },
-      signal: controller.signal,
-    })
-      .then((res) => {
-        if (!res.ok || !res.body) return;
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = "";
+    es.onmessage = (e) => {
+      onMessage(e.data);
+    };
 
-        const read = (): Promise<void> =>
-          reader.read().then(({ done, value }) => {
-            if (done) return;
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split("\n");
-            buffer = lines.pop() || "";
-            for (const line of lines) {
-              if (line.startsWith("data:")) {
-                onMessage(line.slice(5).trim());
-              }
-            }
-            return read();
-          });
-
-        read().catch(() => {});
-      })
-      .catch(() => {});
-
-    return () => controller.abort();
+    // EventSource auto-reconnects on error; nothing else needed
+    return () => es.close();
   },
 };

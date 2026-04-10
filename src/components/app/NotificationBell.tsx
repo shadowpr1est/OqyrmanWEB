@@ -8,6 +8,7 @@ import {
   IconAlertTriangle,
   IconBookmarkOff,
   IconAlertOctagon,
+  IconCalendarEvent,
 } from "@tabler/icons-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNotifications } from "@/hooks/useNotifications";
@@ -22,6 +23,7 @@ const typeIconMap: Record<NotificationType, React.ElementType> = {
   return_deadline: IconAlertTriangle,
   reservation_expired: IconBookmarkOff,
   return_overdue: IconAlertOctagon,
+  event_reminder: IconCalendarEvent,
   general: IconBell,
 };
 
@@ -32,6 +34,7 @@ const typeColorMap: Record<NotificationType, { color: string; bg: string }> = {
   return_deadline: { color: "text-amber-600", bg: "bg-amber-50" },
   reservation_expired: { color: "text-red-600", bg: "bg-red-50" },
   return_overdue: { color: "text-red-600", bg: "bg-red-50" },
+  event_reminder: { color: "text-primary", bg: "bg-primary/10" },
   general: { color: "text-foreground/70", bg: "bg-muted/50" },
 };
 
