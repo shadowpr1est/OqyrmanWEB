@@ -1,4 +1,4 @@
-import { IconHeart, IconHeartFilled } from "@tabler/icons-react";
+import { IconHeart, IconHeartFilled, IconBookOpen, IconCircleCheck } from "@tabler/icons-react";
 import { motion } from "framer-motion";
 import { useWishlistExists, useToggleWishlist } from "@/hooks/useWishlist";
 
@@ -10,37 +10,64 @@ interface WishlistButtonProps {
 export const WishlistButton = ({ bookId, size = "md" }: WishlistButtonProps) => {
   const { data } = useWishlistExists(bookId);
   const { add, remove } = useToggleWishlist(bookId);
-  const isWished = data?.exists || false;
+  const status = data?.status ?? null;
   const loading = add.isPending || remove.isPending;
 
   const iconSize = size === "sm" ? 18 : 22;
-  const classes =
-    size === "sm"
-      ? "p-1.5 rounded-lg"
-      : "p-2.5 rounded-xl";
+  const classes = size === "sm" ? "p-1.5 rounded-lg" : "p-2.5 rounded-xl";
 
-  const handleClick = () => {
-    if (isWished) remove.mutate();
-    else add.mutate("want_to_read");
-  };
+  // "reading" state — book is currently being read, shelf is managed automatically
+  if (status === "reading") {
+    return (
+      <div
+        className={`${classes} bg-blue-50 text-blue-400 cursor-default`}
+        title="Вы сейчас читаете эту книгу"
+      >
+        <IconBookOpen size={iconSize} stroke={1.5} />
+      </div>
+    );
+  }
 
+  // "finished" state — can remove from shelf
+  if (status === "finished") {
+    return (
+      <motion.button
+        whileTap={{ scale: 0.85 }}
+        onClick={() => remove.mutate()}
+        disabled={loading}
+        className={`${classes} transition-colors bg-green-50 text-green-500 hover:bg-green-100`}
+        title="Прочитано — нажмите чтобы убрать с полки"
+      >
+        <IconCircleCheck size={iconSize} stroke={1.5} />
+      </motion.button>
+    );
+  }
+
+  // "want_to_read" — red heart, can remove
+  if (status === "want_to_read") {
+    return (
+      <motion.button
+        whileTap={{ scale: 0.85 }}
+        onClick={() => remove.mutate()}
+        disabled={loading}
+        className={`${classes} transition-colors bg-red-50 text-red-500 hover:bg-red-100`}
+        title="Убрать из списка желаний"
+      >
+        <IconHeartFilled size={iconSize} />
+      </motion.button>
+    );
+  }
+
+  // Not on shelf — outline heart, add as want_to_read
   return (
     <motion.button
       whileTap={{ scale: 0.85 }}
-      onClick={handleClick}
+      onClick={() => add.mutate("want_to_read")}
       disabled={loading}
-      className={`${classes} transition-colors ${
-        isWished
-          ? "bg-red-50 text-red-500 hover:bg-red-100"
-          : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-red-400"
-      }`}
-      title={isWished ? "Убрать из избранного" : "В избранное"}
+      className={`${classes} transition-colors bg-muted/50 text-muted-foreground hover:bg-muted hover:text-red-400`}
+      title="Добавить в список желаний"
     >
-      {isWished ? (
-        <IconHeartFilled size={iconSize} />
-      ) : (
-        <IconHeart size={iconSize} stroke={1.5} />
-      )}
+      <IconHeart size={iconSize} stroke={1.5} />
     </motion.button>
   );
 };

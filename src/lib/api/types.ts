@@ -166,8 +166,9 @@ export interface WishlistItem {
 export interface ReadingSession {
   id: string;
   user_id?: string;
-  book_id?: number;
+  book_id?: string;
   current_page: number;
+  cfi_position?: string;
   status: string;
   updated_at?: string;
   finished_at?: string;
@@ -175,7 +176,7 @@ export interface ReadingSession {
     id: string;
     title: string;
     cover_url?: string;
-    total_pages: number;
+    total_pages?: number;
     author_name?: string;
   };
 }
@@ -183,12 +184,13 @@ export interface ReadingSession {
 // ─── Notes ──────────────────────────────────────────────────────────────────
 
 export interface ReadingNote {
-  id: number;
+  id: string;
   user_id: string;
-  book_id: number;
-  page: number;
+  book_id: string;
+  position: string;
   content: string;
   created_at: string;
+  updated_at: string;
 }
 
 // ─── Notifications ──────────────────────────────────────────────────────────

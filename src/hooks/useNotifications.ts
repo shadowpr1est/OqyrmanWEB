@@ -33,7 +33,6 @@ export function useNotifications() {
       }
     });
 
-    if (!cancel) return;
     return cancel;
   }, [user, qc]);
 

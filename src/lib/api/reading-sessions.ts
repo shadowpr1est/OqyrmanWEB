@@ -10,7 +10,13 @@ export const readingSessionsApi = {
       throw e;
     }),
 
-  upsert: (data: { book_id: string | number; current_page: number; status?: string }) =>
+  upsert: (data: {
+    book_id: string | number;
+    current_page: number;
+    total_pages?: number;
+    cfi_position?: string;
+    status?: string;
+  }) =>
     apiFetch<ReadingSession>("/reading-sessions", {
       method: "POST",
       body: JSON.stringify(data),

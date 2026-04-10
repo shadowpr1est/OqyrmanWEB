@@ -268,13 +268,11 @@ const BookDetail = () => {
               {book.file?.file_url && (
                 <button
                   onClick={() => {
-                    window.open(book.file!.file_url, "_blank");
-                    // upsert на полку со статусом "reading"
                     addToShelf.mutate("reading");
-                    // создать reading_session если нет
                     if (!session) {
-                      readingSessionsApi.upsert({ book_id: bookId, current_page: 0, status: "in_progress" });
+                      readingSessionsApi.upsert({ book_id: bookId, current_page: 0, status: "reading" });
                     }
+                    navigate(`/read/${bookId}`);
                   }}
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#1E5945] text-white text-sm font-semibold hover:bg-[#174a39] transition-colors shadow-sm"
                 >

@@ -1,6 +1,6 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
@@ -30,9 +30,18 @@ const Profile = lazy(() => import("./pages/profile/Profile"));
 const Wishlist = lazy(() => import("./pages/wishlist/Wishlist"));
 const Reservations = lazy(() => import("./pages/reservations/Reservations"));
 const Notifications = lazy(() => import("./pages/notifications/Notifications"));
+const Reader = lazy(() => import("./pages/reader/Reader"));
 
 const queryClient = new QueryClient();
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string;
+
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+};
 
 const PageLoader = () => (
   <div className="min-h-[60vh] flex items-center justify-center">
@@ -48,6 +57,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
+            <ScrollToTop />
             <Suspense fallback={<PageLoader />}>
               <Routes>
                 {/* Landing */}
@@ -58,6 +68,11 @@ const App = () => (
                 <Route path="/register" element={<Register />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
+
+                {/* Reader — fullscreen, no layout chrome */}
+                <Route element={<ProtectedRoute />}>
+                  <Route path="/read/:id" element={<Reader />} />
+                </Route>
 
                 {/* App pages — all require auth */}
                 <Route element={<AppLayout />}>

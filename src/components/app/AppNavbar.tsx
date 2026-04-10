@@ -12,6 +12,7 @@ import {
   IconBookmarks,
 } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 
 const navLinks = [
   { label: "Главная", to: "/catalog", icon: IconHome },
@@ -25,10 +26,12 @@ export const AppNavbar = () => {
   const { pathname } = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Close mobile menu on ANY route change
+  // Close mobile menu instantly on ANY route change
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
+
+  const closeMenu = () => setMobileOpen(false);
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-white/90 backdrop-blur-md">
@@ -111,18 +114,26 @@ export const AppNavbar = () => {
         </div>
       </div>
 
-      {/* Mobile menu */}
+      {/* Mobile menu — no exit animation to avoid sticking over new page */}
       {mobileOpen && (
         <>
           {/* Backdrop */}
-          <div
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2 }}
             className="lg:hidden fixed inset-0 top-16 bg-black/20 backdrop-blur-sm z-40"
-            onClick={() => setMobileOpen(false)}
+            onClick={closeMenu}
           />
 
           {/* Panel */}
-          <div className="lg:hidden absolute inset-x-0 top-16 z-50 border-t border-border/60 bg-white/95 backdrop-blur-xl shadow-xl">
-            <div className="container mx-auto px-5 sm:px-6 py-3">
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="lg:hidden absolute inset-x-0 top-16 z-50 border-t border-border/60 bg-white/95 backdrop-blur-xl shadow-xl"
+          >
+          <div className="container mx-auto px-5 sm:px-6 py-3">
               {/* Nav links */}
               <nav className="space-y-1">
                 {navLinks.map((l) => {
@@ -175,7 +186,7 @@ export const AppNavbar = () => {
                 </div>
               )}
             </div>
-          </div>
+          </motion.div>
         </>
       )}
     </header>
