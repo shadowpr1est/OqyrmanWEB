@@ -183,13 +183,13 @@ const BooksCatalog = () => {
                     <p className="text-xs text-muted-foreground mt-0.5">{s.book?.author_name}</p>
                     <div className="mt-2">
                       <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                        <span>Страница {s.current_page}</span>
-                        <span>{s.book?.total_pages ? Math.round((s.current_page / s.book.total_pages) * 100) : 0}%</span>
+                        <span>Страница {s.current_page}{(s.total_pages || s.book?.total_pages) ? ` / ${s.total_pages || s.book?.total_pages}` : ""}</span>
+                        <span>{(s.total_pages || s.book?.total_pages) ? Math.round((s.current_page / (s.total_pages || s.book!.total_pages!)) * 100) : 0}%</span>
                       </div>
                       <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
                         <div
                           className="h-full bg-primary rounded-full transition-all"
-                          style={{ width: `${s.book?.total_pages ? (s.current_page / s.book.total_pages) * 100 : 0}%` }}
+                          style={{ width: `${(s.total_pages || s.book?.total_pages) ? (s.current_page / (s.total_pages || s.book!.total_pages!)) * 100 : 0}%` }}
                         />
                       </div>
                     </div>

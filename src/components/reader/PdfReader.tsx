@@ -12,6 +12,7 @@ import {
   IconArrowAutofitWidth,
 } from "@tabler/icons-react";
 import { useNavigate } from "react-router-dom";
+import { ReaderNotes } from "./ReaderNotes";
 
 // pdf.js worker — import from node_modules for correct version
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -21,6 +22,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 
 interface PdfReaderProps {
   fileUrl: string;
+  bookId: string;
   bookTitle: string;
   initialPage?: number;
   onProgress?: (page: number, total: number) => void;
@@ -30,6 +32,7 @@ type FitMode = "page" | "width";
 
 export const PdfReader = ({
   fileUrl,
+  bookId,
   bookTitle,
   initialPage = 1,
   onProgress,
@@ -245,6 +248,8 @@ export const PdfReader = ({
           >
             <IconZoomIn size={18} stroke={1.5} />
           </button>
+          <div className="w-px h-5 bg-border/60 mx-0.5" />
+          <ReaderNotes bookId={bookId} currentPage={pageNumber} />
         </div>
       </div>
 

@@ -168,6 +168,7 @@ export interface ReadingSession {
   user_id?: string;
   book_id?: string;
   current_page: number;
+  total_pages?: number;
   cfi_position?: string;
   status: string;
   updated_at?: string;
@@ -187,7 +188,7 @@ export interface ReadingNote {
   id: string;
   user_id: string;
   book_id: string;
-  position: string;
+  page: number;
   content: string;
   created_at: string;
   updated_at: string;

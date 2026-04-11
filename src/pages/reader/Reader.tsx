@@ -15,6 +15,8 @@ const Reader = () => {
   const [initialPage, setInitialPage] = useState(1);
   const [initialCfi, setInitialCfi] = useState<string | undefined>();
   const progressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastProgressRef = useRef<{ page: number; total: number; cfi?: string } | null>(null);
+  const totalPagesSentRef = useRef(false);
   // Track shelf state so we know whether to add or update
   const shelfStatusRef = useRef<ShelfStatus | null>(null);
   const shelfExistsRef = useRef(false);
@@ -67,8 +69,16 @@ const Reader = () => {
   const saveProgress = useCallback(
     (page: number, total: number, cfi?: string) => {
       if (!id) return;
+      lastProgressRef.current = { page, total, cfi };
+
+      // First call with total_pages: send immediately so the book gets total_pages ASAP
+      const immediate = !totalPagesSentRef.current && total > 0;
+      if (immediate) totalPagesSentRef.current = true;
+
       if (progressTimer.current) clearTimeout(progressTimer.current);
-      progressTimer.current = setTimeout(() => {
+
+      const doSave = () => {
+        lastProgressRef.current = null;
         const isFinished = total > 0 && page >= total;
         const sessionStatus = isFinished ? "finished" : "reading";
         readingSessionsApi
@@ -86,17 +96,36 @@ const Reader = () => {
           shelfStatusRef.current = "finished";
           wishlistApi.updateStatus(id, "finished").catch(() => {});
         }
-      }, 3000);
+      };
+
+      if (immediate) {
+        doSave();
+      } else {
+        progressTimer.current = setTimeout(doSave, 3000);
+      }
     },
     [id],
   );
 
-  // Cleanup timer
+  // Flush pending progress on unmount (e.g. user closes the reader)
   useEffect(() => {
     return () => {
       if (progressTimer.current) clearTimeout(progressTimer.current);
+      const pending = lastProgressRef.current;
+      if (pending && id) {
+        const isFinished = pending.total > 0 && pending.page >= pending.total;
+        readingSessionsApi
+          .upsert({
+            book_id: id,
+            current_page: pending.page,
+            total_pages: pending.total > 0 ? pending.total : undefined,
+            cfi_position: pending.cfi,
+            status: isFinished ? "finished" : "reading",
+          })
+          .catch(() => {});
+      }
     };
-  }, []);
+  }, [id]);
 
   if (loading) {
     return (
@@ -132,6 +161,7 @@ const Reader = () => {
     return (
       <EpubReader
         fileUrl={fileUrl}
+        bookId={id!}
         bookTitle={book.title}
         onProgress={saveProgress}
         initialCfi={initialCfi}
@@ -143,6 +173,7 @@ const Reader = () => {
     return (
       <PdfReader
         fileUrl={fileUrl}
+        bookId={id!}
         bookTitle={book.title}
         initialPage={initialPage}
         onProgress={saveProgress}
