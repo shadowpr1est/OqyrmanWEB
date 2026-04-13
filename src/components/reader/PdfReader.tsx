@@ -24,8 +24,8 @@ interface PdfReaderProps {
   fileUrl: string;
   bookId: string;
   bookTitle: string;
-  initialPage?: number;
-  onProgress?: (page: number, total: number) => void;
+  initialProgress?: number;
+  onProgress?: (progress: number) => void;
 }
 
 type FitMode = "page" | "width";
@@ -34,16 +34,18 @@ export const PdfReader = ({
   fileUrl,
   bookId,
   bookTitle,
-  initialPage = 1,
+  initialProgress = 0,
   onProgress,
 }: PdfReaderProps) => {
   const navigate = useNavigate();
   const [numPages, setNumPages] = useState(0);
-  const [pageNumber, setPageNumber] = useState(initialPage);
+  const [pageNumber, setPageNumber] = useState(1);
   const [containerSize, setContainerSize] = useState({ w: 800, h: 600 });
   const [intrinsicSize, setIntrinsicSize] = useState<{ w: number; h: number } | null>(null);
   const [customScale, setCustomScale] = useState<number | null>(null); // null = fit mode
   const [fitMode, setFitMode] = useState<FitMode>("page");
+  const [dragging, setDragging] = useState(false);
+  const [dragValue, setDragValue] = useState(0);
 
   // Refs for stable keyboard handler
   const pageRef = useRef(pageNumber);
@@ -68,23 +70,35 @@ export const PdfReader = ({
     return () => { cancelled = true; };
   }, [fileUrl]);
 
+  const calcProgress = useCallback((page: number, total: number) => {
+    if (total <= 0) return 0;
+    return Math.round((page / total) * 100);
+  }, []);
+
   const onDocumentLoadSuccess = useCallback(
     ({ numPages: total }: { numPages: number }) => {
       setNumPages(total);
-      onProgress?.(initialPage, total);
+      // Restore position from saved progress
+      if (initialProgress > 0 && total > 0) {
+        const restoredPage = Math.max(1, Math.min(total, Math.round((initialProgress / 100) * total)));
+        setPageNumber(restoredPage);
+        onProgress?.(calcProgress(restoredPage, total));
+      } else {
+        onProgress?.(calcProgress(1, total));
+      }
     },
-    [initialPage, onProgress],
+    [initialProgress, onProgress, calcProgress],
   );
 
   const goTo = useCallback(
     (page: number) => {
       setPageNumber((prev) => {
         const p = Math.max(1, Math.min(page, numPagesRef.current));
-        if (p !== prev) onProgress?.(p, numPagesRef.current);
+        if (p !== prev) onProgress?.(calcProgress(p, numPagesRef.current));
         return p;
       });
     },
-    [onProgress],
+    [onProgress, calcProgress],
   );
 
   // Container resize observer
@@ -171,6 +185,8 @@ export const PdfReader = ({
     ? { scale: computedScale }
     : { width: Math.min(containerSize.w - 48, 900) };
 
+  const currentProgress = numPages > 0 ? calcProgress(pageNumber, numPages) : 0;
+
   return (
     <div className="fixed inset-0 z-[100] flex flex-col bg-[#faf9f6]">
       {/* Toolbar — 3-section layout matching EPUB reader */}
@@ -198,7 +214,7 @@ export const PdfReader = ({
             <IconChevronLeft size={18} />
           </button>
           <span className="text-xs text-muted-foreground tabular-nums whitespace-nowrap min-w-[60px] text-center">
-            {pageNumber} / {numPages || "…"}
+            {currentProgress}%
           </span>
           <button
             onClick={() => goTo(pageNumber + 1)}
@@ -249,7 +265,7 @@ export const PdfReader = ({
             <IconZoomIn size={18} stroke={1.5} />
           </button>
           <div className="w-px h-5 bg-border/60 mx-0.5" />
-          <ReaderNotes bookId={bookId} currentPage={pageNumber} />
+          <ReaderNotes bookId={bookId} progress={currentProgress} />
         </div>
       </div>
 
@@ -298,12 +314,47 @@ export const PdfReader = ({
         </button>
       </div>
 
-      {/* Bottom progress bar */}
-      <div className="flex-shrink-0 h-1 bg-muted">
-        <div
-          className="h-full bg-primary transition-all duration-300"
-          style={{ width: numPages ? `${(pageNumber / numPages) * 100}%` : "0%" }}
-        />
+      {/* Bottom progress slider */}
+      <div className="flex-shrink-0 flex items-center gap-3 h-9 px-4 bg-muted/30 border-t border-border/40">
+        <div className="relative flex-1 flex items-center">
+          <input
+            type="range"
+            min={0}
+            max={100}
+            value={dragging ? dragValue : currentProgress}
+            onChange={(e) => {
+              const v = Number(e.target.value);
+              setDragValue(v);
+              if (!dragging) setDragging(true);
+            }}
+            onMouseUp={() => {
+              setDragging(false);
+              if (numPages > 0) {
+                const targetPage = Math.max(1, Math.min(numPages, Math.round((dragValue / 100) * numPages)));
+                setPageNumber(targetPage);
+                goTo(targetPage);
+              }
+            }}
+            onTouchEnd={() => {
+              setDragging(false);
+              if (numPages > 0) {
+                const targetPage = Math.max(1, Math.min(numPages, Math.round((dragValue / 100) * numPages)));
+                setPageNumber(targetPage);
+                goTo(targetPage);
+              }
+            }}
+            className="w-full h-1.5 appearance-none bg-primary/10 rounded-full cursor-pointer
+              [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5
+              [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:shadow-md
+              [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:hover:scale-125
+              [&::-moz-range-thumb]:w-3.5 [&::-moz-range-thumb]:h-3.5 [&::-moz-range-thumb]:rounded-full
+              [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:border-none [&::-moz-range-thumb]:shadow-md
+              [&::-webkit-slider-runnable-track]:rounded-full [&::-moz-range-track]:rounded-full"
+          />
+        </div>
+        <span className="text-[11px] font-medium text-muted-foreground tabular-nums flex-shrink-0 min-w-[32px] text-right">
+          {dragging ? dragValue : currentProgress}%
+        </span>
       </div>
     </div>
   );

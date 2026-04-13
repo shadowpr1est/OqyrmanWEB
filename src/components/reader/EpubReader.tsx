@@ -22,7 +22,7 @@ interface EpubReaderProps {
   fileUrl: string;
   bookId: string;
   bookTitle: string;
-  onProgress?: (page: number, total: number, cfi?: string) => void;
+  onProgress?: (progress: number, cfi?: string) => void;
   initialCfi?: string;
 }
 
@@ -43,13 +43,9 @@ export const EpubReader = ({ fileUrl, bookId, bookTitle, onProgress, initialCfi 
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [tocOpen, setTocOpen] = useState(false);
   const [toc, setToc] = useState<TocItem[]>([]);
-  const [currentPage, setCurrentPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
   const [progress, setProgress] = useState(0);
-  const [locationsReady, setLocationsReady] = useState(false);
-  const [editingPage, setEditingPage] = useState(false);
-  const [pageInput, setPageInput] = useState("");
-  const pageInputRef = useRef<HTMLInputElement>(null);
+  const [dragging, setDragging] = useState(false);
+  const [dragValue, setDragValue] = useState(0);
 
   // Apply settings to rendition
   const applySettings = useCallback(
@@ -111,16 +107,24 @@ export const EpubReader = ({ fileUrl, bookId, bookTitle, onProgress, initialCfi 
       setToc(nav.toc.map((t) => ({ label: t.label.trim(), href: t.href })));
     });
 
-    // Locations: try to load from cache, otherwise generate & cache
+    // Generate locations — required for percentage to work on every page turn.
+    // Without locations, percentage only updates on chapter boundaries.
     const locCacheKey = `epub-locs-${fileUrl}`;
     book.ready.then(async () => {
       if (disposed) return;
       const cached = localStorage.getItem(locCacheKey);
       if (cached) {
-        // Instant — load pre-generated locations from cache
-        book.locations.load(cached);
+        try {
+          book.locations.load(cached);
+        } catch {
+          // Corrupted cache — regenerate
+          localStorage.removeItem(locCacheKey);
+          await book.locations.generate(1600);
+          try {
+            localStorage.setItem(locCacheKey, book.locations.save());
+          } catch { /* quota exceeded */ }
+        }
       } else {
-        // Slow — generate locations, then cache for next time
         await book.locations.generate(1600);
         try {
           localStorage.setItem(locCacheKey, book.locations.save());
@@ -128,25 +132,14 @@ export const EpubReader = ({ fileUrl, bookId, bookTitle, onProgress, initialCfi 
       }
 
       if (disposed) return;
-      const total = book.locations.length();
-      setTotalPages(total);
-      setLocationsReady(true);
 
-      // Update page once locations are ready using the latest known CFI.
-      // Avoid calling rendition.currentLocation() here: epubjs can throw while internals are not ready.
-      const savedCfi =
-        lastCfiRef.current || localStorage.getItem(`epub-pos-${fileUrl}`);
-      if (savedCfi) {
+      // Update progress immediately now that locations are ready
+      const savedCfi = lastCfiRef.current;
+      if (savedCfi && book.locations.length() > 0) {
         const pct = book.locations.percentageFromCfi(savedCfi);
-        const page = Math.max(1, Math.min(total, Math.floor(pct * total) + 1));
-        setCurrentPage(page);
-        setProgress(Math.round((page / total) * 100));
-        onProgress?.(page, total, savedCfi);
-      } else {
-        // First open — report page 1 so total_pages gets saved on the book
-        setCurrentPage(1);
-        setProgress(0);
-        onProgress?.(1, total);
+        const progressPct = Math.round((pct || 0) * 100);
+        setProgress(progressPct);
+        onProgress?.(progressPct, savedCfi);
       }
     });
 
@@ -155,29 +148,22 @@ export const EpubReader = ({ fileUrl, bookId, bookTitle, onProgress, initialCfi 
       "relocated",
       (location: { start: { cfi: string; percentage: number } }) => {
         const cfi = location.start.cfi;
-        const pct = location.start.percentage;
         lastCfiRef.current = cfi;
 
-        // Always save CFI position
+        // Save CFI position
         try {
           localStorage.setItem(`epub-pos-${fileUrl}`, cfi);
         } catch {}
 
-        // Always update percentage (available without locations)
-        setProgress(Math.round((pct || 0) * 100));
+        // Use percentageFromCfi when locations are ready, fallback to spine percentage
+        let pct = location.start.percentage;
+        if (book.locations.length() > 0) {
+          pct = book.locations.percentageFromCfi(cfi);
+        }
 
-        // If locations aren't ready yet, still show percentage-based progress
-        if (book.locations.length() === 0) return;
-
-        const total = book.locations.length();
-        // Use percentage-based page calculation instead of locationFromCfi —
-        // locationFromCfi maps to coarse ~1600-char ranges that may span
-        // multiple visible screens, so the page number wouldn't update on every swipe.
-        const page = Math.max(1, Math.min(total, Math.floor(pct * total) + 1));
-        setCurrentPage(page);
-        setTotalPages(total);
-        setProgress(Math.round((page / total) * 100));
-        onProgress?.(page, total, cfi);
+        const progressPct = Math.round((pct || 0) * 100);
+        setProgress(progressPct);
+        onProgress?.(progressPct, cfi);
       },
     );
 
@@ -219,19 +205,11 @@ export const EpubReader = ({ fileUrl, bookId, bookTitle, onProgress, initialCfi 
     setTocOpen(false);
   };
 
-  const goToPage = (page: number) => {
+  const goToPercent = (pct: number) => {
     const book = bookRef.current;
-    if (!book || !locationsReady || totalPages === 0) return;
-    const clamped = Math.max(1, Math.min(totalPages, page));
-    // Convert 1-based page to location index, then get CFI
-    const cfi = book.locations.cfiFromLocation(clamped - 1);
+    if (!book || book.locations.length() === 0) return;
+    const cfi = book.locations.cfiFromPercentage(pct / 100);
     if (cfi) renditionRef.current?.display(cfi);
-  };
-
-  const handlePageInputSubmit = () => {
-    const num = parseInt(pageInput, 10);
-    if (!isNaN(num)) goToPage(num);
-    setEditingPage(false);
   };
 
   return (
@@ -253,7 +231,7 @@ export const EpubReader = ({ fileUrl, bookId, bookTitle, onProgress, initialCfi 
           </div>
         </div>
 
-        {/* Center: page nav */}
+        {/* Center: progress nav */}
         <div className="flex items-center gap-1 flex-shrink-0">
           <button
             onClick={() => renditionRef.current?.prev()}
@@ -261,40 +239,9 @@ export const EpubReader = ({ fileUrl, bookId, bookTitle, onProgress, initialCfi 
           >
             <IconChevronLeft size={18} />
           </button>
-          {editingPage && locationsReady ? (
-            <form
-              onSubmit={(e) => { e.preventDefault(); handlePageInputSubmit(); }}
-              className="flex items-center gap-1"
-            >
-              <input
-                ref={pageInputRef}
-                type="number"
-                min={1}
-                max={totalPages}
-                value={pageInput}
-                onChange={(e) => setPageInput(e.target.value)}
-                onBlur={handlePageInputSubmit}
-                onKeyDown={(e) => { if (e.key === "Escape") setEditingPage(false); }}
-                className="w-14 text-center text-xs tabular-nums border border-white/30 rounded-md px-1 py-0.5 bg-white/10 text-white placeholder:text-white/50 focus:outline-none focus:ring-1 focus:ring-white/50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              />
-              <span className="text-xs text-white/70">/ {totalPages}</span>
-            </form>
-          ) : (
-            <button
-              onClick={() => {
-                if (!locationsReady) return;
-                setPageInput(String(currentPage));
-                setEditingPage(true);
-                setTimeout(() => pageInputRef.current?.select(), 30);
-              }}
-              className="text-xs tabular-nums whitespace-nowrap text-center bg-white/15 hover:bg-white/25 rounded-full px-3 py-1 transition-colors cursor-pointer font-medium"
-              title="Нажмите, чтобы перейти на страницу"
-            >
-              {locationsReady
-                ? `${currentPage} / ${totalPages}`
-                : `${progress}%`}
-            </button>
-          )}
+          <span className="text-xs tabular-nums whitespace-nowrap text-center bg-white/15 rounded-full px-3 py-1 font-medium">
+            {progress}%
+          </span>
           <button
             onClick={() => renditionRef.current?.next()}
             className="p-1.5 rounded-lg hover:bg-white/15 transition-colors"
@@ -316,7 +263,7 @@ export const EpubReader = ({ fileUrl, bookId, bookTitle, onProgress, initialCfi 
           >
             <IconSettings size={18} stroke={1.5} />
           </button>
-          <ReaderNotes bookId={bookId} currentPage={currentPage} />
+          <ReaderNotes bookId={bookId} progress={progress} />
         </div>
       </div>
 
@@ -394,16 +341,40 @@ export const EpubReader = ({ fileUrl, bookId, bookTitle, onProgress, initialCfi 
         </AnimatePresence>
       </div>
 
-      {/* Bottom progress bar */}
-      <div className="flex-shrink-0 flex items-center gap-3 h-7 px-4 bg-primary/5 border-t border-primary/10">
-        <div className="flex-1 h-1.5 bg-primary/10 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-primary rounded-full transition-all duration-300"
-            style={{ width: `${progress}%` }}
+      {/* Bottom progress slider */}
+      <div className="flex-shrink-0 flex items-center gap-3 h-9 px-4 bg-primary/5 border-t border-primary/10">
+        <div className="relative flex-1 flex items-center group">
+          <input
+            type="range"
+            min={0}
+            max={100}
+            value={dragging ? dragValue : progress}
+            onChange={(e) => {
+              const v = Number(e.target.value);
+              setDragValue(v);
+              if (!dragging) setDragging(true);
+            }}
+            onMouseUp={() => {
+              setProgress(dragValue);
+              setDragging(false);
+              goToPercent(dragValue);
+            }}
+            onTouchEnd={() => {
+              setProgress(dragValue);
+              setDragging(false);
+              goToPercent(dragValue);
+            }}
+            className="w-full h-1.5 appearance-none bg-primary/10 rounded-full cursor-pointer
+              [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5
+              [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:shadow-md
+              [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:hover:scale-125
+              [&::-moz-range-thumb]:w-3.5 [&::-moz-range-thumb]:h-3.5 [&::-moz-range-thumb]:rounded-full
+              [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:border-none [&::-moz-range-thumb]:shadow-md
+              [&::-webkit-slider-runnable-track]:rounded-full [&::-moz-range-track]:rounded-full"
           />
         </div>
-        <span className="text-[11px] font-medium text-primary/70 tabular-nums flex-shrink-0">
-          {progress}%
+        <span className="text-[11px] font-medium text-primary/70 tabular-nums flex-shrink-0 min-w-[32px] text-right">
+          {dragging ? dragValue : progress}%
         </span>
       </div>
     </div>

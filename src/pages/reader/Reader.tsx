@@ -12,11 +12,11 @@ const Reader = () => {
   const [book, setBook] = useState<Book | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [initialPage, setInitialPage] = useState(1);
+  const [initialProgress, setInitialProgress] = useState(0);
   const [initialCfi, setInitialCfi] = useState<string | undefined>();
   const progressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastProgressRef = useRef<{ page: number; total: number; cfi?: string } | null>(null);
-  const totalPagesSentRef = useRef(false);
+  const lastProgressRef = useRef<{ progress: number; cfi?: string } | null>(null);
+  const firstSentRef = useRef(false);
   // Track shelf state so we know whether to add or update
   const shelfStatusRef = useRef<ShelfStatus | null>(null);
   const shelfExistsRef = useRef(false);
@@ -35,8 +35,8 @@ const Reader = () => {
           return;
         }
         setBook(bookData);
-        if (session?.current_page) {
-          setInitialPage(session.current_page);
+        if (session?.progress) {
+          setInitialProgress(session.progress);
         }
         // Prefer server-side CFI, fallback to localStorage
         if (session?.cfi_position) {
@@ -67,31 +67,30 @@ const Reader = () => {
 
   // Debounced progress save
   const saveProgress = useCallback(
-    (page: number, total: number, cfi?: string) => {
+    (progress: number, cfi?: string) => {
       if (!id) return;
-      lastProgressRef.current = { page, total, cfi };
+      lastProgressRef.current = { progress, cfi };
 
-      // First call with total_pages: send immediately so the book gets total_pages ASAP
-      const immediate = !totalPagesSentRef.current && total > 0;
-      if (immediate) totalPagesSentRef.current = true;
+      // First call: send immediately
+      const immediate = !firstSentRef.current;
+      if (immediate) firstSentRef.current = true;
 
       if (progressTimer.current) clearTimeout(progressTimer.current);
 
       const doSave = () => {
         lastProgressRef.current = null;
-        const isFinished = total > 0 && page >= total;
+        const isFinished = progress >= 100;
         const sessionStatus = isFinished ? "finished" : "reading";
         readingSessionsApi
           .upsert({
             book_id: id,
-            current_page: page,
-            total_pages: total > 0 ? total : undefined,
+            progress,
             cfi_position: cfi,
             status: sessionStatus,
           })
           .catch(() => {});
 
-        // Auto-mark shelf as finished on last page (only once)
+        // Auto-mark shelf as finished (only once)
         if (isFinished && shelfExistsRef.current && shelfStatusRef.current !== "finished") {
           shelfStatusRef.current = "finished";
           wishlistApi.updateStatus(id, "finished").catch(() => {});
@@ -113,12 +112,11 @@ const Reader = () => {
       if (progressTimer.current) clearTimeout(progressTimer.current);
       const pending = lastProgressRef.current;
       if (pending && id) {
-        const isFinished = pending.total > 0 && pending.page >= pending.total;
+        const isFinished = pending.progress >= 100;
         readingSessionsApi
           .upsert({
             book_id: id,
-            current_page: pending.page,
-            total_pages: pending.total > 0 ? pending.total : undefined,
+            progress: pending.progress,
             cfi_position: pending.cfi,
             status: isFinished ? "finished" : "reading",
           })
@@ -175,7 +173,7 @@ const Reader = () => {
         fileUrl={fileUrl}
         bookId={id!}
         bookTitle={book.title}
-        initialPage={initialPage}
+        initialProgress={initialProgress}
         onProgress={saveProgress}
       />
     );

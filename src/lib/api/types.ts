@@ -167,8 +167,7 @@ export interface ReadingSession {
   id: string;
   user_id?: string;
   book_id?: string;
-  current_page: number;
-  total_pages?: number;
+  progress: number;
   cfi_position?: string;
   status: string;
   updated_at?: string;
@@ -177,7 +176,6 @@ export interface ReadingSession {
     id: string;
     title: string;
     cover_url?: string;
-    total_pages?: number;
     author_name?: string;
   };
 }
@@ -188,7 +186,7 @@ export interface ReadingNote {
   id: string;
   user_id: string;
   book_id: string;
-  page: number;
+  position: string;
   content: string;
   created_at: string;
   updated_at: string;

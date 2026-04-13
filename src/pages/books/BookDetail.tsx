@@ -59,7 +59,7 @@ const BookDetail = () => {
     mutationFn: () =>
       readingSessionsApi.upsert({
         book_id: bookId,
-        current_page: book?.total_pages || session?.current_page || 1,
+        progress: 100,
         status: "finished",
       }),
     onSuccess: () => {
@@ -270,7 +270,7 @@ const BookDetail = () => {
                   onClick={() => {
                     addToShelf.mutate("reading");
                     if (!session) {
-                      readingSessionsApi.upsert({ book_id: bookId, current_page: 0, status: "reading" });
+                      readingSessionsApi.upsert({ book_id: bookId, progress: 0, status: "reading" });
                     }
                     navigate(`/read/${bookId}`);
                   }}
@@ -287,8 +287,7 @@ const BookDetail = () => {
               <div className="flex items-center gap-2 mb-4 px-3 py-2 rounded-lg bg-blue-50 border border-blue-200 w-fit">
                 <IconProgress size={16} className="text-blue-600" />
                 <span className="text-sm text-blue-700 font-medium">
-                  Вы читаете • стр. {session.current_page}
-                  {book.total_pages > 0 && ` из ${book.total_pages}`}
+                  Вы читаете • {session.progress ?? 0}%
                 </span>
               </div>
             )}

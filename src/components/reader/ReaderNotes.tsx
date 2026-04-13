@@ -15,10 +15,10 @@ import type { ReadingNote } from "@/lib/api/types";
 
 interface ReaderNotesProps {
   bookId: string;
-  currentPage: number;
+  progress: number;
 }
 
-export const ReaderNotes = ({ bookId, currentPage }: ReaderNotesProps) => {
+export const ReaderNotes = ({ bookId, progress }: ReaderNotesProps) => {
   const [open, setOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -34,11 +34,6 @@ export const ReaderNotes = ({ bookId, currentPage }: ReaderNotesProps) => {
     notesApi.getByBook(bookId).then(setNotes).catch(() => {});
   }, [bookId]);
 
-  const hasNoteOnPage = notes.some((n) => n.page === currentPage);
-  const pageNotes = notes.filter((n) => n.page === currentPage);
-  const otherNotes = notes.filter((n) => n.page !== currentPage);
-  const sorted = [...pageNotes, ...otherNotes];
-
   const handleCreate = async () => {
     const text = newText.trim();
     if (!text || saving) return;
@@ -46,7 +41,7 @@ export const ReaderNotes = ({ bookId, currentPage }: ReaderNotesProps) => {
     try {
       const note = await notesApi.create({
         book_id: bookId,
-        page: currentPage,
+        position: `${progress}%`,
         content: text,
       });
       setNotes((prev) => [note, ...prev]);
@@ -105,10 +100,6 @@ export const ReaderNotes = ({ bookId, currentPage }: ReaderNotesProps) => {
     setTimeout(() => textareaRef.current?.focus(), 50);
   };
 
-  const formatPosition = (page: number) => {
-    return `Стр. ${page}`;
-  };
-
   const formatDate = (iso: string) => {
     const d = new Date(iso);
     return d.toLocaleDateString("ru", {
@@ -130,9 +121,6 @@ export const ReaderNotes = ({ bookId, currentPage }: ReaderNotesProps) => {
         title="Заметки"
       >
         <IconNotes size={18} stroke={1.5} />
-        {hasNoteOnPage && (
-          <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-primary" />
-        )}
       </button>
 
       {/* Panel */}
@@ -181,9 +169,9 @@ export const ReaderNotes = ({ bookId, currentPage }: ReaderNotesProps) => {
                   <div className="p-3 space-y-2">
                     <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                       <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">
-                        {formatPosition(currentPage)}
+                        {progress}%
                       </span>
-                      <span>— текущая страница</span>
+                      <span>— текущая позиция</span>
                     </div>
                     <textarea
                       ref={textareaRef}
@@ -227,7 +215,7 @@ export const ReaderNotes = ({ bookId, currentPage }: ReaderNotesProps) => {
 
             {/* Notes list */}
             <div className="flex-1 overflow-y-auto">
-              {sorted.length === 0 && !creating ? (
+              {notes.length === 0 && !creating ? (
                 <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
                   <IconNotebook
                     size={32}
@@ -244,35 +232,19 @@ export const ReaderNotes = ({ bookId, currentPage }: ReaderNotesProps) => {
                 </div>
               ) : (
                 <div className="divide-y divide-border/30">
-                  {sorted.map((note) => {
-                    const isCurrentPage = note.page === currentPage;
+                  {notes.map((note) => {
                     const isEditing = editingId === note.id;
 
                     return (
                       <div
                         key={note.id}
-                        className={`px-4 py-3 transition-colors ${
-                          isCurrentPage
-                            ? "bg-emerald-50/60"
-                            : "hover:bg-muted/30"
-                        }`}
+                        className="px-4 py-3 transition-colors hover:bg-muted/30"
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex items-center gap-1.5 text-[11px]">
-                            <span
-                              className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded font-medium ${
-                                isCurrentPage
-                                  ? "bg-emerald-100 text-emerald-700"
-                                  : "bg-muted/60 text-muted-foreground"
-                              }`}
-                            >
-                              {formatPosition(note.page)}
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded font-medium bg-muted/60 text-muted-foreground">
+                              {note.position}
                             </span>
-                            {isCurrentPage && (
-                              <span className="text-emerald-600 font-medium">
-                                •
-                              </span>
-                            )}
                           </div>
                           {!isEditing && (
                             <div className="flex items-center gap-0.5 flex-shrink-0">
