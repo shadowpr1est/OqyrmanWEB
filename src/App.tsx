@@ -9,6 +9,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { AppLayout } from "@/layouts/AppLayout";
 import { ProtectedRoute } from "@/layouts/ProtectedRoute";
 
+
 // Landing & auth (eagerly loaded)
 import Index from "./pages/Index";
 import Login from "./pages/Login";
@@ -31,6 +32,7 @@ const Wishlist = lazy(() => import("./pages/wishlist/Wishlist"));
 const Reservations = lazy(() => import("./pages/reservations/Reservations"));
 const Notifications = lazy(() => import("./pages/notifications/Notifications"));
 const Reader = lazy(() => import("./pages/reader/Reader"));
+
 
 const queryClient = new QueryClient();
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string;

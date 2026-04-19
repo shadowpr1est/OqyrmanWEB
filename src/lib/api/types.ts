@@ -136,6 +136,7 @@ export interface Reservation {
   library_book_id: string;
   book: { id: string; title: string; cover_url?: string };
   library: { id: string; name: string; address?: string };
+  user?: { id: string; name: string; surname: string; email: string };
 }
 
 // ─── Wishlist ───────────────────────────────────────────────────────────────
@@ -226,15 +227,27 @@ export interface UserStats {
 // ─── AI ─────────────────────────────────────────────────────────────────────
 
 export interface AiConversation {
-  id: number;
+  id: string;
   title: string;
   created_at: string;
+  updated_at: string;
 }
 
 export interface AiMessage {
-  id: number;
-  conversation_id: number;
+  id: string;
+  conversation_id: string;
   role: "user" | "assistant";
   content: string;
   created_at: string;
+}
+
+export interface AiStreamChunk {
+  type: "chunk" | "error" | "done";
+  content?: string;
+  user_message?: AiMessage;
+  ai_message?: AiMessage;
+}
+
+export interface AiSuggestedPrompts {
+  prompts: string[];
 }
