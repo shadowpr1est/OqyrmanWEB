@@ -7,6 +7,7 @@ export interface BooksParams {
   genre_id?: number;
   author_id?: number;
   sort?: string;
+  [key: string]: unknown;
 }
 
 function toQuery(params: Record<string, unknown>): string {

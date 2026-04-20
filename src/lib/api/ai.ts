@@ -88,4 +88,52 @@ export const aiApi = {
 
   deleteConversation: (id: string) =>
     apiFetch<void>(`/ai/conversations/${id}`, { method: "DELETE" }),
+
+  explainSelection: async (
+    bookId: string,
+    action: "explain" | "translate" | "identify",
+    selection: string,
+    onChunk: (chunk: AiStreamChunk) => void,
+    signal?: AbortSignal,
+  ) => {
+    const token = tokenStorage.getAccess();
+    const res = await fetch(`${BASE_URL}/ai/books/${bookId}/explain`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ action, selection }),
+      signal,
+    });
+
+    if (!res.ok) {
+      throw new Error(`Stream error: ${res.status}`);
+    }
+
+    const reader = res.body?.getReader();
+    if (!reader) throw new Error("No reader available");
+
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || "";
+
+      for (const line of lines) {
+        if (!line.startsWith("data: ")) continue;
+        try {
+          const data = JSON.parse(line.slice(6)) as AiStreamChunk;
+          onChunk(data);
+        } catch {
+          // skip malformed lines
+        }
+      }
+    }
+  },
 };

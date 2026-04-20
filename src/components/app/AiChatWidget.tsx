@@ -5,9 +5,9 @@ import {
   IconTrash,
   IconPlus,
   IconArrowLeft,
-  IconSparkles,
   IconMessage,
 } from "@tabler/icons-react";
+import { AiMark } from "@/components/shared/AiMark";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -37,7 +37,7 @@ export function AiChatWidget() {
             className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-b from-primary-light to-primary text-white shadow-[0_4px_20px_rgba(0,0,0,0.15),0_2px_0_0_rgba(255,255,255,0.15)_inset] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_6px_24px_rgba(0,0,0,0.2),0_2px_0_0_rgba(255,255,255,0.15)_inset] active:translate-y-0 active:scale-95"
             aria-label="AI ассистент"
           >
-            <IconSparkles size={24} stroke={1.8} />
+            <AiMark size={26} mono className="text-white" />
           </motion.button>
         )}
       </AnimatePresence>
@@ -95,7 +95,7 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
             )}
           </AnimatePresence>
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10">
-            <IconSparkles size={16} className="text-primary" stroke={2} />
+            <AiMark size={16} animated={false} />
           </div>
           <span className="text-sm font-semibold tracking-tight text-foreground">
             AI Ассистент
@@ -145,19 +145,14 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
 
 function ConversationList({ onSelect }: { onSelect: (id: string) => void }) {
   const [conversations, setConversations] = useState<AiConversation[]>([]);
-  const [prompts, setPrompts] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [convs, suggested] = await Promise.all([
-        aiApi.listConversations(),
-        aiApi.suggestedPrompts().catch(() => ({ prompts: [] })),
-      ]);
+      const convs = await aiApi.listConversations();
       setConversations(convs || []);
-      setPrompts(suggested.prompts || []);
     } catch {
       /* silent */
     } finally {
@@ -181,18 +176,6 @@ function ConversationList({ onSelect }: { onSelect: (id: string) => void }) {
     }
   };
 
-  const createWithPrompt = async (prompt: string) => {
-    setCreating(true);
-    try {
-      const conv = await aiApi.createConversation();
-      onSelect(conv.id + ":" + prompt);
-    } catch {
-      /* silent */
-    } finally {
-      setCreating(false);
-    }
-  };
-
   const deleteConv = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     try {
@@ -205,30 +188,6 @@ function ConversationList({ onSelect }: { onSelect: (id: string) => void }) {
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
-      {/* Suggested prompts */}
-      {prompts.length > 0 && !loading && (
-        <div className="px-4 pt-3 pb-1">
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
-            Быстрые вопросы
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {prompts.slice(0, 4).map((p, i) => (
-              <motion.button
-                key={p}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05, duration: 0.2 }}
-                onClick={() => createWithPrompt(p)}
-                disabled={creating}
-                className="rounded-full border border-border/80 bg-white px-3 py-1.5 text-xs text-foreground/70 shadow-sm transition-all duration-150 hover:border-primary/30 hover:bg-primary/5 hover:text-primary active:scale-[0.97] disabled:opacity-50"
-              >
-                {p}
-              </motion.button>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* New chat button */}
       <div className="px-4 pt-3 pb-2">
         <Button
@@ -302,11 +261,7 @@ function ConversationList({ onSelect }: { onSelect: (id: string) => void }) {
 
 // ── Chat View ───────────────────────────────────────────────────────────────
 
-function ChatView({ conversationId: rawId }: { conversationId: string }) {
-  const colonIdx = rawId.indexOf(":");
-  const [convId, initialPrompt] =
-    colonIdx > 0 ? [rawId.slice(0, colonIdx), rawId.slice(colonIdx + 1)] : [rawId, ""];
-
+function ChatView({ conversationId: convId }: { conversationId: string }) {
   const [messages, setMessages] = useState<AiMessage[]>([]);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
@@ -315,7 +270,6 @@ function ChatView({ conversationId: rawId }: { conversationId: string }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
-  const initialSent = useRef(false);
 
   const scrollToBottom = useCallback(() => {
     requestAnimationFrame(() => {
@@ -345,15 +299,6 @@ function ChatView({ conversationId: rawId }: { conversationId: string }) {
       }
     })();
   }, [convId]);
-
-  // Send initial prompt
-  useEffect(() => {
-    if (!loading && initialPrompt && !initialSent.current) {
-      initialSent.current = true;
-      sendMessage(initialPrompt);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading]);
 
   const sendMessage = async (text: string) => {
     const content = text.trim();
@@ -457,11 +402,7 @@ function ChatView({ conversationId: rawId }: { conversationId: string }) {
         ) : messages.length === 0 && !streaming ? (
           <div className="flex flex-col items-center justify-center py-10 text-center">
             <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-b from-primary/10 to-primary/5">
-              <IconSparkles
-                size={22}
-                className="text-primary"
-                stroke={1.8}
-              />
+              <AiMark size={26} />
             </div>
             <p className="text-sm font-medium text-foreground/80">
               Чем могу помочь?
@@ -560,7 +501,7 @@ function MessageBubble({
     >
       {!isUser && (
         <div className="mr-2 mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10">
-          <IconSparkles size={12} className="text-primary" stroke={2.5} />
+          <AiMark size={13} animated={false} />
         </div>
       )}
       <div

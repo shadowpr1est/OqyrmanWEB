@@ -23,6 +23,7 @@ const typeIconMap: Record<NotificationType, React.ElementType> = {
   return_deadline: IconAlertTriangle,
   reservation_expired: IconBookmarkOff,
   return_overdue: IconAlertOctagon,
+  event_reminder: IconClock,
   general: IconBell,
 };
 
@@ -33,6 +34,7 @@ const typeColorMap: Record<NotificationType, { color: string; bg: string; border
   return_deadline: { color: "text-amber-600", bg: "bg-amber-50", border: "border-amber-200/60" },
   reservation_expired: { color: "text-red-600", bg: "bg-red-50", border: "border-red-200/60" },
   return_overdue: { color: "text-red-600", bg: "bg-red-50", border: "border-red-200/60" },
+  event_reminder: { color: "text-purple-600", bg: "bg-purple-50", border: "border-purple-200/60" },
   general: { color: "text-foreground/70", bg: "bg-muted/50", border: "border-border/40" },
 };
 

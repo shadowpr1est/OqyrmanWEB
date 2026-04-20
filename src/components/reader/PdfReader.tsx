@@ -13,6 +13,7 @@ import {
 } from "@tabler/icons-react";
 import { useNavigate } from "react-router-dom";
 import { ReaderNotes } from "./ReaderNotes";
+import { AiSelectionLayer, type ReaderSelection } from "./AiSelectionLayer";
 
 // pdf.js worker — import from node_modules for correct version
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -46,6 +47,8 @@ export const PdfReader = ({
   const [fitMode, setFitMode] = useState<FitMode>("page");
   const [dragging, setDragging] = useState(false);
   const [dragValue, setDragValue] = useState(0);
+  const [aiSelection, setAiSelection] = useState<ReaderSelection | null>(null);
+  const containerElRef = useRef<HTMLDivElement | null>(null);
 
   // Refs for stable keyboard handler
   const pageRef = useRef(pageNumber);
@@ -101,14 +104,21 @@ export const PdfReader = ({
     [onProgress, calcProgress],
   );
 
-  // Container resize observer
+  // Container resize observer + selection listener
   const observerRef = useRef<ResizeObserver | null>(null);
+  const selectionHandlerRef = useRef<(() => void) | null>(null);
   const containerRef = useCallback((node: HTMLDivElement | null) => {
     if (observerRef.current) {
       observerRef.current.disconnect();
       observerRef.current = null;
     }
+    if (selectionHandlerRef.current) {
+      selectionHandlerRef.current();
+      selectionHandlerRef.current = null;
+    }
+    containerElRef.current = node;
     if (!node) return;
+
     const ro = new ResizeObserver((entries) => {
       for (const entry of entries) {
         setContainerSize({
@@ -120,6 +130,35 @@ export const PdfReader = ({
     ro.observe(node);
     observerRef.current = ro;
     setContainerSize({ w: node.clientWidth, h: node.clientHeight });
+
+    // Detect text selections inside the PDF and open the AI popover
+    const onRelease = () => {
+      const sel = window.getSelection();
+      const text = sel?.toString().trim() || "";
+      if (!sel || sel.rangeCount === 0) return;
+      const range = sel.getRangeAt(0);
+      if (!node.contains(range.commonAncestorContainer)) return;
+      if (!text || text.length < 3) {
+        setAiSelection(null);
+        return;
+      }
+      const rect = range.getBoundingClientRect();
+      setAiSelection({
+        text,
+        rect: {
+          top: rect.top,
+          left: rect.left,
+          width: rect.width,
+          height: rect.height,
+        },
+      });
+    };
+    node.addEventListener("mouseup", onRelease);
+    node.addEventListener("touchend", onRelease);
+    selectionHandlerRef.current = () => {
+      node.removeEventListener("mouseup", onRelease);
+      node.removeEventListener("touchend", onRelease);
+    };
   }, []);
 
   // Compute effective scale
@@ -300,14 +339,14 @@ export const PdfReader = ({
         {/* Prev / Next touch zones */}
         <button
           onClick={() => goTo(pageNumber - 1)}
-          className="absolute left-0 top-0 h-full w-16 sm:w-24 flex items-center justify-start pl-2 opacity-0 hover:opacity-100 transition-opacity"
+          className="absolute left-0 top-0 h-full w-12 lg:w-20 hidden sm:flex items-center justify-start pl-2 opacity-0 hover:opacity-100 transition-opacity"
           aria-label="Previous"
         >
           <IconChevronLeft size={24} className="text-foreground/30" />
         </button>
         <button
           onClick={() => goTo(pageNumber + 1)}
-          className="absolute right-0 top-0 h-full w-16 sm:w-24 flex items-center justify-end pr-2 opacity-0 hover:opacity-100 transition-opacity"
+          className="absolute right-0 top-0 h-full w-12 lg:w-20 hidden sm:flex items-center justify-end pr-2 opacity-0 hover:opacity-100 transition-opacity"
           aria-label="Next"
         >
           <IconChevronRight size={24} className="text-foreground/30" />
@@ -356,6 +395,13 @@ export const PdfReader = ({
           {dragging ? dragValue : currentProgress}%
         </span>
       </div>
+
+      <AiSelectionLayer
+        bookId={bookId}
+        progress={currentProgress}
+        selection={aiSelection}
+        onDismiss={() => setAiSelection(null)}
+      />
     </div>
   );
 };

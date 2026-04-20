@@ -1,4 +1,4 @@
-import { IconHeart, IconHeartFilled, IconBookOpen, IconCircleCheck } from "@tabler/icons-react";
+import { IconHeart, IconHeartFilled, IconBook, IconCircleCheck } from "@tabler/icons-react";
 import { motion } from "framer-motion";
 import { useWishlistExists, useToggleWishlist } from "@/hooks/useWishlist";
 
@@ -23,7 +23,7 @@ export const WishlistButton = ({ bookId, size = "md" }: WishlistButtonProps) => 
         className={`${classes} bg-blue-50 text-blue-400 cursor-default`}
         title="Вы сейчас читаете эту книгу"
       >
-        <IconBookOpen size={iconSize} stroke={1.5} />
+        <IconBook size={iconSize} stroke={1.5} />
       </div>
     );
   }

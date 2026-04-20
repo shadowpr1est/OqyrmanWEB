@@ -25,8 +25,8 @@ function toBook(item: WishlistItem): Book {
     ratings_count: 0,
     author_id: b.author.id as unknown as number,
     genre_id: b.genre.id as unknown as number,
-    author: { id: b.author.id as unknown as number, name: b.author.name, bio: "", photo_url: "" },
-    genre: { id: b.genre.id as unknown as number, name: b.genre.name, slug: b.genre.slug ?? "" },
+    author: { id: b.author.id, name: b.author.name, bio: "", photo_url: "" },
+    genre: { id: b.genre.id, name: b.genre.name, slug: b.genre.slug ?? "" },
     created_at: item.added_at,
   };
 }

@@ -17,6 +17,7 @@ import {
 } from "@tabler/icons-react";
 import { useNavigate } from "react-router-dom";
 import { ReaderNotes } from "./ReaderNotes";
+import { AiSelectionLayer, type ReaderSelection } from "./AiSelectionLayer";
 
 interface EpubReaderProps {
   fileUrl: string;
@@ -46,6 +47,7 @@ export const EpubReader = ({ fileUrl, bookId, bookTitle, onProgress, initialCfi 
   const [progress, setProgress] = useState(0);
   const [dragging, setDragging] = useState(false);
   const [dragValue, setDragValue] = useState(0);
+  const [aiSelection, setAiSelection] = useState<ReaderSelection | null>(null);
 
   // Apply settings to rendition
   const applySettings = useCallback(
@@ -167,6 +169,39 @@ export const EpubReader = ({ fileUrl, bookId, bookTitle, onProgress, initialCfi 
       },
     );
 
+    // Text selection → AI actions popover
+    rendition.on(
+      "selected",
+      (_cfiRange: string, contents: { window: Window; document: Document }) => {
+        const sel = contents.window.getSelection();
+        const text = sel?.toString().trim() || "";
+        if (!text || text.length < 3 || !sel || sel.rangeCount === 0) return;
+        const iframe = viewerRef.current?.querySelector("iframe");
+        if (!iframe) return;
+        const rect = sel.getRangeAt(0).getBoundingClientRect();
+        const iframeRect = iframe.getBoundingClientRect();
+        setAiSelection({
+          text,
+          rect: {
+            top: rect.top + iframeRect.top,
+            left: rect.left + iframeRect.left,
+            width: rect.width,
+            height: rect.height,
+          },
+        });
+      },
+    );
+
+    // Clear popover when selection is cleared inside the iframe
+    rendition.hooks.content.register((contents: { document: Document }) => {
+      contents.document.addEventListener("selectionchange", () => {
+        const s = contents.document.getSelection();
+        if (!s || s.isCollapsed || !s.toString().trim()) {
+          setAiSelection(null);
+        }
+      });
+    });
+
     // Keyboard navigation
     rendition.on("keyup", (e: KeyboardEvent) => {
       if (e.key === "ArrowLeft") rendition.prev();
@@ -275,14 +310,14 @@ export const EpubReader = ({ fileUrl, bookId, bookTitle, onProgress, initialCfi 
         {/* Prev / Next touch zones */}
         <button
           onClick={() => renditionRef.current?.prev()}
-          className="absolute left-0 top-0 h-full w-16 sm:w-24 flex items-center justify-start pl-2 opacity-0 hover:opacity-100 transition-opacity"
+          className="absolute left-0 top-0 h-full w-12 lg:w-20 hidden sm:flex items-center justify-start pl-2 opacity-0 hover:opacity-100 transition-opacity"
           aria-label="Previous"
         >
           <IconChevronLeft size={24} className="text-primary/30" />
         </button>
         <button
           onClick={() => renditionRef.current?.next()}
-          className="absolute right-0 top-0 h-full w-16 sm:w-24 flex items-center justify-end pr-2 opacity-0 hover:opacity-100 transition-opacity"
+          className="absolute right-0 top-0 h-full w-12 lg:w-20 hidden sm:flex items-center justify-end pr-2 opacity-0 hover:opacity-100 transition-opacity"
           aria-label="Next"
         >
           <IconChevronRight size={24} className="text-primary/30" />
@@ -377,6 +412,13 @@ export const EpubReader = ({ fileUrl, bookId, bookTitle, onProgress, initialCfi 
           {dragging ? dragValue : progress}%
         </span>
       </div>
+
+      <AiSelectionLayer
+        bookId={bookId}
+        progress={progress}
+        selection={aiSelection}
+        onDismiss={() => setAiSelection(null)}
+      />
     </div>
   );
 };
