@@ -14,7 +14,6 @@ import {
 
 const navLinks = [
   { name: "Возможности", link: "#features" },
-  { name: "Документация", link: "https://api.oqyrman.app/swagger/index.html" },
   { name: "О нас",       link: "#about" },
   { name: "Контакты",    link: "#contacts" },
 ];

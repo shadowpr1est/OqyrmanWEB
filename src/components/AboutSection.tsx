@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { IconTargetArrow, IconHeart, IconBulb, IconUsers } from "@tabler/icons-react";
+import { IconTargetArrow, IconHeart, IconBulb, IconUsers, IconCheck } from "@tabler/icons-react";
 
 const values = [
   {
@@ -28,6 +28,12 @@ const values = [
   },
 ];
 
+const highlights = [
+  "AI-ассистент прямо в читалке",
+  "QR-билет вместо пластиковой карты",
+  "Онлайн-бронирование в два клика",
+  "Уведомления о сроках возврата",
+];
 
 export const AboutSection = () => (
   <section id="about" className="py-24 md:py-32 relative overflow-hidden">
@@ -82,6 +88,7 @@ export const AboutSection = () => (
 
         <div className="relative px-8 py-14 md:px-16 md:py-20">
           <div className="grid md:grid-cols-2 gap-10 items-center">
+            {/* Left: story text */}
             <div>
               <motion.span
                 initial={{ opacity: 0, x: -20 }}
@@ -111,31 +118,25 @@ export const AboutSection = () => (
               >
                 Oqyrman родился из простой проблемы: найти нужную книгу в библиотеках Алматы
                 было слишком сложно. Мы решили это изменить — создали платформу, где каждый
-                может найти, забронировать и забрать книгу за пару кликов. Сегодня мы
-                объединяем 10 библиотек и сотни читателей.
+                может найти, забронировать и забрать книгу за пару кликов.
               </motion.p>
             </div>
 
-            {/* Stats mini-grid */}
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                { num: "10", label: "библиотек", suffix: "" },
-                { num: "200", label: "книг", suffix: "+" },
-                { num: "500", label: "читателей", suffix: "+" },
-                { num: "24/7", label: "онлайн доступ", suffix: "" },
-              ].map((s, i) => (
+            {/* Right: feature highlights */}
+            <div className="flex flex-col gap-3">
+              {highlights.map((text, i) => (
                 <motion.div
-                  key={s.label}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
+                  key={text}
+                  initial={{ opacity: 0, x: 20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: 0.3 + i * 0.1 }}
-                  className="rounded-2xl border border-white/[0.08] bg-white/[0.04] backdrop-blur-sm p-5 text-center"
+                  transition={{ duration: 0.45, delay: 0.3 + i * 0.1 }}
+                  className="flex items-center gap-3 rounded-xl border border-white/[0.08] bg-white/[0.04] backdrop-blur-sm px-5 py-3.5"
                 >
-                  <div className="text-2xl font-bold text-white mb-1">
-                    {s.num}{s.suffix}
+                  <div className="shrink-0 w-6 h-6 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
+                    <IconCheck size={13} className="text-emerald-400" stroke={2.5} />
                   </div>
-                  <div className="text-xs text-white/40 font-medium">{s.label}</div>
+                  <span className="text-sm text-white/75 font-medium">{text}</span>
                 </motion.div>
               ))}
             </div>
@@ -170,7 +171,6 @@ export const AboutSection = () => (
           </motion.div>
         ))}
       </div>
-
     </div>
   </section>
 );
