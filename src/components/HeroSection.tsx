@@ -37,19 +37,19 @@ function ReaderMockup() {
 
         {/* Book content */}
         <div className="px-6 py-5 space-y-3 font-serif">
-          <p className="text-[12.5px] leading-[1.9] text-white/38">
+          <p className="text-[12.5px] leading-[1.9] text-white/50">
             Раскольников медленно поднялся по узкой лестнице к своей каморке на пятом этаже.
           </p>
 
           {/* Highlighted passage */}
           <div className="relative flex">
             <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-emerald-400/70 rounded-full" />
-            <p className="text-[12.5px] leading-[1.9] text-white/82 bg-emerald-500/[0.13] rounded-r-md pl-3 pr-2 py-1">
+            <p className="text-[12.5px] leading-[1.9] text-white/90 bg-emerald-500/[0.13] rounded-r-md pl-3 pr-2 py-1">
               — Тварь ли я дрожащая или право имею?
             </p>
           </div>
 
-          <p className="text-[12.5px] leading-[1.9] text-white/38">
+          <p className="text-[12.5px] leading-[1.9] text-white/50">
             Мысли путались, он никак не мог сосредоточиться на главном...
           </p>
         </div>
