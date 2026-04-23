@@ -7,6 +7,7 @@ import {
   IconArrowLeft,
   IconMessage,
 } from "@tabler/icons-react";
+import { toast } from "sonner";
 import { AiMark } from "@/components/shared/AiMark";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -14,12 +15,25 @@ import { cn } from "@/lib/utils";
 import { aiApi } from "@/lib/api/ai";
 import { useAuth } from "@/contexts/AuthContext";
 import type { AiConversation, AiMessage } from "@/lib/api/types";
+import { onOpenChatConversation } from "@/lib/aiChatBus";
 
 // ── Widget Root ─────────────────────────────────────────────────────────────
 
 export function AiChatWidget() {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
+  const [initialConv, setInitialConv] = useState<string | null>(null);
+  // Bumped on every external open request to remount ChatPanel into the
+  // requested conversation, even if the panel was already open.
+  const [openSeq, setOpenSeq] = useState(0);
+
+  useEffect(() => {
+    return onOpenChatConversation(({ conversationId }) => {
+      setInitialConv(conversationId);
+      setOpen(true);
+      setOpenSeq((n) => n + 1);
+    });
+  }, []);
 
   if (!user) return null;
 
@@ -42,9 +56,18 @@ export function AiChatWidget() {
         )}
       </AnimatePresence>
 
-      {/* Chat Panel */}
+      {/* Chat Panel — keyed by openSeq so external opens force a fresh mount */}
       <AnimatePresence>
-        {open && <ChatPanel onClose={() => setOpen(false)} />}
+        {open && (
+          <ChatPanel
+            key={openSeq}
+            initialConversationId={initialConv}
+            onClose={() => {
+              setOpen(false);
+              setInitialConv(null);
+            }}
+          />
+        )}
       </AnimatePresence>
     </>
   );
@@ -54,9 +77,19 @@ export function AiChatWidget() {
 
 type View = "conversations" | "chat";
 
-function ChatPanel({ onClose }: { onClose: () => void }) {
-  const [view, setView] = useState<View>("conversations");
-  const [activeConv, setActiveConv] = useState<string | null>(null);
+function ChatPanel({
+  onClose,
+  initialConversationId,
+}: {
+  onClose: () => void;
+  initialConversationId?: string | null;
+}) {
+  const [view, setView] = useState<View>(
+    initialConversationId ? "chat" : "conversations",
+  );
+  const [activeConv, setActiveConv] = useState<string | null>(
+    initialConversationId ?? null,
+  );
 
   const openConversation = (id: string) => {
     setActiveConv(id);
@@ -154,7 +187,7 @@ function ConversationList({ onSelect }: { onSelect: (id: string) => void }) {
       const convs = await aiApi.listConversations();
       setConversations(convs || []);
     } catch {
-      /* silent */
+      toast.error("Не удалось загрузить чаты. Попробуйте позже.");
     } finally {
       setLoading(false);
     }
@@ -170,7 +203,7 @@ function ConversationList({ onSelect }: { onSelect: (id: string) => void }) {
       const conv = await aiApi.createConversation();
       onSelect(conv.id);
     } catch {
-      /* silent */
+      toast.error("Не удалось создать чат. Попробуйте позже.");
     } finally {
       setCreating(false);
     }
@@ -182,7 +215,7 @@ function ConversationList({ onSelect }: { onSelect: (id: string) => void }) {
       await aiApi.deleteConversation(id);
       setConversations((prev) => prev.filter((c) => c.id !== id));
     } catch {
-      /* silent */
+      toast.error("Не удалось удалить чат.");
     }
   };
 
@@ -267,6 +300,7 @@ function ChatView({ conversationId: convId }: { conversationId: string }) {
   const [streaming, setStreaming] = useState(false);
   const [streamText, setStreamText] = useState("");
   const [loading, setLoading] = useState(true);
+  const [suggestedPrompts, setSuggestedPrompts] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -286,18 +320,24 @@ function ChatView({ conversationId: convId }: { conversationId: string }) {
     scrollToBottom();
   }, [messages, streamText, scrollToBottom]);
 
-  // Load conversation
+  // Load conversation + suggested prompts
   useEffect(() => {
     (async () => {
       try {
         const data = await aiApi.getConversation(convId);
         setMessages(data.messages || []);
       } catch {
-        /* new conversation */
+        /* new conversation — expected for fresh chats */
       } finally {
         setLoading(false);
       }
     })();
+
+    aiApi.suggestedPrompts().then((res) => {
+      if (res?.prompts?.length) setSuggestedPrompts(res.prompts);
+    }).catch(() => {
+      // fallback: keep empty array, static hint shows instead
+    });
   }, [convId]);
 
   const sendMessage = async (text: string) => {
@@ -400,16 +440,28 @@ function ChatView({ conversationId: convId }: { conversationId: string }) {
             <TypingDots />
           </div>
         ) : messages.length === 0 && !streaming ? (
-          <div className="flex flex-col items-center justify-center py-10 text-center">
+          <div className="flex flex-col items-center py-8 text-center">
             <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-b from-primary/10 to-primary/5">
               <AiMark size={26} />
             </div>
-            <p className="text-sm font-medium text-foreground/80">
-              Чем могу помочь?
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground/60">
-              Спросите про книги, рекомендации или события
-            </p>
+            <p className="text-sm font-medium text-foreground/80">Чем могу помочь?</p>
+            {suggestedPrompts.length > 0 ? (
+              <div className="mt-4 flex flex-col gap-2 w-full px-1">
+                {suggestedPrompts.slice(0, 4).map((prompt) => (
+                  <button
+                    key={prompt}
+                    onClick={() => setInput(prompt)}
+                    className="w-full rounded-xl border border-border/70 bg-muted/40 px-3 py-2 text-left text-xs text-foreground/70 transition-all duration-150 hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-1 text-xs text-muted-foreground/60">
+                Спросите про книги, рекомендации или события
+              </p>
+            )}
           </div>
         ) : (
           <div className="space-y-3">

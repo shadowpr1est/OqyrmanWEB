@@ -3,9 +3,9 @@ import { motion } from "framer-motion";
 import { IconBrandGithub, IconBook, IconMapPin, IconStar, IconCode, IconMail } from "@tabler/icons-react";
 
 const navLinks = [
-  { label: "Каталог", href: "#books", icon: IconBook },
-  { label: "Библиотеки", href: "#libraries", icon: IconMapPin },
-  { label: "Возможности", href: "#features", icon: IconStar },
+  { label: "Каталог", to: "/catalog", icon: IconBook },
+  { label: "Библиотеки", to: "/libraries", icon: IconMapPin },
+  { label: "Возможности", to: "/#features", icon: IconStar },
 ];
 
 export const Footer = () => (
@@ -54,7 +54,7 @@ export const Footer = () => (
           {/* Social / external links */}
           <div className="flex items-center gap-3">
             <a
-              href="https://github.com"
+              href="https://github.com/shadowpr1est/OqyrmanWEB"
               target="_blank"
               rel="noopener noreferrer"
               className="w-9 h-9 rounded-xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center text-white/40 hover:text-white hover:bg-white/[0.12] transition-all duration-300"
@@ -62,7 +62,7 @@ export const Footer = () => (
               <IconBrandGithub size={18} stroke={1.5} />
             </a>
             <a
-              href="mailto:support@oqyrman.app"
+              href="mailto:oqyrmanapp@gmail.com"
               className="w-9 h-9 rounded-xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center text-white/40 hover:text-white hover:bg-white/[0.12] transition-all duration-300"
             >
               <IconMail size={18} stroke={1.5} />
@@ -83,14 +83,14 @@ export const Footer = () => (
           </h4>
           <div className="flex flex-col gap-3">
             {navLinks.map((l) => (
-              <a
+              <Link
                 key={l.label}
-                href={l.href}
+                to={l.to}
                 className="group flex items-center gap-2.5 text-sm text-white/50 hover:text-emerald-400 transition-colors duration-300"
               >
                 <l.icon size={16} stroke={1.5} className="text-white/25 group-hover:text-emerald-400/70 transition-colors duration-300" />
                 {l.label}
-              </a>
+              </Link>
             ))}
           </div>
         </motion.div>
