@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { IconBrandGithub, IconBook, IconMapPin, IconStar, IconCode, IconMail } from "@tabler/icons-react";
+import { IconBrandGithub, IconBook, IconMapPin, IconStar, IconCode, IconMail, IconBrandTelegram, IconPhone } from "@tabler/icons-react";
 
 const navLinks = [
   { label: "Каталог", to: "/catalog", icon: IconBook },
@@ -95,7 +95,7 @@ export const Footer = () => (
           </div>
         </motion.div>
 
-        {/* Developers column */}
+        {/* Contacts column */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -104,24 +104,42 @@ export const Footer = () => (
           className="md:col-span-4"
         >
           <h4 className="text-xs font-semibold text-white/30 uppercase tracking-widest mb-5">
-            Разработчикам
+            Контакты
           </h4>
-          <a
-            href="https://api.oqyrman.app/swagger/index.html"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group inline-flex items-center gap-3 rounded-xl bg-white/[0.04] border border-white/[0.08] px-4 py-3 hover:bg-white/[0.08] hover:border-white/[0.12] transition-all duration-300"
-          >
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-              <IconCode size={16} className="text-emerald-400" stroke={1.5} />
-            </div>
-            <div>
-              <span className="block text-sm font-medium text-white/80 group-hover:text-white transition-colors">
-                API Documentation
-              </span>
-              <span className="block text-xs text-white/30">Swagger / OpenAPI</span>
-            </div>
-          </a>
+          <div className="flex flex-col gap-3">
+            <a
+              href="mailto:oqyrmanapp@gmail.com"
+              className="group flex items-center gap-2.5 text-sm text-white/50 hover:text-emerald-400 transition-colors duration-300"
+            >
+              <IconMail size={16} stroke={1.5} className="text-white/25 group-hover:text-emerald-400/70 transition-colors duration-300" />
+              oqyrmanapp@gmail.com
+            </a>
+            <a
+              href="https://t.me/a2jz_power"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group flex items-center gap-2.5 text-sm text-white/50 hover:text-emerald-400 transition-colors duration-300"
+            >
+              <IconBrandTelegram size={16} stroke={1.5} className="text-white/25 group-hover:text-emerald-400/70 transition-colors duration-300" />
+              @a2jz_power
+            </a>
+            <a
+              href="tel:+77051962655"
+              className="group flex items-center gap-2.5 text-sm text-white/50 hover:text-emerald-400 transition-colors duration-300"
+            >
+              <IconPhone size={16} stroke={1.5} className="text-white/25 group-hover:text-emerald-400/70 transition-colors duration-300" />
+              +7 (705) 196-26-55
+            </a>
+            <a
+              href="https://api.oqyrman.app/swagger/index.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group flex items-center gap-2.5 text-sm text-white/50 hover:text-emerald-400 transition-colors duration-300 mt-1"
+            >
+              <IconCode size={16} stroke={1.5} className="text-white/25 group-hover:text-emerald-400/70 transition-colors duration-300" />
+              API Documentation
+            </a>
+          </div>
         </motion.div>
       </div>
 

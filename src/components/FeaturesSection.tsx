@@ -10,11 +10,11 @@ import {
 
 function TypingDots() {
   return (
-    <div className="flex gap-1 px-3 py-2.5 rounded-2xl rounded-bl-sm bg-white/[0.07] w-fit">
+    <div className="flex gap-1 px-3 py-2.5 rounded-2xl rounded-bl-sm bg-white border border-border/60 w-fit">
       {[0, 1, 2].map((i) => (
         <motion.span
           key={i}
-          className="block w-1.5 h-1.5 rounded-full bg-white/40"
+          className="block w-1.5 h-1.5 rounded-full bg-foreground/30"
           animate={{ opacity: [0.3, 1, 0.3], y: [0, -2, 0] }}
           transition={{ duration: 1, repeat: Infinity, delay: i * 0.2, ease: "easeInOut" }}
         />
@@ -49,7 +49,7 @@ export const FeaturesSection = () => (
         <span className="inline-block text-sm font-semibold text-primary tracking-wider uppercase mb-4">
           Возможности
         </span>
-        <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-4">
+        <h2 className="font-display text-3xl md:text-5xl font-bold text-foreground mb-4">
           Всё для комфортного чтения
         </h2>
         <p className="text-lg text-muted-foreground max-w-xl mx-auto">
@@ -60,54 +60,56 @@ export const FeaturesSection = () => (
       {/* Bento grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5">
 
-        {/* ── AI рекомендации — dark featured card, spans 2 cols ─────────── */}
+        {/* ── AI рекомендации — spans 2 cols ────────────────────────────── */}
         <motion.div
           custom={0}
           variants={cardVariants}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-40px" }}
-          className="sm:col-span-2 lg:col-span-2"
+          className="sm:col-span-2 lg:col-span-2 group"
         >
-          <div className="relative h-full rounded-2xl bg-gradient-to-br from-[#0d2b1f] to-[#0a1f17] border border-white/[0.08] p-6 lg:p-8 overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-[70px] pointer-events-none" />
+          <div className="relative h-full rounded-2xl border border-border bg-white p-6 lg:p-8 overflow-hidden transition-all duration-300 hover:border-transparent hover:shadow-xl hover:shadow-black/[0.04]">
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500 -z-10 blur-[1px] scale-[1.02]" />
+            <div className="absolute inset-[1px] rounded-[15px] bg-white -z-10" />
 
             <div className="relative grid sm:grid-cols-2 gap-6 items-start">
               {/* Left: title + desc */}
               <div>
-                <div className="w-11 h-11 rounded-xl bg-white/10 flex items-center justify-center mb-5">
-                  <IconSparkles size={22} className="text-emerald-400" stroke={1.5} />
+                <div className="w-12 h-12 rounded-xl bg-emerald-500/10 group-hover:bg-emerald-500/20 flex items-center justify-center mb-5 transition-colors duration-300">
+                  <IconSparkles size={24} className="text-emerald-600" stroke={1.5} />
                 </div>
-                <h3 className="text-xl font-bold text-white mb-2">AI рекомендации</h3>
-                <p className="text-white/50 text-sm leading-relaxed">
+                <h3 className="text-[17px] font-semibold text-foreground mb-2.5">AI рекомендации</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">
                   Персональный AI-помощник анализирует ваши предпочтения и предлагает книги,
                   которые вам точно понравятся. Задавайте вопросы прямо в читалке.
                 </p>
               </div>
 
               {/* Right: mini chat preview */}
-              <div className="rounded-xl bg-white/[0.05] border border-white/[0.07] p-3.5 space-y-2.5">
+              <div className="rounded-xl bg-muted/40 border border-border/60 p-3.5 space-y-2.5">
                 <div className="flex justify-end">
-                  <div className="bg-emerald-700/80 text-white text-[11.5px] rounded-2xl rounded-br-sm px-3.5 py-2 max-w-[90%] leading-[1.55]">
+                  <div className="bg-primary text-primary-foreground text-[11.5px] rounded-2xl rounded-br-sm px-3.5 py-2 max-w-[90%] leading-[1.55]">
                     Посоветуй что-нибудь похожее на Достоевского
                   </div>
                 </div>
                 <div className="flex gap-2 items-end">
-                  <div className="w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0">
-                    <IconSparkles size={9} className="text-emerald-400" />
+                  <div className="w-5 h-5 rounded-full bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center shrink-0">
+                    <IconSparkles size={9} className="text-emerald-600" />
                   </div>
-                  <div className="bg-white/[0.08] border border-white/[0.06] text-white/75 text-[11.5px] rounded-2xl rounded-bl-sm px-3.5 py-2 max-w-[90%] leading-[1.55]">
+                  <div className="bg-white border border-border/60 text-foreground/70 text-[11.5px] rounded-2xl rounded-bl-sm px-3.5 py-2 max-w-[90%] leading-[1.55]">
                     Попробуйте «Идиота» или «Воскресение» Толстого — схожая глубина психологизма...
                   </div>
                 </div>
                 <div className="flex gap-2 items-center">
-                  <div className="w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0">
-                    <IconSparkles size={9} className="text-emerald-400" />
+                  <div className="w-5 h-5 rounded-full bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center shrink-0">
+                    <IconSparkles size={9} className="text-emerald-600" />
                   </div>
                   <TypingDots />
                 </div>
               </div>
             </div>
+            <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-emerald-500 to-teal-500 opacity-0 group-hover:opacity-60 transition-opacity duration-500" />
           </div>
         </motion.div>
 

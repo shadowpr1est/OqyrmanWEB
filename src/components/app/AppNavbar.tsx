@@ -40,7 +40,7 @@ export const AppNavbar = () => {
           {/* Left: Logo + nav */}
           <div className="flex items-center gap-8">
             <Link
-              to="/catalog"
+              to="/"
               className="flex items-center gap-2 flex-shrink-0"
             >
               <img

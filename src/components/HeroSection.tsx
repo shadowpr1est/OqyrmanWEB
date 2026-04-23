@@ -98,16 +98,8 @@ function ReaderMockup() {
         </div>
       </motion.div>
 
-      {/* Selection chip */}
-      <motion.div
-        initial={{ opacity: 0, x: 12 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.4, delay: 1.1 }}
-        className="absolute top-[32%] -left-10 bg-white rounded-full shadow-lg border border-border/50 px-3 py-1.5 flex items-center gap-1.5 z-10"
-      >
-        <Sparkles size={11} className="text-primary" />
-        <span className="text-[10px] font-semibold text-foreground">Спросить AI</span>
-      </motion.div>
+
+
     </div>
   );
 }
@@ -155,12 +147,12 @@ export const HeroSection = () => (
 
           <motion.h1
             variants={item}
-            className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white leading-[1.1] mb-6"
+            className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white leading-[1.1] mb-6"
           >
-            Читайте больше.
+            Вся библиотека
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300">
-              Живите ярче.
+              Алматы — в кармане.
             </span>
           </motion.h1>
 

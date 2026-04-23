@@ -203,6 +203,7 @@ export const EpubReader = ({ fileUrl, bookId, bookTitle, onProgress, initialCfi 
     );
 
     // Clear popover when selection is cleared inside the iframe
+    // Also: suppress swipes shorter than 60px so text selection doesn't flip pages
     rendition.hooks.content.register((contents: { document: Document }) => {
       contents.document.addEventListener("selectionchange", () => {
         const s = contents.document.getSelection();
@@ -210,6 +211,15 @@ export const EpubReader = ({ fileUrl, bookId, bookTitle, onProgress, initialCfi 
           setAiSelection(null);
         }
       });
+
+      let swipeTouchStartX = 0;
+      contents.document.addEventListener("touchstart", (e: TouchEvent) => {
+        swipeTouchStartX = e.touches[0].clientX;
+      }, { passive: true, capture: true });
+      contents.document.addEventListener("touchend", (e: TouchEvent) => {
+        const delta = Math.abs(e.changedTouches[0].clientX - swipeTouchStartX);
+        if (delta < 60) e.stopPropagation();
+      }, { capture: true });
     });
 
     // Keyboard navigation

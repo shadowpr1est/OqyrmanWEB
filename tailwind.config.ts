@@ -61,6 +61,9 @@ export default {
           ring: "hsl(var(--sidebar-ring, 217.2 91.2% 59.8%))",
         },
       },
+      fontFamily: {
+        display: ["Fraunces", "Georgia", "serif"],
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",

@@ -44,7 +44,7 @@ interface Props {
   onDismiss: () => void;
 }
 
-const POPOVER_WIDTH = 332;
+const POPOVER_WIDTH = 270;
 const POPOVER_HEIGHT = 44;
 const VIEWPORT_PAD = 10;
 
