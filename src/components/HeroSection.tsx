@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import { WavyBackground } from "@/components/ui/wavy-background";
 import { AnimateIn } from "@/components/AnimateIn";
 import { BookOpen, ArrowRight } from "lucide-react";
@@ -36,12 +36,18 @@ export const HeroSection = () => (
 
         <AnimateIn delay={0.3}>
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button size="xl" className="bg-white text-primary hover:bg-white/90 font-semibold">
+            <Link
+              to="/catalog"
+              className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-white text-primary hover:bg-white/90 font-semibold text-base transition-all duration-200"
+            >
               Найти книгу <ArrowRight size={20} />
-            </Button>
-            <Button size="xl" className="bg-transparent border border-white/40 text-white hover:bg-white/10 hover:border-white/60 font-semibold">
+            </Link>
+            <a
+              href="#features"
+              className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-transparent border border-white/40 text-white hover:bg-white/10 hover:border-white/60 font-semibold text-base transition-all duration-200"
+            >
               Узнать больше
-            </Button>
+            </a>
           </div>
         </AnimateIn>
       </div>
