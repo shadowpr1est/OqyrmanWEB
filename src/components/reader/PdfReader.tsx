@@ -14,6 +14,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { ReaderNotes } from "./ReaderNotes";
 import { AiSelectionLayer, type ReaderSelection } from "./AiSelectionLayer";
+import { parsePosition } from "@/lib/notePosition";
 
 // pdf.js worker — import from node_modules for correct version
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -143,6 +144,13 @@ export const PdfReader = ({
         return;
       }
       const rect = range.getBoundingClientRect();
+      // PDF text layer is a flat collection of spans for the current page;
+      // the page's whole text gives the model enough surrounding context.
+      const pageEl = (range.commonAncestorContainer as Node & { parentElement?: Element | null })
+        .parentElement?.closest(".react-pdf__Page__textContent");
+      const context = pageEl ? (pageEl.textContent || "").replace(/\s+/g, " ").trim() : "";
+      const page = pageRef.current;
+      const total = numPagesRef.current;
       setAiSelection({
         text,
         rect: {
@@ -150,6 +158,12 @@ export const PdfReader = ({
           left: rect.left,
           width: rect.width,
           height: rect.height,
+        },
+        context: context && context !== text ? context : undefined,
+        locator: {
+          kind: "page",
+          value: String(page),
+          label: total > 0 ? `стр. ${page} / ${total}` : `стр. ${page}`,
         },
       });
     };
@@ -304,7 +318,17 @@ export const PdfReader = ({
             <IconZoomIn size={18} stroke={1.5} />
           </button>
           <div className="w-px h-5 bg-border/60 mx-0.5" />
-          <ReaderNotes bookId={bookId} progress={currentProgress} />
+          <ReaderNotes
+            bookId={bookId}
+            progress={currentProgress}
+            onNavigate={(raw) => {
+              const parsed = parsePosition(raw);
+              if (parsed.kind === "page") {
+                const n = parseInt(parsed.value, 10);
+                if (Number.isFinite(n)) goTo(n);
+              }
+            }}
+          />
         </div>
       </div>
 
@@ -336,20 +360,20 @@ export const PdfReader = ({
           </Document>
         </div>
 
-        {/* Prev / Next touch zones */}
+        {/* Prev / Next click zones — keep narrow so text selection isn't hijacked */}
         <button
           onClick={() => goTo(pageNumber - 1)}
-          className="absolute left-0 top-0 h-full w-12 lg:w-20 hidden sm:flex items-center justify-start pl-2 opacity-0 hover:opacity-100 transition-opacity"
+          className="absolute left-0 top-0 h-full w-5 lg:w-8 hidden sm:flex items-center justify-start pl-1 opacity-0 hover:opacity-100 transition-opacity"
           aria-label="Previous"
         >
-          <IconChevronLeft size={24} className="text-foreground/30" />
+          <IconChevronLeft size={20} className="text-foreground/30" />
         </button>
         <button
           onClick={() => goTo(pageNumber + 1)}
-          className="absolute right-0 top-0 h-full w-12 lg:w-20 hidden sm:flex items-center justify-end pr-2 opacity-0 hover:opacity-100 transition-opacity"
+          className="absolute right-0 top-0 h-full w-5 lg:w-8 hidden sm:flex items-center justify-end pr-1 opacity-0 hover:opacity-100 transition-opacity"
           aria-label="Next"
         >
-          <IconChevronRight size={24} className="text-foreground/30" />
+          <IconChevronRight size={20} className="text-foreground/30" />
         </button>
       </div>
 

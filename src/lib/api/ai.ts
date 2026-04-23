@@ -89,12 +89,25 @@ export const aiApi = {
   deleteConversation: (id: string) =>
     apiFetch<void>(`/ai/conversations/${id}`, { method: "DELETE" }),
 
+  seedConversationFromSelection: (
+    bookId: string,
+    body: { action: "ask" | "translate"; selection: string; answer: string },
+  ) =>
+    apiFetch<{ id: string; title: string }>(
+      `/ai/books/${bookId}/seed-conversation`,
+      {
+        method: "POST",
+        body: JSON.stringify(body),
+      },
+    ),
+
   explainSelection: async (
     bookId: string,
-    action: "explain" | "translate" | "identify",
+    action: "ask" | "translate",
     selection: string,
     onChunk: (chunk: AiStreamChunk) => void,
     signal?: AbortSignal,
+    context?: string,
   ) => {
     const token = tokenStorage.getAccess();
     const res = await fetch(`${BASE_URL}/ai/books/${bookId}/explain`, {
@@ -103,7 +116,7 @@ export const aiApi = {
         "Content-Type": "application/json",
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
-      body: JSON.stringify({ action, selection }),
+      body: JSON.stringify({ action, selection, context: context ?? "" }),
       signal,
     });
 

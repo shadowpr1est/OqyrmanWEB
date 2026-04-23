@@ -12,13 +12,16 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { notesApi } from "@/lib/api";
 import type { ReadingNote } from "@/lib/api/types";
+import { parsePosition } from "@/lib/notePosition";
 
 interface ReaderNotesProps {
   bookId: string;
   progress: number;
+  // Called when the user clicks a note's position chip — host reader jumps there.
+  onNavigate?: (raw: string) => void;
 }
 
-export const ReaderNotes = ({ bookId, progress }: ReaderNotesProps) => {
+export const ReaderNotes = ({ bookId, progress, onNavigate }: ReaderNotesProps) => {
   const [open, setOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -242,9 +245,28 @@ export const ReaderNotes = ({ bookId, progress }: ReaderNotesProps) => {
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex items-center gap-1.5 text-[11px]">
-                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded font-medium bg-muted/60 text-muted-foreground">
-                              {note.position}
-                            </span>
+                            {(() => {
+                              const parsed = parsePosition(note.position);
+                              const canNavigate =
+                                onNavigate && parsed.kind !== "percent";
+                              return (
+                                <button
+                                  type="button"
+                                  disabled={!canNavigate}
+                                  onClick={() => onNavigate?.(note.position)}
+                                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded font-medium ${
+                                    canNavigate
+                                      ? "bg-primary/10 text-primary hover:bg-primary/20 cursor-pointer transition-colors"
+                                      : "bg-muted/60 text-muted-foreground"
+                                  }`}
+                                  title={
+                                    canNavigate ? "Перейти к месту" : undefined
+                                  }
+                                >
+                                  {parsed.label}
+                                </button>
+                              );
+                            })()}
                           </div>
                           {!isEditing && (
                             <div className="flex items-center gap-0.5 flex-shrink-0">

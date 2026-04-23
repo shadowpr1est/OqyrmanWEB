@@ -2,35 +2,39 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   IconLanguage,
-  IconBulb,
+  IconSparkles,
   IconX,
   IconBookmark,
   IconCheck,
   IconCopy,
   IconRefresh,
   IconAlertCircle,
-  IconStars,
+  IconMessageCircle,
 } from "@tabler/icons-react";
 import { aiApi, notesApi } from "@/lib/api";
 import { AiMark } from "@/components/shared/AiMark";
+import { formatPosition, type PositionKind } from "@/lib/notePosition";
+import { openChatConversation } from "@/lib/aiChatBus";
 
-type AiReaderAction = "explain" | "translate" | "identify";
+type AiReaderAction = "ask" | "translate";
 
 const ACTION_LABELS: Record<AiReaderAction, string> = {
-  explain: "Объяснить",
+  ask: "Спросить AI",
   translate: "Перевести",
-  identify: "Что это?",
 };
 
 const ACTION_ICONS: Record<AiReaderAction, React.ReactNode> = {
-  explain: <IconBulb size={15} stroke={2} />,
+  ask: <IconSparkles size={15} stroke={2} />,
   translate: <IconLanguage size={15} stroke={2} />,
-  identify: <IconStars size={15} stroke={2} />,
 };
 
 export interface ReaderSelection {
   text: string;
   rect: { top: number; left: number; width: number; height: number };
+  context?: string;
+  // Precise locator used to jump back to this selection from the notes list.
+  // `label` is what's shown in the UI ("стр. 42", "45%").
+  locator?: { kind: PositionKind; value: string; label: string };
 }
 
 interface Props {
@@ -59,6 +63,7 @@ export const AiSelectionLayer = ({
     "idle",
   );
   const [copied, setCopied] = useState(false);
+  const [continuing, setContinuing] = useState(false);
 
   const activeSelectionRef = useRef<ReaderSelection | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -98,6 +103,7 @@ export const AiSelectionLayer = ({
             }
           },
           abort.signal,
+          sel.context,
         );
       } catch (err) {
         if ((err as Error).name !== "AbortError") {
@@ -124,8 +130,26 @@ export const AiSelectionLayer = ({
     setError(null);
     setSavedState("idle");
     setCopied(false);
+    setContinuing(false);
     activeSelectionRef.current = null;
   }, []);
+
+  const continueInChat = useCallback(async () => {
+    const sel = activeSelectionRef.current;
+    if (!sel || !streamText || !activeAction || streaming || continuing) return;
+    setContinuing(true);
+    try {
+      const { id } = await aiApi.seedConversationFromSelection(bookId, {
+        action: activeAction,
+        selection: sel.text,
+        answer: streamText,
+      });
+      openChatConversation(id);
+      closeResult();
+    } catch {
+      setContinuing(false);
+    }
+  }, [streamText, activeAction, streaming, continuing, bookId, closeResult]);
 
   // Esc to close result modal
   useEffect(() => {
@@ -160,9 +184,12 @@ export const AiSelectionLayer = ({
         `🤖 ${label}:`,
         streamText,
       ].join("\n");
+      const position = sel.locator
+        ? formatPosition(sel.locator.kind, sel.locator.value, sel.locator.label)
+        : `${progress}%`;
       await notesApi.create({
         book_id: bookId,
-        position: `${progress}%`,
+        position,
         content,
       });
       setSavedState("saved");
@@ -223,18 +250,14 @@ export const AiSelectionLayer = ({
             role="toolbar"
             aria-label="Действия ИИ над выделением"
           >
-            {(["explain", "translate", "identify"] as AiReaderAction[]).map(
-              (action) => (
-                <PopoverButton
-                  key={action}
-                  icon={ACTION_ICONS[action]}
-                  label={
-                    action === "translate" ? "Перевод" : ACTION_LABELS[action]
-                  }
-                  onClick={() => runAction(action)}
-                />
-              ),
-            )}
+            {(["ask", "translate"] as AiReaderAction[]).map((action) => (
+              <PopoverButton
+                key={action}
+                icon={ACTION_ICONS[action]}
+                label={action === "translate" ? "Перевод" : ACTION_LABELS[action]}
+                onClick={() => runAction(action)}
+              />
+            ))}
             <div className="mx-0.5 h-5 w-px bg-border/60" />
             <button
               onClick={onDismiss}
@@ -346,6 +369,24 @@ export const AiSelectionLayer = ({
                   Позиция: {progress}%
                 </span>
                 <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={continueInChat}
+                    disabled={!streamText || streaming || continuing}
+                    className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+                    aria-label="Продолжить в чате"
+                    title="Продолжить в чате"
+                  >
+                    {continuing ? (
+                      <motion.span
+                        className="h-3 w-3 rounded-full border-2 border-muted-foreground/30 border-t-muted-foreground"
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+                      />
+                    ) : (
+                      <IconMessageCircle size={13} stroke={1.8} />
+                    )}
+                    В чат
+                  </button>
                   <button
                     onClick={copyResponse}
                     disabled={!streamText || streaming}

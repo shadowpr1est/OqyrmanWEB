@@ -5,6 +5,7 @@ import type { Book } from "@/lib/api";
 import type { ShelfStatus } from "@/lib/api/types";
 import { EpubReader } from "@/components/reader/EpubReader";
 import { PdfReader } from "@/components/reader/PdfReader";
+import { AiChatWidget } from "@/components/app/AiChatWidget";
 
 const Reader = () => {
   const { id } = useParams<{ id: string }>();
@@ -157,25 +158,31 @@ const Reader = () => {
 
   if (format === "epub") {
     return (
-      <EpubReader
-        fileUrl={fileUrl}
-        bookId={id!}
-        bookTitle={book.title}
-        onProgress={saveProgress}
-        initialCfi={initialCfi}
-      />
+      <>
+        <EpubReader
+          fileUrl={fileUrl}
+          bookId={id!}
+          bookTitle={book.title}
+          onProgress={saveProgress}
+          initialCfi={initialCfi}
+        />
+        <AiChatWidget />
+      </>
     );
   }
 
   if (format === "pdf") {
     return (
-      <PdfReader
-        fileUrl={fileUrl}
-        bookId={id!}
-        bookTitle={book.title}
-        initialProgress={initialProgress}
-        onProgress={saveProgress}
-      />
+      <>
+        <PdfReader
+          fileUrl={fileUrl}
+          bookId={id!}
+          bookTitle={book.title}
+          initialProgress={initialProgress}
+          onProgress={saveProgress}
+        />
+        <AiChatWidget />
+      </>
     );
   }
 

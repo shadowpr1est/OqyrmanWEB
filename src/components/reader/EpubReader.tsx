@@ -18,6 +18,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { ReaderNotes } from "./ReaderNotes";
 import { AiSelectionLayer, type ReaderSelection } from "./AiSelectionLayer";
+import { parsePosition } from "@/lib/notePosition";
 
 interface EpubReaderProps {
   fileUrl: string;
@@ -172,14 +173,21 @@ export const EpubReader = ({ fileUrl, bookId, bookTitle, onProgress, initialCfi 
     // Text selection → AI actions popover
     rendition.on(
       "selected",
-      (_cfiRange: string, contents: { window: Window; document: Document }) => {
+      (cfiRange: string, contents: { window: Window; document: Document }) => {
         const sel = contents.window.getSelection();
         const text = sel?.toString().trim() || "";
         if (!text || text.length < 3 || !sel || sel.rangeCount === 0) return;
         const iframe = viewerRef.current?.querySelector("iframe");
         if (!iframe) return;
-        const rect = sel.getRangeAt(0).getBoundingClientRect();
+        const range = sel.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
         const iframeRect = iframe.getBoundingClientRect();
+        // Snapshot progress at selection time — `progress` from closure may be
+        // stale, but `book.locations` is live.
+        let pct = 0;
+        if (book.locations.length() > 0) {
+          pct = Math.round((book.locations.percentageFromCfi(cfiRange) || 0) * 100);
+        }
         setAiSelection({
           text,
           rect: {
@@ -188,6 +196,8 @@ export const EpubReader = ({ fileUrl, bookId, bookTitle, onProgress, initialCfi 
             width: rect.width,
             height: rect.height,
           },
+          context: extractSurroundingContext(range, text),
+          locator: { kind: "cfi", value: cfiRange, label: `${pct}%` },
         });
       },
     );
@@ -298,7 +308,16 @@ export const EpubReader = ({ fileUrl, bookId, bookTitle, onProgress, initialCfi 
           >
             <IconSettings size={18} stroke={1.5} />
           </button>
-          <ReaderNotes bookId={bookId} progress={progress} />
+          <ReaderNotes
+            bookId={bookId}
+            progress={progress}
+            onNavigate={(raw) => {
+              const parsed = parsePosition(raw);
+              if (parsed.kind === "cfi") {
+                renditionRef.current?.display(parsed.value);
+              }
+            }}
+          />
         </div>
       </div>
 
@@ -307,20 +326,20 @@ export const EpubReader = ({ fileUrl, bookId, bookTitle, onProgress, initialCfi 
         {/* EPUB viewer */}
         <div ref={viewerRef} className="h-full w-full" />
 
-        {/* Prev / Next touch zones */}
+        {/* Prev / Next click zones — keep narrow so text selection isn't hijacked */}
         <button
           onClick={() => renditionRef.current?.prev()}
-          className="absolute left-0 top-0 h-full w-12 lg:w-20 hidden sm:flex items-center justify-start pl-2 opacity-0 hover:opacity-100 transition-opacity"
+          className="absolute left-0 top-0 h-full w-5 lg:w-8 hidden sm:flex items-center justify-start pl-1 opacity-0 hover:opacity-100 transition-opacity"
           aria-label="Previous"
         >
-          <IconChevronLeft size={24} className="text-primary/30" />
+          <IconChevronLeft size={20} className="text-primary/30" />
         </button>
         <button
           onClick={() => renditionRef.current?.next()}
-          className="absolute right-0 top-0 h-full w-12 lg:w-20 hidden sm:flex items-center justify-end pr-2 opacity-0 hover:opacity-100 transition-opacity"
+          className="absolute right-0 top-0 h-full w-5 lg:w-8 hidden sm:flex items-center justify-end pr-1 opacity-0 hover:opacity-100 transition-opacity"
           aria-label="Next"
         >
-          <IconChevronRight size={24} className="text-primary/30" />
+          <IconChevronRight size={20} className="text-primary/30" />
         </button>
 
         {/* TOC panel */}
@@ -422,3 +441,28 @@ export const EpubReader = ({ fileUrl, bookId, bookTitle, onProgress, initialCfi 
     </div>
   );
 };
+
+// Walk up to the nearest block-level ancestor and return its text plus
+// the previous and next sibling blocks — used as context for the AI prompt.
+function extractSurroundingContext(range: Range, selectionText: string): string {
+  const BLOCK_TAGS = new Set([
+    "P", "DIV", "LI", "BLOCKQUOTE", "SECTION", "ARTICLE",
+    "H1", "H2", "H3", "H4", "H5", "H6", "TD", "DD", "DT",
+  ]);
+  let node: Node | null = range.commonAncestorContainer;
+  while (node && (node.nodeType !== 1 || !BLOCK_TAGS.has((node as Element).tagName))) {
+    node = node.parentNode;
+  }
+  if (!node) return "";
+  const block = node as Element;
+  const collect = (el: Element | null): string =>
+    (el?.textContent || "").replace(/\s+/g, " ").trim();
+  const parts = [
+    collect(block.previousElementSibling),
+    collect(block),
+    collect(block.nextElementSibling),
+  ].filter(Boolean);
+  const joined = parts.join("\n\n");
+  // Don't waste tokens echoing the selection back.
+  return joined === selectionText.replace(/\s+/g, " ").trim() ? "" : joined;
+}
