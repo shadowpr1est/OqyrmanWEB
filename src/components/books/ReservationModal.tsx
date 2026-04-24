@@ -69,11 +69,11 @@ export const ReservationModal = ({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[480px] p-0 overflow-hidden gap-0">
         {/* Header */}
-        <div className="relative px-6 pt-6 pb-4 bg-gradient-to-b from-[#1E5945]/[0.04] to-transparent">
+        <div className="relative px-6 pt-6 pb-4 bg-gradient-to-b from-primary/[0.04] to-transparent">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-foreground flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-[#1E5945]/10 flex items-center justify-center flex-shrink-0">
-                <IconBuildingBank size={18} className="text-[#1E5945]" />
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <IconBuildingBank size={18} className="text-primary" />
               </div>
               Забронировать книгу
             </DialogTitle>
@@ -109,7 +109,7 @@ export const ReservationModal = ({
                   onClick={() => setSelectedId(lb.id)}
                   className={`w-full text-left rounded-xl border-2 p-3.5 transition-all duration-200 ${
                     isSelected
-                      ? "border-[#1E5945] bg-[#1E5945]/[0.04] shadow-sm"
+                      ? "border-primary bg-primary/[0.04] shadow-sm"
                       : "border-border/60 bg-white hover:border-border hover:shadow-sm"
                   }`}
                 >
@@ -118,7 +118,7 @@ export const ReservationModal = ({
                     <div
                       className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
                         isSelected
-                          ? "border-[#1E5945] bg-[#1E5945]"
+                          ? "border-primary bg-primary"
                           : "border-muted-foreground/30"
                       }`}
                     >
@@ -136,7 +136,7 @@ export const ReservationModal = ({
                     {/* Library info */}
                     <div className="flex-1 min-w-0">
                       <p className={`text-sm font-semibold transition-colors ${
-                        isSelected ? "text-[#1E5945]" : "text-foreground"
+                        isSelected ? "text-primary" : "text-foreground"
                       }`}>
                         {lb.library?.name || `Библиотека #${lb.library_id}`}
                       </p>
@@ -179,7 +179,7 @@ export const ReservationModal = ({
             Отмена
           </Button>
           <Button
-            className="flex-1 bg-[#1E5945] hover:bg-[#174a39] text-white"
+            className="flex-1 bg-primary hover:bg-primary-dark text-white"
             disabled={!selectedId || reserveMutation.isPending}
             onClick={() => reserveMutation.mutate()}
           >

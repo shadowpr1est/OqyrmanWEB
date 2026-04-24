@@ -11,6 +11,8 @@ import {
 import { eventsApi } from "@/lib/api";
 import type { Event } from "@/lib/api";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { PageHeader } from "@/components/shared/PageHeader";
+import { staggerItem, backdropFade } from "@/lib/motion";
 import { optimizedUrl } from "@/lib/imageProxy";
 
 const Events = () => {
@@ -35,21 +37,10 @@ const Events = () => {
 
   return (
     <div className="container mx-auto px-4 lg:px-8 py-8">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-8"
-      >
-        <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-          Мероприятия
-        </h1>
-        <p className="text-muted-foreground">
-          События и встречи в библиотеках
-        </p>
-      </motion.div>
+      <PageHeader title="Мероприятия" subtitle="События и встречи в библиотеках" />
 
       {isLoading ? (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
           {Array.from({ length: 6 }, (_, i) => (
             <div key={i} className="animate-pulse h-72 rounded-2xl bg-muted/40" />
           ))}
@@ -61,13 +52,12 @@ const Events = () => {
           description="Следите за обновлениями — скоро здесь появятся события"
         />
       ) : (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
           {events.map((event, i) => (
             <motion.div
               key={event.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
+              {...staggerItem}
+              transition={{ ...staggerItem.transition, delay: i * 0.05 }}
               whileHover={{ y: -4 }}
               className="group cursor-pointer"
               onClick={() => setSelected(event)}
@@ -101,9 +91,9 @@ const Events = () => {
                       {formatDate(event.starts_at)}, {formatTime(event.starts_at)}
                     </p>
                     {event.location && (
-                      <p className="flex items-center gap-1.5">
-                        <IconMapPin size={14} stroke={1.5} />
-                        {event.location}
+                      <p className="flex items-center gap-1.5 min-w-0">
+                        <IconMapPin size={14} stroke={1.5} className="flex-shrink-0" />
+                        <span className="truncate">{event.location}</span>
                       </p>
                     )}
                   </div>
@@ -120,8 +110,7 @@ const Events = () => {
           <>
             {/* Backdrop */}
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+              {...backdropFade}
               exit={{ opacity: 0 }}
               className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
               onClick={() => setSelected(null)}
@@ -162,7 +151,7 @@ const Events = () => {
 
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                  <h2 className="text-lg font-bold text-foreground leading-tight">
+                  <h2 className="section-title leading-tight">
                     {selected.title}
                   </h2>
 

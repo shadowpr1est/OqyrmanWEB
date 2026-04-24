@@ -8,6 +8,7 @@ import {
   IconArrowRight,
 } from "@tabler/icons-react";
 import { booksApi, readingSessionsApi } from "@/lib/api";
+import { fadeLeft, fadeRight, fadeUp } from "@/lib/motion";
 import type { Book, ReadingSession } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { BookCard } from "@/components/books/BookCard";
@@ -73,7 +74,7 @@ const BooksCatalog = () => {
       {/* ── Hero Poster ── */}
       <section className="relative overflow-hidden rounded-b-3xl">
         {/* Background pattern */}
-        <div className="absolute inset-0 bg-[#1E5945]">
+        <div className="absolute inset-0 bg-primary">
           <svg className="absolute inset-0 w-full h-full opacity-[0.06]" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
@@ -91,9 +92,7 @@ const BooksCatalog = () => {
             {/* Left text */}
             <motion.div
               className="flex-1 text-center lg:text-left"
-              initial={{ opacity: 0, x: -30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5 }}
+              {...fadeLeft}
             >
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/10 text-emerald-200 text-xs font-medium mb-5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -114,9 +113,8 @@ const BooksCatalog = () => {
             {/* Right — floating book covers */}
             <motion.div
               className="flex-1 hidden lg:flex items-center justify-center"
-              initial={{ opacity: 0, x: 30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.15 }}
+              {...fadeRight}
+              transition={{ ...fadeRight.transition, delay: 0.15 }}
             >
               <div className="relative w-[300px] h-[280px]">
                 {/* Decorative book covers */}
@@ -136,9 +134,8 @@ const BooksCatalog = () => {
           {/* Stats bar */}
           <motion.div
             className="flex justify-center gap-8 md:gap-16 pb-8 text-center"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
+            {...fadeUp}
+            transition={{ ...fadeUp.transition, delay: 0.3 }}
           >
             {[
               { value: "200+", label: "Книг" },
@@ -264,7 +261,7 @@ function Section({
   return (
     <section>
       <div className="flex items-center justify-between mb-5">
-        <h2 className="flex items-center gap-2 text-lg md:text-xl font-bold text-foreground">
+        <h2 className="flex items-center gap-2 section-title">
           {icon}
           {title}
         </h2>

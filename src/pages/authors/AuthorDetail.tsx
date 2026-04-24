@@ -6,6 +6,7 @@ import { authorsApi, booksApi } from "@/lib/api";
 import { BookCard } from "@/components/books/BookCard";
 import { BookGridSkeleton } from "@/components/books/BookCardSkeleton";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { fadeUpSm, fadeUp, staggerItem } from "@/lib/motion";
 
 const AuthorDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -76,7 +77,7 @@ const AuthorDetail = () => {
         <div className="container mx-auto px-4 lg:px-8 py-12 md:py-16 relative">
           <button
             onClick={() => navigate(-1)}
-            className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-white transition-colors mb-6"
+            className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-white transition-colors mb-6 -ml-2 px-2 py-1.5 rounded-lg hover:bg-white/10"
           >
             <IconArrowLeft size={16} /> Назад
           </button>
@@ -102,9 +103,8 @@ const AuthorDetail = () => {
             </motion.div>
 
             <motion.div
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
+              {...fadeUpSm}
+              transition={{ ...fadeUpSm.transition, delay: 0.1 }}
               className="text-center md:text-left"
             >
               <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
@@ -135,11 +135,10 @@ const AuthorDetail = () => {
       <div className="container mx-auto px-4 lg:px-8 py-10">
         {/* Books */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
+          {...fadeUp}
+          transition={{ ...fadeUp.transition, delay: 0.3 }}
         >
-          <h2 className="text-lg font-semibold text-foreground mb-5">
+          <h2 className="section-title mb-5">
             Книги автора
           </h2>
 
@@ -152,13 +151,12 @@ const AuthorDetail = () => {
               description="Книги этого автора пока не добавлены в каталог"
             />
           ) : (
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
               {books.map((book, i) => (
                 <motion.div
                   key={book.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.03 }}
+                  {...staggerItem}
+                  transition={{ ...staggerItem.transition, delay: i * 0.03 }}
                 >
                   <BookCard book={book} />
                 </motion.div>

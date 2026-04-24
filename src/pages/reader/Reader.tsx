@@ -1,11 +1,21 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, lazy, Suspense } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { booksApi, readingSessionsApi, wishlistApi } from "@/lib/api";
 import type { Book } from "@/lib/api";
 import type { ShelfStatus } from "@/lib/api/types";
-import { EpubReader } from "@/components/reader/EpubReader";
-import { PdfReader } from "@/components/reader/PdfReader";
 import { AiChatWidget } from "@/components/app/AiChatWidget";
+
+const EpubReader = lazy(() => import("@/components/reader/EpubReader").then(m => ({ default: m.EpubReader })));
+const PdfReader = lazy(() => import("@/components/reader/PdfReader").then(m => ({ default: m.PdfReader })));
+
+const ReaderSpinner = () => (
+  <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#faf9f6]">
+    <div className="flex flex-col items-center gap-3">
+      <div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      <p className="text-sm text-muted-foreground">Загрузка книги…</p>
+    </div>
+  </div>
+);
 
 const Reader = () => {
   const { id } = useParams<{ id: string }>();
@@ -24,6 +34,7 @@ const Reader = () => {
 
   useEffect(() => {
     if (!id) return;
+    let cancelled = false;
 
     Promise.all([
       booksApi.getById(id),
@@ -31,6 +42,7 @@ const Reader = () => {
       wishlistApi.exists(id),
     ])
       .then(([bookData, session, shelf]) => {
+        if (cancelled) return;
         if (!bookData.file?.file_url) {
           setError("У этой книги нет файла для чтения");
           return;
@@ -62,8 +74,10 @@ const Reader = () => {
           shelfStatusRef.current = "reading";
         }
       })
-      .catch(() => setError("Книга не найдена"))
-      .finally(() => setLoading(false));
+      .catch(() => { if (!cancelled) setError("Книга не найдена"); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+
+    return () => { cancelled = true; };
   }, [id]);
 
   // Debounced progress save
@@ -126,16 +140,7 @@ const Reader = () => {
     };
   }, [id]);
 
-  if (loading) {
-    return (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-white">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-muted-foreground">Загрузка книги…</p>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <ReaderSpinner />;
 
   if (error || !book?.file) {
     return (
@@ -158,7 +163,7 @@ const Reader = () => {
 
   if (format === "epub") {
     return (
-      <>
+      <Suspense fallback={<ReaderSpinner />}>
         <EpubReader
           fileUrl={fileUrl}
           bookId={id!}
@@ -167,13 +172,13 @@ const Reader = () => {
           initialCfi={initialCfi}
         />
         <AiChatWidget />
-      </>
+      </Suspense>
     );
   }
 
   if (format === "pdf") {
     return (
-      <>
+      <Suspense fallback={<ReaderSpinner />}>
         <PdfReader
           fileUrl={fileUrl}
           bookId={id!}
@@ -182,7 +187,7 @@ const Reader = () => {
           onProgress={saveProgress}
         />
         <AiChatWidget />
-      </>
+      </Suspense>
     );
   }
 

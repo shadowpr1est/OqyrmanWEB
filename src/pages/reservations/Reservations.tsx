@@ -8,6 +8,8 @@ import { reservationsApi } from "@/lib/api";
 import type { Reservation } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { PageHeader } from "@/components/shared/PageHeader";
+import { fadeUpSm } from "@/lib/motion";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -103,9 +105,8 @@ const ReservationCard = ({ reservation }: { reservation: Reservation }) => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="rounded-xl border border-border bg-white p-5 flex flex-col sm:flex-row gap-4"
+      {...fadeUpSm}
+      className="rounded-2xl border border-border bg-white p-5 flex flex-col sm:flex-row gap-4"
     >
       {book?.cover_url ? (
         <Link to={`/books/${book.id}`} className="flex-shrink-0">
@@ -194,24 +195,16 @@ const Reservations = () => {
 
   return (
     <div className="container mx-auto px-4 lg:px-8 py-8">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-8 flex items-center justify-between"
-      >
-        <div>
-          <h1 className="text-2xl font-bold text-foreground mb-2">Мои брони</h1>
-          <p className="text-muted-foreground">
-            {reservations.length > 0
-              ? `${reservations.length} бронирований`
-              : "Управляйте своими бронированиями"}
-          </p>
-        </div>
-        <Button onClick={() => setCardOpen(true)} className="gap-1.5">
-          <IconIdBadge2 size={18} />
-          Читательский билет
-        </Button>
-      </motion.div>
+      <PageHeader
+        title="Мои брони"
+        subtitle={reservations.length > 0 ? `${reservations.length} бронирований` : "Управляйте своими бронированиями"}
+        action={
+          <Button onClick={() => setCardOpen(true)} className="gap-1.5">
+            <IconIdBadge2 size={18} />
+            Читательский билет
+          </Button>
+        }
+      />
 
       {isLoading ? (
         <div className="space-y-4">

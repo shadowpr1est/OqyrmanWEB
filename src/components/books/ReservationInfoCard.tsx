@@ -24,7 +24,7 @@ const statusConfig = {
   },
   active: {
     label: "На руках",
-    color: "text-[#1E5945]",
+    color: "text-primary",
     bg: "bg-emerald-50 border-emerald-200",
     icon: IconCheck,
   },
@@ -105,7 +105,7 @@ export const ReservationInfoCard = ({ reservation }: ReservationInfoCardProps) =
           <button
             onClick={() => extendMutation.mutate()}
             disabled={extendMutation.isPending}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#1E5945]/30 bg-white text-[#1E5945] text-xs font-medium hover:bg-emerald-50 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-primary/30 bg-white text-primary text-xs font-medium hover:bg-accent transition-colors"
           >
             <IconRefresh size={13} />
             {extendMutation.isPending ? "Продлеваем..." : "Продлить на 7 дней"}

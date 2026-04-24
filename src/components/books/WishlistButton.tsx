@@ -20,7 +20,7 @@ export const WishlistButton = ({ bookId, size = "md" }: WishlistButtonProps) => 
   if (status === "reading") {
     return (
       <div
-        className={`${classes} bg-blue-50 text-blue-400 cursor-default`}
+        className={`${classes} bg-sky-50 text-sky-500 cursor-default`}
         title="Вы сейчас читаете эту книгу"
       >
         <IconBook size={iconSize} stroke={1.5} />
@@ -35,7 +35,7 @@ export const WishlistButton = ({ bookId, size = "md" }: WishlistButtonProps) => 
         whileTap={{ scale: 0.85 }}
         onClick={() => remove.mutate()}
         disabled={loading}
-        className={`${classes} transition-colors bg-green-50 text-green-500 hover:bg-green-100`}
+        className={`${classes} transition-colors bg-emerald-50 text-emerald-600 hover:bg-emerald-100`}
         title="Прочитано — нажмите чтобы убрать с полки"
       >
         <IconCircleCheck size={iconSize} stroke={1.5} />

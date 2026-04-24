@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { IconStar, IconPencil, IconTrash, IconCheck, IconX } from "@tabler/icons-react";
+import { IconPencil, IconTrash, IconCheck, IconX } from "@tabler/icons-react";
 import { reviewsApi } from "@/lib/api";
 import type { Review } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { Rating } from "@/components/shared/Rating";
 import { Button } from "@/components/ui/button";
+import { ReviewForm } from "@/components/books/ReviewForm";
 import { toast } from "sonner";
 
 interface BookReviewsProps {
@@ -100,49 +101,15 @@ export const BookReviews = ({ bookId }: BookReviewsProps) => {
           animate={{ opacity: 1, y: 0 }}
           className="rounded-xl border border-border p-5 mb-6 bg-muted/20"
         >
-          <div className="flex items-center gap-1 mb-4">
-            <span className="text-sm text-muted-foreground mr-2">Оценка:</span>
-            {[1, 2, 3, 4, 5].map((v) => (
-              <button
-                key={v}
-                onClick={() => setRating(v)}
-                className="p-0.5 hover:scale-110 transition-transform"
-              >
-                <IconStar
-                  size={22}
-                  fill={v <= rating ? "currentColor" : "none"}
-                  className={v <= rating ? "text-amber-400" : "text-muted-foreground/30"}
-                  stroke={1.5}
-                />
-              </button>
-            ))}
-          </div>
-          <textarea
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            placeholder="Поделитесь впечатлениями..."
-            className="w-full rounded-lg border border-border bg-white p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/30 min-h-[100px]"
+          <ReviewForm
+            rating={rating}
+            body={body}
+            onRatingChange={setRating}
+            onBodyChange={setBody}
+            onSubmit={() => createMutation.mutate()}
+            onCancel={() => { setShowForm(false); setRating(0); setBody(""); }}
+            isPending={createMutation.isPending}
           />
-          <div className="flex gap-2 mt-3">
-            <Button
-              size="sm"
-              disabled={rating === 0 || createMutation.isPending}
-              onClick={() => createMutation.mutate()}
-            >
-              {createMutation.isPending ? "Отправляем..." : "Отправить"}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setShowForm(false);
-                setRating(0);
-                setBody("");
-              }}
-            >
-              Отмена
-            </Button>
-          </div>
         </motion.div>
       )}
 
@@ -226,44 +193,17 @@ export const BookReviews = ({ bookId }: BookReviewsProps) => {
                 </div>
 
                 {isEditing ? (
-                  <div className="mt-2 space-y-3">
-                    <div className="flex items-center gap-1">
-                      <span className="text-sm text-muted-foreground mr-2">Оценка:</span>
-                      {[1, 2, 3, 4, 5].map((v) => (
-                        <button
-                          key={v}
-                          onClick={() => setEditRating(v)}
-                          className="p-0.5 hover:scale-110 transition-transform"
-                        >
-                          <IconStar
-                            size={20}
-                            fill={v <= editRating ? "currentColor" : "none"}
-                            className={v <= editRating ? "text-amber-400" : "text-muted-foreground/30"}
-                            stroke={1.5}
-                          />
-                        </button>
-                      ))}
-                    </div>
-                    <textarea
-                      value={editBody}
-                      onChange={(e) => setEditBody(e.target.value)}
-                      className="w-full rounded-lg border border-border bg-white p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/30 min-h-[80px]"
+                  <div className="mt-2">
+                    <ReviewForm
+                      rating={editRating}
+                      body={editBody}
+                      onRatingChange={setEditRating}
+                      onBodyChange={setEditBody}
+                      onSubmit={() => updateMutation.mutate({ id: r.id, rating: editRating, body: editBody })}
+                      onCancel={cancelEdit}
+                      isPending={updateMutation.isPending}
+                      minHeight="min-h-[80px]"
                     />
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        disabled={editRating === 0 || updateMutation.isPending}
-                        onClick={() => updateMutation.mutate({ id: r.id, rating: editRating, body: editBody })}
-                        className="gap-1"
-                      >
-                        <IconCheck size={14} />
-                        {updateMutation.isPending ? "Сохраняем..." : "Сохранить"}
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={cancelEdit} className="gap-1">
-                        <IconX size={14} />
-                        Отмена
-                      </Button>
-                    </div>
                   </div>
                 ) : (
                   r.body && (

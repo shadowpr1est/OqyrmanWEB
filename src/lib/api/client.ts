@@ -158,8 +158,8 @@ export async function apiUpload<T>(
     if (!isRefreshing) {
       isRefreshing = true;
       try {
-        await refreshTokens();
-        refreshQueue.forEach((q) => q.resolve(""));
+        const newToken = await refreshTokens();
+        refreshQueue.forEach((q) => q.resolve(newToken));
         refreshQueue = [];
         isRefreshing = false;
         return apiUpload<T>(path, formData, false);

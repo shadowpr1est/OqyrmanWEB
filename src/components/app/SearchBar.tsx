@@ -78,9 +78,14 @@ export const SearchBar = () => {
   const hasQuery = query.length >= 2;
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className="relative" role="search" aria-label="Поиск книг и авторов">
       {/* Search trigger / input */}
       <div
+        role="combobox"
+        aria-expanded={open}
+        aria-haspopup="listbox"
+        aria-label="Поиск"
+        tabIndex={open ? -1 : 0}
         className={`flex items-center gap-2 rounded-xl border transition-all ${
           open
             ? "border-primary/40 bg-white shadow-md w-[320px] lg:w-[400px]"
@@ -92,23 +97,36 @@ export const SearchBar = () => {
             setTimeout(() => inputRef.current?.focus(), 0);
           }
         }}
+        onKeyDown={(e) => {
+          if (!open && (e.key === "Enter" || e.key === " ")) {
+            e.preventDefault();
+            setOpen(true);
+            setTimeout(() => inputRef.current?.focus(), 0);
+          }
+        }}
       >
-        <IconSearch size={16} stroke={1.5} className="ml-3 text-muted-foreground flex-shrink-0" />
+        <IconSearch size={16} stroke={1.5} className="ml-3 text-muted-foreground flex-shrink-0" aria-hidden="true" />
         {open ? (
           <input
             ref={inputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={tab === "book" ? "Поиск книг..." : "Поиск авторов..."}
+            aria-autocomplete="list"
+            aria-controls="search-results"
             className="flex-1 py-2 pr-2 text-sm bg-transparent outline-none placeholder:text-muted-foreground"
             onKeyDown={(e) => { if (e.key === "Escape") setOpen(false); }}
           />
         ) : (
-          <span className="flex-1 py-2 text-sm text-muted-foreground">Поиск...</span>
+          <span className="flex-1 py-2 text-sm text-muted-foreground" aria-hidden="true">Поиск...</span>
         )}
         {open && query && (
-          <button onClick={() => setQuery("")} className="pr-3 text-muted-foreground hover:text-foreground">
-            <IconX size={14} />
+          <button
+            onClick={() => setQuery("")}
+            aria-label="Очистить поиск"
+            className="pr-3 text-muted-foreground hover:text-foreground"
+          >
+            <IconX size={14} aria-hidden="true" />
           </button>
         )}
       </div>
@@ -117,8 +135,10 @@ export const SearchBar = () => {
       {open && (
         <div className="absolute top-full left-0 right-0 mt-1.5 rounded-xl border border-border/60 bg-white shadow-lg overflow-hidden z-50">
           {/* Tabs */}
-          <div className="flex border-b border-border/60">
+          <div role="tablist" aria-label="Тип поиска" className="flex border-b border-border/60">
             <button
+              role="tab"
+              aria-selected={tab === "book"}
               onClick={() => setTab("book")}
               className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm font-medium transition-colors ${
                 tab === "book"
@@ -126,10 +146,12 @@ export const SearchBar = () => {
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              <IconBook size={15} />
+              <IconBook size={15} aria-hidden="true" />
               Книга
             </button>
             <button
+              role="tab"
+              aria-selected={tab === "author"}
               onClick={() => setTab("author")}
               className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm font-medium transition-colors ${
                 tab === "author"
@@ -137,13 +159,13 @@ export const SearchBar = () => {
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              <IconUser size={15} />
+              <IconUser size={15} aria-hidden="true" />
               Автор
             </button>
           </div>
 
           {/* Results */}
-          <div className="max-h-[320px] overflow-y-auto">
+          <div id="search-results" role="listbox" aria-label="Результаты поиска" className="max-h-[320px] overflow-y-auto">
             {loading && (
               <div className="px-4 py-6 text-center text-sm text-muted-foreground">Ищем...</div>
             )}
@@ -163,6 +185,8 @@ export const SearchBar = () => {
             {!loading && tab === "book" && books.map((b) => (
               <button
                 key={b.id}
+                role="option"
+                aria-selected={false}
                 onClick={() => handleSelect(`/books/${b.id}`)}
                 className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors text-left"
               >
@@ -185,6 +209,8 @@ export const SearchBar = () => {
             {!loading && tab === "author" && authors.map((a) => (
               <button
                 key={a.id}
+                role="option"
+                aria-selected={false}
                 onClick={() => handleSelect(`/authors/${a.id}`)}
                 className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors text-left"
               >

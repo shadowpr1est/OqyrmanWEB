@@ -13,6 +13,7 @@ import {
 } from "@tabler/icons-react";
 import type { Notification, NotificationType } from "@/lib/api";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { PageHeader } from "@/components/shared/PageHeader";
 import { toast } from "sonner";
 import { useNotifications } from "@/hooks/useNotifications";
 
@@ -128,20 +129,10 @@ const Notifications = () => {
 
   return (
     <div className="container mx-auto px-4 lg:px-8 py-8">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-8 flex items-center justify-between"
-      >
-        <div>
-          <h1 className="text-2xl font-bold text-foreground mb-2">Уведомления</h1>
-          <p className="text-muted-foreground">
-            {unreadCount > 0
-              ? `${unreadCount} непрочитанных`
-              : "Все прочитано"}
-          </p>
-        </div>
-      </motion.div>
+      <PageHeader
+        title="Уведомления"
+        subtitle={unreadCount > 0 ? `${unreadCount} непрочитанных` : "Все прочитано"}
+      />
 
       {isLoading ? (
         <div className="space-y-3 max-w-2xl">

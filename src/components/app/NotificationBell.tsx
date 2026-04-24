@@ -97,9 +97,9 @@ const NotificationPopoverItem = ({
             onMarkRead(notification.id);
           }}
           className="mt-0.5 flex-shrink-0 p-1 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-          title="Прочитано"
+          aria-label="Отметить как прочитанное"
         >
-          <IconCheck size={14} />
+          <IconCheck size={14} aria-hidden="true" />
         </button>
       )}
     </div>
@@ -115,8 +115,11 @@ export const NotificationBell = () => {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button className="relative p-2 rounded-xl hover:bg-muted/60 transition-colors">
-          <IconBell size={20} stroke={1.5} className="text-foreground/70" />
+        <button
+          className="relative p-2.5 rounded-xl hover:bg-muted/60 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+          aria-label={unreadCount > 0 ? `Уведомления — ${unreadCount} непрочитанных` : "Уведомления"}
+        >
+          <IconBell size={20} stroke={1.5} className="text-foreground/70" aria-hidden="true" />
           <AnimatePresence>
             {unreadCount > 0 && (
               <motion.span
@@ -135,7 +138,7 @@ export const NotificationBell = () => {
       <PopoverContent
         align="end"
         sideOffset={8}
-        className="w-[360px] p-0 rounded-xl shadow-lg border border-border/60"
+        className="w-[min(360px,calc(100vw-2rem))] p-0 rounded-xl shadow-lg border border-border/60"
       >
         <div className="flex items-center justify-between px-4 py-3 border-b border-border/40">
           <h3 className="text-sm font-semibold text-foreground">Уведомления</h3>

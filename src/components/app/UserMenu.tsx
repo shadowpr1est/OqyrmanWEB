@@ -41,7 +41,7 @@ export const UserMenu = () => {
   <>
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex items-center gap-2 px-2 py-1.5 rounded-xl hover:bg-muted/60 transition-colors outline-none">
+        <button className="flex items-center gap-2 px-2 py-2 rounded-xl hover:bg-muted/60 transition-colors outline-none min-h-[44px]">
           {user.avatar_url ? (
             <img
               src={user.avatar_url}

@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { IconCamera, IconLock, IconTrash, IconAlertTriangle } from "@tabler/icons-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { PageHeader } from "@/components/shared/PageHeader";
 import { userApi } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,23 +43,17 @@ function phoneToRaw(formatted: string): string {
 }
 
 const Profile = () => {
-  const { user, setAuthData, signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const qc = useQueryClient();
 
   if (!user) return null;
 
   return (
     <div className="container mx-auto max-w-2xl px-4 lg:px-8 py-8">
-      <motion.h1
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-2xl font-bold text-foreground mb-8"
-      >
-        Мой профиль
-      </motion.h1>
+      <PageHeader title="Мой профиль" />
 
       <div className="space-y-8">
-        <ProfileSection user={user} setAuthData={setAuthData} qc={qc} />
+        <ProfileSection user={user} qc={qc} />
 
         {user.has_password && (
           <>
@@ -78,13 +73,12 @@ const Profile = () => {
 
 function ProfileSection({
   user,
-  setAuthData,
   qc,
 }: {
   user: NonNullable<ReturnType<typeof useAuth>["user"]>;
-  setAuthData: ReturnType<typeof useAuth>["setAuthData"];
   qc: ReturnType<typeof useQueryClient>;
 }) {
+  const { updateUser } = useAuth();
   const [name, setName] = useState(user.name);
   const [surname, setSurname] = useState(user.surname);
   const [phone, setPhone] = useState(user.phone ? formatPhone(user.phone) : "");
@@ -102,9 +96,7 @@ function ProfileSection({
         phone: phoneToRaw(phone) || undefined,
       }),
     onSuccess: (updated) => {
-      const at = localStorage.getItem("access_token") || "";
-      const rt = localStorage.getItem("refresh_token") || "";
-      setAuthData(updated, at, rt);
+      updateUser(updated);
       toast.success("Профиль обновлён");
     },
     onError: () => toast.error("Ошибка обновления"),
@@ -113,9 +105,7 @@ function ProfileSection({
   const avatarMutation = useMutation({
     mutationFn: (file: File) => userApi.uploadAvatar(file),
     onSuccess: (updated) => {
-      const at = localStorage.getItem("access_token") || "";
-      const rt = localStorage.getItem("refresh_token") || "";
-      setAuthData(updated, at, rt);
+      updateUser(updated);
       qc.invalidateQueries({ queryKey: ["user"] });
       toast.success("Аватар обновлён");
     },
@@ -176,7 +166,7 @@ function ProfileSection({
 
       {/* Form */}
       <div className="space-y-5">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label>Имя</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} />

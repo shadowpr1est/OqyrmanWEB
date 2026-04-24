@@ -81,7 +81,7 @@ const EventDetail = () => {
                 <img
                   src={event.cover_url}
                   alt={event.title}
-                  className="w-full md:w-[360px] rounded-xl shadow-2xl shadow-black/30 object-cover aspect-[16/9]"
+                  className="w-full md:w-[360px] max-h-[220px] md:max-h-none rounded-xl shadow-2xl shadow-black/30 object-cover aspect-[16/9]"
                 />
               </motion.div>
             )}

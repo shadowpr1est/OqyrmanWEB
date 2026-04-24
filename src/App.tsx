@@ -8,15 +8,18 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AppLayout } from "@/layouts/AppLayout";
 import { ProtectedRoute } from "@/layouts/ProtectedRoute";
+import { GlobalErrorBoundary } from "@/components/shared/GlobalErrorBoundary";
 
 
-// Landing & auth (eagerly loaded)
-import Index from "./pages/Index";
+// Auth (eagerly loaded — shown immediately to unauthenticated users)
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
+
+// Landing (lazy — heavy animation components, only shown at "/")
+const Index = lazy(() => import("./pages/Index"));
 
 // App pages (lazy loaded)
 const BooksCatalog = lazy(() => import("./pages/catalog/BooksCatalog"));
@@ -57,6 +60,7 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <GlobalErrorBoundary>
         <BrowserRouter>
           <AuthProvider>
             <ScrollToTop />
@@ -99,6 +103,7 @@ const App = () => (
             </Suspense>
           </AuthProvider>
         </BrowserRouter>
+        </GlobalErrorBoundary>
       </TooltipProvider>
     </QueryClientProvider>
   </GoogleOAuthProvider>

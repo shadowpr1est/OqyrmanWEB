@@ -1,4 +1,6 @@
 import { Link, NavLink, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { SearchBar } from "./SearchBar";
 import { NotificationBell } from "./NotificationBell";
@@ -11,13 +13,25 @@ import {
   IconCalendarEvent,
   IconBookmarks,
 } from "@tabler/icons-react";
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { backdropFade, slideDown } from "@/lib/motion";
 
-const navLinks = [
-  { label: "Главная", to: "/catalog", icon: IconHome },
+// Desktop nav — all sections
+const desktopLinks = [
+  { label: "Главная", to: "/catalog" },
+  { label: "Библиотеки", to: "/libraries" },
+  { label: "События", to: "/events" },
+  { label: "Полка", to: "/wishlist" },
+];
+
+// Mobile hamburger — only items not covered by the bottom nav
+const mobileExtraLinks = [
   { label: "Библиотеки", to: "/libraries", icon: IconBuildingArch },
   { label: "События", to: "/events", icon: IconCalendarEvent },
+];
+
+// Mobile bottom nav covers these — shown in hamburger only for guests
+const mobileGuestLinks = [
+  { label: "Главная", to: "/catalog", icon: IconHome },
   { label: "Полка", to: "/wishlist", icon: IconBookmarks },
 ];
 
@@ -26,23 +40,19 @@ export const AppNavbar = () => {
   const { pathname } = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Close mobile menu instantly on ANY route change
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
 
-  const closeMenu = () => setMobileOpen(false);
+  const mobileLinks = user ? mobileExtraLinks : [...mobileGuestLinks, ...mobileExtraLinks];
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-white/90 backdrop-blur-md">
       <div className="container mx-auto px-5 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Left: Logo + nav */}
+          {/* Logo + desktop nav */}
           <div className="flex items-center gap-8">
-            <Link
-              to="/"
-              className="flex items-center gap-2 flex-shrink-0"
-            >
+            <Link to="/" className="flex items-center gap-2 flex-shrink-0">
               <img
                 src="https://api.oqyrman.app/minio/oqyrman/static/logo_circle.png"
                 alt="Oqyrman"
@@ -52,7 +62,7 @@ export const AppNavbar = () => {
             </Link>
 
             <nav className="hidden lg:flex items-center gap-1">
-              {navLinks.map((l) => (
+              {desktopLinks.map((l) => (
                 <NavLink
                   key={l.to}
                   to={l.to}
@@ -70,12 +80,12 @@ export const AppNavbar = () => {
             </nav>
           </div>
 
-          {/* Center: Search (desktop) */}
+          {/* Desktop search */}
           <div className="hidden lg:block">
             <SearchBar />
           </div>
 
-          {/* Right: Actions */}
+          {/* Right actions */}
           <div className="flex items-center gap-1">
             {user ? (
               <>
@@ -99,44 +109,38 @@ export const AppNavbar = () => {
               </div>
             )}
 
-            {/* Mobile toggle */}
+            {/* Mobile hamburger — Библиотеки + События */}
             <button
               className="lg:hidden p-2 rounded-lg hover:bg-muted/50 transition-colors"
+              aria-label={mobileOpen ? "Закрыть меню" : "Открыть меню"}
+              aria-expanded={mobileOpen}
               onClick={() => setMobileOpen(!mobileOpen)}
             >
               {mobileOpen ? (
-                <IconX size={22} className="text-foreground" />
+                <IconX size={22} className="text-foreground" aria-hidden="true" />
               ) : (
-                <IconMenu2 size={22} className="text-foreground" />
+                <IconMenu2 size={22} className="text-foreground" aria-hidden="true" />
               )}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Mobile menu — no exit animation to avoid sticking over new page */}
+      {/* Mobile menu */}
       {mobileOpen && (
         <>
-          {/* Backdrop */}
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.2 }}
+            {...backdropFade}
             className="lg:hidden fixed inset-0 top-16 bg-black/20 backdrop-blur-sm z-40"
-            onClick={closeMenu}
+            onClick={() => setMobileOpen(false)}
           />
-
-          {/* Panel */}
           <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
+            {...slideDown}
             className="lg:hidden absolute inset-x-0 top-16 z-50 border-t border-border/60 bg-white/95 backdrop-blur-xl shadow-xl"
           >
-          <div className="container mx-auto px-5 sm:px-6 py-3">
-              {/* Nav links */}
+            <div className="container mx-auto px-5 sm:px-6 py-3">
               <nav className="space-y-1">
-                {navLinks.map((l) => {
+                {mobileLinks.map((l) => {
                   const Icon = l.icon;
                   return (
                     <NavLink
@@ -166,13 +170,12 @@ export const AppNavbar = () => {
                 })}
               </nav>
 
-              {/* Auth buttons for guests */}
               {!user && (
                 <div className="flex gap-2.5 mt-3 pt-3 border-t border-border/60">
                   <Link
                     to="/login"
                     onClick={() => setMobileOpen(false)}
-                    className="flex-1 text-center px-4 py-2.5 rounded-xl text-sm font-medium border border-border text-foreground/70 active:bg-muted/60 transition-colors"
+                    className="flex-1 text-center px-4 py-2.5 rounded-xl text-sm font-medium border border-border text-foreground/70 transition-colors"
                   >
                     Войти
                   </Link>
