@@ -133,6 +133,7 @@ export interface Reservation {
   due_date: string;
   returned_at?: string;
   extended_count: number;
+  qr_token?: string;
   library_book_id: string;
   book: { id: string; title: string; cover_url?: string };
   library: { id: string; name: string; address?: string };

@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { IconQrcode, IconPhone } from "@tabler/icons-react";
 import { Link } from "react-router-dom";
+import { QRCodeSVG } from "qrcode.react";
 import { useAuth } from "@/contexts/AuthContext";
 import { userApi } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -82,12 +83,10 @@ export function ReaderCard({ open, onOpenChange }: ReaderCardProps) {
             <div className="flex flex-col items-center">
               {qrLoading ? (
                 <div className="w-40 h-40 rounded-xl bg-muted/40 animate-pulse" />
-              ) : qrData?.qr_url ? (
-                <img
-                  src={qrData.qr_url}
-                  alt="QR код"
-                  className="w-40 h-40 rounded-xl"
-                />
+              ) : qrData?.qr_code ? (
+                <div className="bg-white p-3 rounded-xl shadow-sm border">
+                  <QRCodeSVG value={qrData.qr_code} size={148} level="M" />
+                </div>
               ) : (
                 <div className="w-40 h-40 rounded-xl bg-muted/20 flex items-center justify-center">
                   <IconQrcode size={48} className="text-muted-foreground/30" />

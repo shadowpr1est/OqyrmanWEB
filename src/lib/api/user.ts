@@ -18,7 +18,7 @@ export const userApi = {
     return apiUpload<AuthUser>("/users/me/avatar", fd);
   },
 
-  getQr: () => apiFetch<{ qr_url: string }>("/users/me/qr"),
+  getQr: () => apiFetch<{ qr_code: string }>("/users/me/qr"),
 
   changePassword: (old_password: string, new_password: string) =>
     apiFetch<{ message: string }>("/users/me/change-password", {

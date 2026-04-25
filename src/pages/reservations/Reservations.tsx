@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { IconBookmark, IconX, IconClock, IconCheck, IconIdBadge2 } from "@tabler/icons-react";
+import { IconBookmark, IconX, IconClock, IconCheck, IconIdBadge2, IconQrcode } from "@tabler/icons-react";
 import { QRCodeSVG } from "qrcode.react";
 import { reservationsApi } from "@/lib/api";
 import type { Reservation } from "@/lib/api";
@@ -73,9 +73,58 @@ const ReaderCardDialog = ({
   );
 };
 
+/* ── Reservation QR Dialog ────────────────────────────────────────────────── */
+
+const ReservationQRDialog = ({
+  reservation,
+  open,
+  onOpenChange,
+}: {
+  reservation: Reservation;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) => {
+  if (!reservation.qr_token) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-sm p-0 overflow-hidden rounded-2xl border-0 shadow-2xl">
+        <DialogTitle className="sr-only">QR-код брони</DialogTitle>
+
+        <div className="bg-gradient-to-br from-amber-500 to-orange-500 px-6 pt-6 pb-4 text-center">
+          <p className="text-lg font-bold text-white">QR-код бронирования</p>
+          <p className="text-xs text-white/80 mt-1">
+            Покажите сотруднику библиотеки для получения книги
+          </p>
+        </div>
+
+        <div className="px-6 pb-6 pt-4 text-center">
+          <p className="text-sm font-semibold text-foreground mb-1 truncate">
+            {reservation.book?.title}
+          </p>
+          <p className="text-xs text-muted-foreground mb-4">
+            {reservation.library?.name}
+          </p>
+
+          <div className="flex justify-center">
+            <div className="bg-white p-3 rounded-xl shadow-sm border">
+              <QRCodeSVG value={reservation.qr_token} size={180} level="M" />
+            </div>
+          </div>
+
+          <p className="text-xs text-muted-foreground mt-4">
+            Срок бронирования: до {formatDate(reservation.due_date)}
+          </p>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 /* ── Reservation Card ─────────────────────────────────────────────────────── */
 
 const ReservationCard = ({ reservation }: { reservation: Reservation }) => {
+  const [qrOpen, setQrOpen] = useState(false);
   const qc = useQueryClient();
   const status = statusConfig[reservation.status] || statusConfig.pending;
   const StatusIcon = status.icon;
@@ -151,32 +200,49 @@ const ReservationCard = ({ reservation }: { reservation: Reservation }) => {
           )}
         </div>
 
-        {(canCancel || canExtend) && (
-          <div className="flex gap-2 mt-3">
-            {canExtend && (
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={extendMutation.isPending}
-                onClick={() => extendMutation.mutate()}
-              >
-                Продлить
-              </Button>
-            )}
-            {canCancel && (
-              <Button
-                size="sm"
-                variant="ghost"
-                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                disabled={cancelMutation.isPending}
-                onClick={() => cancelMutation.mutate()}
-              >
-                Отменить
-              </Button>
-            )}
-          </div>
-        )}
+        <div className="flex flex-wrap gap-2 mt-3">
+          {reservation.status === "pending" && reservation.qr_token && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5 border-amber-300 text-amber-700 hover:bg-amber-50"
+              onClick={() => setQrOpen(true)}
+            >
+              <IconQrcode size={15} />
+              Показать QR
+            </Button>
+          )}
+          {canExtend && (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={extendMutation.isPending}
+              onClick={() => extendMutation.mutate()}
+            >
+              Продлить
+            </Button>
+          )}
+          {canCancel && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              disabled={cancelMutation.isPending}
+              onClick={() => cancelMutation.mutate()}
+            >
+              Отменить
+            </Button>
+          )}
+        </div>
       </div>
+
+      {reservation.qr_token && (
+        <ReservationQRDialog
+          reservation={reservation}
+          open={qrOpen}
+          onOpenChange={setQrOpen}
+        />
+      )}
     </motion.div>
   );
 };
