@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
+import { toast } from "sonner";
 import { booksApi, genresApi, authorsApi } from "@/lib/api";
 import type { Author, Book, Genre } from "@/lib/api";
 
@@ -109,14 +110,14 @@ export const useBookFilters = (): BookFiltersState => {
           result.total = result.items.length;
         } else if (hasGenres || hasAuthors) {
           const allItems: Book[] = [];
-          const seen = new Set<number>();
+          const seen = new Set<string>();
 
           if (hasGenres) {
             const results = await Promise.all(genreIds.map((gid) => booksApi.getByGenre(gid, { limit: 200 }).catch(() => ({ items: [] as Book[], total: 0 }))));
-            for (const r of results) for (const b of r.items) if (!seen.has(b.id)) { seen.add(b.id); allItems.push(b); }
+            for (const r of results) for (const b of r.items) if (!seen.has(String(b.id))) { seen.add(String(b.id)); allItems.push(b); }
           } else {
             const results = await Promise.all(authorIds.map((aid) => booksApi.getByAuthor(aid, { limit: 200 }).catch(() => ({ items: [] as Book[], total: 0 }))));
-            for (const r of results) for (const b of r.items) if (!seen.has(b.id)) { seen.add(b.id); allItems.push(b); }
+            for (const r of results) for (const b of r.items) if (!seen.has(String(b.id))) { seen.add(String(b.id)); allItems.push(b); }
           }
 
           let filtered = allItems;
@@ -141,7 +142,11 @@ export const useBookFilters = (): BookFiltersState => {
           setBooks(sorted);
         }
       } catch {
-        if (!cancelled) { setBooks([]); setTotal(0); }
+        if (!cancelled) {
+          setBooks([]);
+          setTotal(0);
+          toast.error("Не удалось загрузить книги");
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }

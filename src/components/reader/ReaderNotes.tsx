@@ -134,7 +134,7 @@ export const ReaderNotes = ({ bookId, progress, onNavigate }: ReaderNotesProps) 
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 16 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
-            className="absolute right-0 top-0 h-full w-80 bg-white border-l border-border/60 shadow-xl z-50 flex flex-col"
+            className="absolute right-0 top-0 h-full w-full sm:w-80 max-w-[320px] bg-white border-l border-border/60 shadow-xl z-50 flex flex-col"
           >
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-border/40">

@@ -1,17 +1,16 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   IconChevronRight,
-  IconChevronLeft,
   IconBook,
-  IconArrowRight,
 } from "@tabler/icons-react";
 import { booksApi, readingSessionsApi } from "@/lib/api";
 import { fadeLeft, fadeRight, fadeUp } from "@/lib/motion";
 import type { Book, ReadingSession } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { BookCard } from "@/components/books/BookCard";
+import { HorizontalScroll } from "@/components/shared/HorizontalScroll";
 
 /* ── Featured authors for "By Author" sections ── */
 const FEATURED_AUTHORS = [
@@ -53,7 +52,7 @@ const BooksCatalog = () => {
   useEffect(() => {
     FEATURED_GENRES.forEach((g) => {
       booksApi
-        .getByGenre(g.id as unknown as number, { limit: 10 })
+        .getByGenre(g.id, { limit: 10 })
         .then((res) => setGenreBooks((prev) => ({ ...prev, [g.id]: (res.items || []).slice(0, 10) })))
         .catch(() => {});
     });
@@ -63,7 +62,7 @@ const BooksCatalog = () => {
   useEffect(() => {
     FEATURED_AUTHORS.forEach((a) => {
       booksApi
-        .getByAuthor(a.id as unknown as number, { limit: 10 })
+        .getByAuthor(a.id, { limit: 10 })
         .then((res) => setAuthorBooks((prev) => ({ ...prev, [a.id]: (res.items || []).slice(0, 10) })))
         .catch(() => {});
     });
@@ -98,7 +97,7 @@ const BooksCatalog = () => {
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 200+ книг доступно
               </div>
-              <h1 className="text-3xl lg:text-4xl xl:text-5xl font-extrabold text-white leading-[1.15] mb-4 tracking-tight">
+              <h1 className="font-display text-3xl lg:text-4xl xl:text-5xl font-extrabold text-white leading-[1.15] mb-4 tracking-tight">
                 Читай. Открывай.
                 <br />
                 <span className="bg-gradient-to-r from-emerald-300 to-teal-200 bg-clip-text text-transparent">
@@ -277,62 +276,6 @@ function Section({
       </div>
       {children}
     </section>
-  );
-}
-
-function HorizontalScroll({ children }: { children: React.ReactNode }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [canLeft, setCanLeft] = useState(false);
-  const [canRight, setCanRight] = useState(false);
-
-  const check = () => {
-    const el = ref.current;
-    if (!el) return;
-    setCanLeft(el.scrollLeft > 4);
-    setCanRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
-  };
-
-  useEffect(() => {
-    check();
-    const el = ref.current;
-    el?.addEventListener("scroll", check, { passive: true });
-    window.addEventListener("resize", check);
-    return () => {
-      el?.removeEventListener("scroll", check);
-      window.removeEventListener("resize", check);
-    };
-  }, [children]);
-
-  const scroll = (dir: number) => {
-    ref.current?.scrollBy({ left: dir * 340, behavior: "smooth" });
-  };
-
-  return (
-    <div className="relative group/scroll">
-      {canLeft && (
-        <button
-          onClick={() => scroll(-1)}
-          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white border border-border/60 shadow-md flex items-center justify-center text-foreground/70 hover:text-foreground opacity-0 group-hover/scroll:opacity-100 transition-opacity -ml-2"
-        >
-          <IconChevronLeft size={18} />
-        </button>
-      )}
-      <div
-        ref={ref}
-        className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 items-start"
-        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-      >
-        {children}
-      </div>
-      {canRight && (
-        <button
-          onClick={() => scroll(1)}
-          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white border border-border/60 shadow-md flex items-center justify-center text-foreground/70 hover:text-foreground opacity-0 group-hover/scroll:opacity-100 transition-opacity -mr-2"
-        >
-          <IconChevronRight size={18} />
-        </button>
-      )}
-    </div>
   );
 }
 

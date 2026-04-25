@@ -29,7 +29,7 @@ export interface TokenResponse {
 // ─── Books ──────────────────────────────────────────────────────────────────
 
 export interface Book {
-  id: number;
+  id: string | number;
   title: string;
   description: string;
   cover_url: string;
@@ -39,8 +39,8 @@ export interface Book {
   language: string;
   avg_rating: number;
   ratings_count: number;
-  author_id: number;
-  genre_id: number;
+  author_id: string | number;
+  genre_id: string | number;
   author?: Author;
   genre?: Genre;
   file?: BookFile;

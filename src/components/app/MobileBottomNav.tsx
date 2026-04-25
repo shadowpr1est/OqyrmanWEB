@@ -19,8 +19,11 @@ export const MobileBottomNav = () => {
   if (!user) return null;
 
   return (
-    <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 h-16 bg-white/95 backdrop-blur-md border-t border-border/60 safe-area-inset-bottom">
-      <div className="flex h-full">
+    <nav
+      className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-border/60"
+      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+    >
+      <div className="flex h-16">
         {items.map(({ label, to, icon: Icon }) => (
           <NavLink
             key={to}

@@ -83,13 +83,16 @@ export function ConversationList({ onSelect }: { onSelect: (id: string) => void 
         ) : (
           <div className="space-y-0.5">
             {conversations.map((c, i) => (
-              <motion.button
+              <motion.div
                 key={c.id}
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.03, duration: 0.2 }}
                 onClick={() => onSelect(c.id)}
-                className="group flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left transition-all duration-150 hover:bg-primary/[0.04]"
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === "Enter" && onSelect(c.id)}
+                className="group flex w-full cursor-pointer items-center justify-between rounded-xl px-3 py-2.5 text-left transition-all duration-150 hover:bg-primary/[0.04]"
               >
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[13px] font-medium text-foreground/85 transition-colors group-hover:text-foreground">
@@ -108,7 +111,7 @@ export function ConversationList({ onSelect }: { onSelect: (id: string) => void 
                 >
                   <IconTrash size={13} stroke={1.8} />
                 </button>
-              </motion.button>
+              </motion.div>
             ))}
           </div>
         )}

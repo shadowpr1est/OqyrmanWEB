@@ -12,11 +12,11 @@ import {
   IconChevronLeft,
   IconChevronRight,
   IconSettings,
-  IconList,
   IconBook,
 } from "@tabler/icons-react";
 import { useNavigate } from "react-router-dom";
 import { ReaderNotes } from "./ReaderNotes";
+import { ReaderAiPanel } from "./ReaderAiPanel";
 import { AiSelectionLayer, type ReaderSelection } from "./AiSelectionLayer";
 import { parsePosition } from "@/lib/notePosition";
 
@@ -28,13 +28,7 @@ interface EpubReaderProps {
   initialCfi?: string;
 }
 
-interface TocItem {
-  label: string;
-  href: string;
-}
-
 export const EpubReader = ({ fileUrl, bookId, bookTitle, onProgress, initialCfi }: EpubReaderProps) => {
-  const [notesOpen, setNotesOpen] = useState(false);
   const viewerRef = useRef<HTMLDivElement>(null);
   const bookRef = useRef<Book | null>(null);
   const renditionRef = useRef<Rendition | null>(null);
@@ -43,9 +37,8 @@ export const EpubReader = ({ fileUrl, bookId, bookTitle, onProgress, initialCfi 
 
   const [config, setConfig] = useState<ReaderConfig>(loadSettings);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [tocOpen, setTocOpen] = useState(false);
-  const [toc, setToc] = useState<TocItem[]>([]);
   const [progress, setProgress] = useState(0);
+  const [locationsReady, setLocationsReady] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [dragValue, setDragValue] = useState(0);
   const [aiSelection, setAiSelection] = useState<ReaderSelection | null>(null);
@@ -105,11 +98,6 @@ export const EpubReader = ({ fileUrl, bookId, bookTitle, onProgress, initialCfi 
       rendition.display();
     }
 
-    // Load TOC
-    book.loaded.navigation.then((nav) => {
-      setToc(nav.toc.map((t) => ({ label: t.label.trim(), href: t.href })));
-    });
-
     // Generate locations — required for percentage to work on every page turn.
     // Without locations, percentage only updates on chapter boundaries.
     const locCacheKey = `epub-locs-${fileUrl}`;
@@ -135,6 +123,8 @@ export const EpubReader = ({ fileUrl, bookId, bookTitle, onProgress, initialCfi 
       }
 
       if (disposed) return;
+
+      setLocationsReady(true);
 
       // Update progress immediately now that locations are ready
       const savedCfi = lastCfiRef.current;
@@ -255,11 +245,6 @@ export const EpubReader = ({ fileUrl, bookId, bookTitle, onProgress, initialCfi 
     return () => document.removeEventListener("keyup", handler);
   }, [navigate]);
 
-  const goToChapter = (href: string) => {
-    renditionRef.current?.display(href);
-    setTocOpen(false);
-  };
-
   const goToPercent = (pct: number) => {
     const book = bookRef.current;
     if (!book || book.locations.length() === 0) return;
@@ -307,13 +292,7 @@ export const EpubReader = ({ fileUrl, bookId, bookTitle, onProgress, initialCfi 
 
         <div className="flex items-center gap-1 flex-1 justify-end">
           <button
-            onClick={() => { setTocOpen(!tocOpen); setSettingsOpen(false); setNotesOpen(false); }}
-            className={`p-2 rounded-lg transition-colors ${tocOpen ? "bg-white/25" : "hover:bg-white/15"}`}
-          >
-            <IconList size={18} stroke={1.5} />
-          </button>
-          <button
-            onClick={() => { setSettingsOpen(!settingsOpen); setTocOpen(false); setNotesOpen(false); }}
+            onClick={() => setSettingsOpen((v) => !v)}
             className={`p-2 rounded-lg transition-colors ${settingsOpen ? "bg-white/25" : "hover:bg-white/15"}`}
           >
             <IconSettings size={18} stroke={1.5} />
@@ -328,6 +307,7 @@ export const EpubReader = ({ fileUrl, bookId, bookTitle, onProgress, initialCfi 
               }
             }}
           />
+          <ReaderAiPanel darkToolbar />
         </div>
       </div>
 
@@ -352,39 +332,6 @@ export const EpubReader = ({ fileUrl, bookId, bookTitle, onProgress, initialCfi 
           <IconChevronRight size={20} className="text-primary/30" />
         </button>
 
-        {/* TOC panel */}
-        <AnimatePresence>
-          {tocOpen && (
-            <motion.div
-              initial={{ opacity: 0, x: -16 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -16 }}
-              transition={{ duration: 0.15, ease: "easeOut" }}
-              className="absolute left-0 top-0 h-full w-72 bg-white border-r border-border/60 shadow-xl z-50 overflow-y-auto"
-            >
-              <div className="p-4 border-b border-primary/20 bg-primary/5">
-                <h3 className="text-sm font-semibold text-primary">Содержание</h3>
-              </div>
-              <nav className="p-2">
-                {toc.map((item, i) => (
-                  <button
-                    key={i}
-                    onClick={() => goToChapter(item.href)}
-                    className="w-full text-left px-3 py-2.5 rounded-lg text-sm text-foreground/70 hover:bg-muted/50 hover:text-foreground transition-colors truncate"
-                  >
-                    {item.label}
-                  </button>
-                ))}
-                {toc.length === 0 && (
-                  <p className="text-sm text-muted-foreground text-center py-8">
-                    Содержание недоступно
-                  </p>
-                )}
-              </nav>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
         {/* Settings panel */}
         <AnimatePresence>
           {settingsOpen && (
@@ -408,10 +355,18 @@ export const EpubReader = ({ fileUrl, bookId, bookTitle, onProgress, initialCfi 
       {/* Bottom progress slider */}
       <div className="flex-shrink-0 flex items-center gap-3 h-9 px-4 bg-primary/5 border-t border-primary/10">
         <div className="relative flex-1 flex items-center group">
+          {!locationsReady && (
+            <div className="absolute inset-0 flex items-center pointer-events-none">
+              <div className="w-full h-1.5 rounded-full bg-primary/10 overflow-hidden">
+                <div className="h-full w-1/3 bg-primary/30 rounded-full animate-[slide_1.5s_ease-in-out_infinite]" />
+              </div>
+            </div>
+          )}
           <input
             type="range"
             min={0}
             max={100}
+            disabled={!locationsReady}
             value={dragging ? dragValue : progress}
             onChange={(e) => {
               const v = Number(e.target.value);

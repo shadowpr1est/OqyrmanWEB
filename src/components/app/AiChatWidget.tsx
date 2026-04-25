@@ -37,7 +37,7 @@ export function AiChatWidget() {
             exit={{ scale: 0, opacity: 0 }}
             transition={{ type: "spring", stiffness: 400, damping: 25 }}
             onClick={() => setOpen(true)}
-            className="fixed bottom-[4.5rem] lg:bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-b from-primary-light to-primary text-white shadow-[0_4px_20px_rgba(0,0,0,0.15),0_2px_0_0_rgba(255,255,255,0.15)_inset] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_6px_24px_rgba(0,0,0,0.2),0_2px_0_0_rgba(255,255,255,0.15)_inset] active:translate-y-0 active:scale-95"
+            className="fixed bottom-[4.5rem] lg:bottom-6 right-6 z-[110] flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-b from-primary-light to-primary text-white shadow-[0_4px_20px_rgba(0,0,0,0.15),0_2px_0_0_rgba(255,255,255,0.15)_inset] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_6px_24px_rgba(0,0,0,0.2),0_2px_0_0_rgba(255,255,255,0.15)_inset] active:translate-y-0 active:scale-95"
             aria-label="AI ассистент"
           >
             <AiMark size={26} mono className="text-white" />
@@ -96,7 +96,7 @@ function ChatPanel({
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.92, y: 20 }}
       transition={{ type: "spring", stiffness: 380, damping: 28 }}
-      className="fixed bottom-[4.5rem] lg:bottom-6 right-6 z-50 flex h-[min(520px,calc(100dvh-5rem))] lg:h-[min(520px,calc(100dvh-3rem))] w-[min(380px,calc(100vw-3rem))] flex-col overflow-hidden rounded-2xl border border-border/80 bg-white shadow-[0_16px_70px_-12px_rgba(0,0,0,0.25)]"
+      className="fixed bottom-[4.5rem] lg:bottom-6 right-6 z-[110] flex h-[min(520px,calc(100dvh-5rem))] lg:h-[min(520px,calc(100dvh-3rem))] w-[min(380px,calc(100vw-3rem))] flex-col overflow-hidden rounded-2xl border border-border/80 bg-white shadow-[0_16px_70px_-12px_rgba(0,0,0,0.25)]"
     >
       {/* Header */}
       <div className="relative flex items-center justify-between px-4 py-3.5 after:absolute after:inset-x-0 after:bottom-0 after:h-px after:bg-gradient-to-r after:from-transparent after:via-border after:to-transparent">

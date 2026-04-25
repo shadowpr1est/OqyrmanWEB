@@ -14,6 +14,7 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { staggerItem, backdropFade } from "@/lib/motion";
 import { optimizedUrl } from "@/lib/imageProxy";
+import { formatDate, formatTime } from "@/lib/utils";
 
 const Events = () => {
   const [selected, setSelected] = useState<Event | null>(null);
@@ -24,16 +25,6 @@ const Events = () => {
   });
 
   const events = data?.items || [];
-
-  const formatDate = (iso: string) =>
-    new Date(iso).toLocaleDateString("ru", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
-
-  const formatTime = (iso: string) =>
-    new Date(iso).toLocaleTimeString("ru", { hour: "2-digit", minute: "2-digit" });
 
   return (
     <div className="container mx-auto px-4 lg:px-8 py-8">

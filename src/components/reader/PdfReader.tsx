@@ -13,6 +13,7 @@ import {
 } from "@tabler/icons-react";
 import { useNavigate } from "react-router-dom";
 import { ReaderNotes } from "./ReaderNotes";
+import { ReaderAiPanel } from "./ReaderAiPanel";
 import { AiSelectionLayer, type ReaderSelection } from "./AiSelectionLayer";
 import { parsePosition } from "@/lib/notePosition";
 
@@ -329,6 +330,7 @@ export const PdfReader = ({
               }
             }}
           />
+          <ReaderAiPanel />
         </div>
       </div>
 
@@ -394,7 +396,6 @@ export const PdfReader = ({
               setDragging(false);
               if (numPages > 0) {
                 const targetPage = Math.max(1, Math.min(numPages, Math.round((dragValue / 100) * numPages)));
-                setPageNumber(targetPage);
                 goTo(targetPage);
               }
             }}
@@ -402,7 +403,6 @@ export const PdfReader = ({
               setDragging(false);
               if (numPages > 0) {
                 const targetPage = Math.max(1, Math.min(numPages, Math.round((dragValue / 100) * numPages)));
-                setPageNumber(targetPage);
                 goTo(targetPage);
               }
             }}

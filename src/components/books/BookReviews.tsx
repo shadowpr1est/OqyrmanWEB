@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { IconPencil, IconTrash, IconCheck, IconX } from "@tabler/icons-react";
+import { IconPencil, IconTrash, IconCheck, IconX, IconMessage } from "@tabler/icons-react";
 import { reviewsApi } from "@/lib/api";
 import type { Review } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
@@ -124,9 +124,10 @@ export const BookReviews = ({ bookId }: BookReviewsProps) => {
           ))}
         </div>
       ) : reviews.length === 0 ? (
-        <p className="text-sm text-muted-foreground text-center py-8">
-          Пока нет отзывов. Будьте первым!
-        </p>
+        <div className="flex flex-col items-center gap-2 py-10 text-muted-foreground">
+          <IconMessage size={32} stroke={1.5} className="opacity-40" />
+          <p className="text-sm">Пока нет отзывов. Будьте первым!</p>
+        </div>
       ) : (
         <div className="space-y-4">
           {reviews.map((r, i) => {

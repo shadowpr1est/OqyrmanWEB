@@ -3,7 +3,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import { booksApi, readingSessionsApi, wishlistApi } from "@/lib/api";
 import type { Book } from "@/lib/api";
 import type { ShelfStatus } from "@/lib/api/types";
-import { AiChatWidget } from "@/components/app/AiChatWidget";
 
 const EpubReader = lazy(() => import("@/components/reader/EpubReader").then(m => ({ default: m.EpubReader })));
 const PdfReader = lazy(() => import("@/components/reader/PdfReader").then(m => ({ default: m.PdfReader })));
@@ -48,7 +47,7 @@ const Reader = () => {
           return;
         }
         setBook(bookData);
-        if (session?.progress) {
+        if (session?.progress != null) {
           setInitialProgress(session.progress);
         }
         // Prefer server-side CFI, fallback to localStorage
@@ -171,7 +170,6 @@ const Reader = () => {
           onProgress={saveProgress}
           initialCfi={initialCfi}
         />
-        <AiChatWidget />
       </Suspense>
     );
   }
@@ -186,7 +184,6 @@ const Reader = () => {
           initialProgress={initialProgress}
           onProgress={saveProgress}
         />
-        <AiChatWidget />
       </Suspense>
     );
   }

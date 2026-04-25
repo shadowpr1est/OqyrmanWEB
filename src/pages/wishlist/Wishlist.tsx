@@ -14,7 +14,7 @@ import type { WishlistItem, ShelfStatus } from "@/lib/api/types";
 function toBook(item: WishlistItem): Book {
   const b = item.book;
   return {
-    id: b.id as unknown as number,
+    id: b.id,
     title: b.title,
     description: b.description ?? "",
     cover_url: b.cover_url,
@@ -24,8 +24,8 @@ function toBook(item: WishlistItem): Book {
     language: b.language ?? "",
     avg_rating: b.avg_rating,
     ratings_count: 0,
-    author_id: b.author.id as unknown as number,
-    genre_id: b.genre.id as unknown as number,
+    author_id: b.author.id,
+    genre_id: b.genre.id,
     author: { id: b.author.id, name: b.author.name, bio: "", photo_url: "" },
     genre: { id: b.genre.id, name: b.genre.name, slug: b.genre.slug ?? "" },
     created_at: item.added_at,

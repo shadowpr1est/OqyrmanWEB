@@ -151,14 +151,9 @@ export function BookActions({ book }: BookActionsProps) {
       {book.file?.file_url && (
         <div className="flex flex-wrap items-center gap-3 mb-4">
           <button
-            onClick={() => {
-              addToShelf.mutate("reading");
-              if (!session) {
-                readingSessionsApi.upsert({ book_id: bookId, progress: 0, status: "reading" });
-              }
-              navigate(`/read/${bookId}`);
-            }}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-dark transition-colors shadow-sm"
+            disabled={shelfBusy}
+            onClick={() => navigate(`/read/${bookId}`)}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-dark transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
           >
             <IconDeviceDesktop size={16} />
             Читать онлайн
