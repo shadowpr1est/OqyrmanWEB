@@ -1,5 +1,22 @@
 export const BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api/v1";
 
+// ─── Locale ─────────────────────────────────────────────────────────────────
+
+/**
+ * Returns the user's current UI language (`kk` | `ru`) read directly from
+ * localStorage so that this helper has no dependency on the i18n bundle and is
+ * safe to call before i18n has finished initializing.
+ */
+function currentLanguage(): string {
+  try {
+    const raw = localStorage.getItem("oqyrman_lang");
+    if (raw === "kk" || raw === "ru") return raw;
+  } catch {
+    /* ignore — SSR / privacy mode */
+  }
+  return "ru";
+}
+
 // ─── Token storage ──────────────────────────────────────────────────────────
 
 export const tokenStorage = {
@@ -83,6 +100,7 @@ export async function apiFetch<T>(
 ): Promise<T> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
+    "Accept-Language": currentLanguage(),
     ...(options.headers as Record<string, string>),
   };
 
@@ -147,6 +165,7 @@ export async function apiUpload<T>(
   const headers: Record<string, string> = {};
   const token = tokenStorage.getAccess();
   if (token) headers["Authorization"] = `Bearer ${token}`;
+  headers["Accept-Language"] = currentLanguage();
 
   const res = await fetch(`${BASE_URL}${path}`, {
     method: "POST",
