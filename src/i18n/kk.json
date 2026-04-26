@@ -427,6 +427,10 @@
     "children-literature": "Балалар әдебиеті",
     "non-fiction": "Деректі әдебиет",
     "self-help": "Өзін-өзі дамыту",
+    "self-development": "Өзін-өзі дамыту",
+    "kazakh-history": "Қазақ тарихы",
+    "kazakh-poetry": "Қазақ поэзиясы",
+    "world-classic": "Әлем классикасы",
     "business": "Бизнес",
     "science": "Ғылым",
     "drama": "Драма",
@@ -520,7 +524,79 @@
   },
   "reader": {
     "loadingBook": "Кітап жүктелуде…",
-    "noFile": "Бұл кітаптың оқуға арналған файлы жоқ"
+    "noFile": "Бұл кітаптың оқуға арналған файлы жоқ",
+    "back": "Артқа",
+    "bookNotFound": "Кітап табылмады",
+    "fileUnavailable": "Файл қолжетімсіз",
+    "formatNotSupported": "«{{format}}» форматы қолдау таппайды",
+    "settings": {
+      "title": "Баптаулар",
+      "fontFamily": "Қаріп",
+      "fontSize": "Қаріп өлшемі",
+      "lineHeight": "Жолдар арасы"
+    },
+    "ai": {
+      "assistant": "AI көмекші",
+      "close": "Жабу"
+    },
+    "notes": {
+      "title": "Жазбалар",
+      "open": "Жазбалар",
+      "newNote": "Жаңа жазба",
+      "close": "Жабу",
+      "currentPosition": "— ағымдағы позиция",
+      "placeholder": "Сіздің жазбаңыз…",
+      "ctrlEnterToSave": "Ctrl+Enter — сақтау",
+      "cancel": "Бас тарту",
+      "save": "Сақтау",
+      "empty": "Жазбалар жоқ",
+      "addFirst": "Бірінші жазбаны қосу",
+      "edit": "Өңдеу",
+      "delete": "Жою",
+      "jumpTo": "Орынға өту"
+    },
+    "pdf": {
+      "fitPage": "Бет бойынша",
+      "fitWidth": "Ені бойынша",
+      "loadFailed": "PDF жүктеу мүмкін болмады",
+      "pageOf": "{{page}}-бет / {{total}}",
+      "page": "{{page}}-бет"
+    },
+    "selection": {
+      "ask": "AI-ден сұрау",
+      "translate": "Аудару",
+      "translation": "Аударма",
+      "actionsAria": "Таңдау бойынша AI әрекеттері",
+      "close": "Жабу",
+      "closeEsc": "Жабу (Esc)",
+      "assistant": "Көмекші",
+      "errorGeneric": "Жауап алу мүмкін болмады",
+      "errorTryLater": "Жауап алу мүмкін болмады. Кейінірек қайталап көріңіз.",
+      "retry": "Қайталау",
+      "thinking": "Жауап туралы ойланудамын…",
+      "position": "Позиция: {{progress}}%",
+      "continueInChat": "Чатта жалғастыру",
+      "inChat": "Чатқа",
+      "copy": "Көшіру",
+      "copied": "Көшірілді",
+      "saveToNotes": "Жазбаларға",
+      "saving": "Сақталуда…",
+      "saved": "Сақталды",
+      "noteLabelAi": "AI"
+    }
+  },
+  "chat": {
+    "newChat": "Жаңа чат",
+    "loadFailed": "Чаттарды жүктеу мүмкін болмады. Кейінірек қайталаңыз.",
+    "createFailed": "Чат құру мүмкін болмады. Кейінірек қайталаңыз.",
+    "deleteFailed": "Чатты жою мүмкін болмады.",
+    "noConversations": "Әңгімелер жоқ",
+    "startNew": "Көмекшімен жаңа чатты бастаңыз",
+    "howCanIHelp": "Немен көмектесе аламын?",
+    "askHint": "Кітаптар, ұсыныстар немесе іс-шаралар туралы сұраңыз",
+    "inputPlaceholder": "Хабарлама жазу...",
+    "errorOccurred": "Қате орын алды.",
+    "errorTryLater": "Жауап алу мүмкін болмады. Кейінірек қайталап көріңіз."
   },
   "common": {
     "loading": "Жүктелуде...",

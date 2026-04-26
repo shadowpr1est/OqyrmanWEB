@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
@@ -40,6 +41,7 @@ export const PdfReader = ({
   initialProgress = 0,
   onProgress,
 }: PdfReaderProps) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [numPages, setNumPages] = useState(0);
   const [pageNumber, setPageNumber] = useState(1);
@@ -164,7 +166,7 @@ export const PdfReader = ({
         locator: {
           kind: "page",
           value: String(page),
-          label: total > 0 ? `стр. ${page} / ${total}` : `стр. ${page}`,
+          label: total > 0 ? t("reader.pdf.pageOf", { page, total }) : t("reader.pdf.page", { page }),
         },
       });
     };
@@ -288,7 +290,7 @@ export const PdfReader = ({
                 ? "bg-primary/10 text-primary"
                 : "hover:bg-muted/60"
             }`}
-            title="По странице"
+            title={t("reader.pdf.fitPage")}
           >
             <IconArrowsMaximize size={18} stroke={1.5} />
           </button>
@@ -299,7 +301,7 @@ export const PdfReader = ({
                 ? "bg-primary/10 text-primary"
                 : "hover:bg-muted/60"
             }`}
-            title="По ширине"
+            title={t("reader.pdf.fitWidth")}
           >
             <IconArrowAutofitWidth size={18} stroke={1.5} />
           </button>
@@ -350,7 +352,7 @@ export const PdfReader = ({
             }
             error={
               <div className="text-center py-16 text-muted-foreground">
-                <p className="text-sm">Не удалось загрузить PDF</p>
+                <p className="text-sm">{t("reader.pdf.loadFailed")}</p>
               </div>
             }
           >

@@ -1,4 +1,5 @@
 import { IconTextSize, IconLetterSpacing, IconTypography, IconX } from "@tabler/icons-react";
+import { useTranslation } from "react-i18next";
 
 export interface ReaderConfig {
   fontFamily: string;
@@ -36,6 +37,7 @@ export const ReaderSettings = ({
   onChange: (cfg: ReaderConfig) => void;
   onClose: () => void;
 }) => {
+  const { t } = useTranslation();
   const update = (patch: Partial<ReaderConfig>) => {
     onChange({ ...config, ...patch });
   };
@@ -43,7 +45,7 @@ export const ReaderSettings = ({
   return (
     <div className="absolute right-3 top-14 z-50 w-72 rounded-2xl bg-white border border-border/60 shadow-xl p-5 space-y-5">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-foreground">Настройки</h3>
+        <h3 className="text-sm font-semibold text-foreground">{t("reader.settings.title")}</h3>
         <button onClick={onClose} className="p-1 rounded-lg hover:bg-muted/60 transition-colors">
           <IconX size={16} />
         </button>
@@ -52,7 +54,7 @@ export const ReaderSettings = ({
       {/* Font family */}
       <div className="space-y-2">
         <label className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-          <IconTypography size={14} /> Шрифт
+          <IconTypography size={14} /> {t("reader.settings.fontFamily")}
         </label>
         <div className="grid grid-cols-2 gap-1.5">
           {FONTS.map((f) => (
@@ -76,7 +78,7 @@ export const ReaderSettings = ({
       <div className="space-y-2">
         <label className="flex items-center justify-between text-xs font-medium text-muted-foreground">
           <span className="flex items-center gap-2">
-            <IconTextSize size={14} /> Размер шрифта
+            <IconTextSize size={14} /> {t("reader.settings.fontSize")}
           </span>
           <span className="text-foreground font-semibold">{config.fontSize}px</span>
         </label>
@@ -99,7 +101,7 @@ export const ReaderSettings = ({
       <div className="space-y-2">
         <label className="flex items-center justify-between text-xs font-medium text-muted-foreground">
           <span className="flex items-center gap-2">
-            <IconLetterSpacing size={14} /> Межстрочный интервал
+            <IconLetterSpacing size={14} /> {t("reader.settings.lineHeight")}
           </span>
           <span className="text-foreground font-semibold">{config.lineHeight.toFixed(1)}</span>
         </label>

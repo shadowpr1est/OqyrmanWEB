@@ -103,7 +103,9 @@ export interface LibraryBook {
 export interface Event {
   id: number;
   title: string;
+  title_kk?: string;
   description: string;
+  description_kk?: string;
   location: string;
   starts_at: string;
   ends_at: string;

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { AnimatePresence, motion } from "framer-motion";
 import { IconArrowLeft, IconChevronRight } from "@tabler/icons-react";
 import { AiMark } from "@/components/shared/AiMark";
@@ -14,6 +15,7 @@ interface ReaderAiPanelProps {
 }
 
 export function ReaderAiPanel({ darkToolbar = false }: ReaderAiPanelProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<View>("conversations");
   const [activeConv, setActiveConv] = useState<string | null>(null);
@@ -51,7 +53,7 @@ export function ReaderAiPanel({ darkToolbar = false }: ReaderAiPanelProps) {
             ? "bg-primary/10 text-primary"
             : "hover:bg-muted/60"
         }`}
-        title="AI Ассистент"
+        title={t("reader.ai.assistant")}
       >
         <AiMark size={18} animated={false} mono={darkToolbar} />
       </button>
@@ -86,12 +88,12 @@ export function ReaderAiPanel({ darkToolbar = false }: ReaderAiPanelProps) {
                 <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/10">
                   <AiMark size={14} animated={false} />
                 </div>
-                <span className="text-sm font-semibold text-foreground">AI Ассистент</span>
+                <span className="text-sm font-semibold text-foreground">{t("reader.ai.assistant")}</span>
               </div>
               <button
                 onClick={toggle}
                 className="p-1.5 rounded-lg hover:bg-muted/60 transition-colors text-muted-foreground"
-                title="Закрыть"
+                title={t("reader.ai.close")}
               >
                 <IconChevronRight size={16} stroke={1.5} />
               </button>

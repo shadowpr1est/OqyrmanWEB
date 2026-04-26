@@ -18,7 +18,7 @@ import { formatDate, formatTime } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 
 const Events = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [selected, setSelected] = useState<Event | null>(null);
 
   const { data, isLoading } = useQuery({
@@ -62,7 +62,7 @@ const Events = () => {
                   <div className="aspect-[16/9] overflow-hidden">
                     <img
                       src={optimizedUrl(event.cover_url, 500)}
-                      alt={event.title}
+                      alt={i18n.language === "kk" && event.title_kk ? event.title_kk : event.title}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                       loading="lazy"
                     />
@@ -76,7 +76,7 @@ const Events = () => {
                 {/* Content */}
                 <div className="p-5">
                   <h3 className="text-base font-semibold text-foreground mb-2 line-clamp-2 group-hover:text-primary transition-colors">
-                    {event.title}
+                    {i18n.language === "kk" && event.title_kk ? event.title_kk : event.title}
                   </h3>
 
                   <div className="space-y-1.5 text-sm text-muted-foreground">
@@ -127,7 +127,7 @@ const Events = () => {
                   {selected.cover_url ? (
                     <img
                       src={optimizedUrl(selected.cover_url, 800)}
-                      alt={selected.title}
+                      alt={i18n.language === "kk" && selected.title_kk ? selected.title_kk : selected.title}
                       className="w-full h-48 object-cover"
                     />
                   ) : (
@@ -146,7 +146,7 @@ const Events = () => {
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto p-6 space-y-4">
                   <h2 className="section-title leading-tight">
-                    {selected.title}
+                    {i18n.language === "kk" && selected.title_kk ? selected.title_kk : selected.title}
                   </h2>
 
                   {/* Date & Time */}
@@ -183,11 +183,13 @@ const Events = () => {
                   )}
 
                   {/* Description */}
-                  {selected.description && (
+                  {(selected.description || selected.description_kk) && (
                     <div>
                       <p className="text-xs text-muted-foreground mb-1">{t("events.descriptionLabel")}</p>
                       <p className="text-sm text-foreground/75 leading-relaxed whitespace-pre-line">
-                        {selected.description}
+                        {i18n.language === "kk" && selected.description_kk
+                          ? selected.description_kk
+                          : selected.description}
                       </p>
                     </div>
                   )}

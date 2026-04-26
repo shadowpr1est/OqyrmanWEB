@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import {
   IconNotes,
   IconPlus,
@@ -22,6 +23,7 @@ interface ReaderNotesProps {
 }
 
 export const ReaderNotes = ({ bookId, progress, onNavigate }: ReaderNotesProps) => {
+  const { t, i18n } = useTranslation();
   const [open, setOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -105,7 +107,7 @@ export const ReaderNotes = ({ bookId, progress, onNavigate }: ReaderNotesProps) 
 
   const formatDate = (iso: string) => {
     const d = new Date(iso);
-    return d.toLocaleDateString("ru", {
+    return d.toLocaleDateString(i18n.language === "kk" ? "kk-KZ" : "ru-RU", {
       day: "numeric",
       month: "short",
       hour: "2-digit",
@@ -121,7 +123,7 @@ export const ReaderNotes = ({ bookId, progress, onNavigate }: ReaderNotesProps) 
         className={`relative p-2 rounded-lg transition-colors ${
           open ? "bg-white/25" : "hover:bg-white/15"
         }`}
-        title="Заметки"
+        title={t("reader.notes.open")}
       >
         <IconNotes size={18} stroke={1.5} />
       </button>
@@ -139,20 +141,20 @@ export const ReaderNotes = ({ bookId, progress, onNavigate }: ReaderNotesProps) 
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-border/40">
               <h3 className="text-sm font-semibold text-foreground">
-                Заметки
+                {t("reader.notes.title")}
               </h3>
               <div className="flex items-center gap-1">
                 <button
                   onClick={openCreate}
                   className="p-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors"
-                  title="Новая заметка"
+                  title={t("reader.notes.newNote")}
                 >
                   <IconPlus size={16} stroke={2} />
                 </button>
                 <button
                   onClick={togglePanel}
                   className="p-1.5 rounded-lg hover:bg-muted/60 transition-colors text-muted-foreground"
-                  title="Закрыть"
+                  title={t("reader.notes.close")}
                 >
                   <IconChevronRight size={16} stroke={1.5} />
                 </button>
@@ -174,7 +176,7 @@ export const ReaderNotes = ({ bookId, progress, onNavigate }: ReaderNotesProps) 
                       <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">
                         {progress}%
                       </span>
-                      <span>— текущая позиция</span>
+                      <span>{t("reader.notes.currentPosition")}</span>
                     </div>
                     <textarea
                       ref={textareaRef}
@@ -184,13 +186,13 @@ export const ReaderNotes = ({ bookId, progress, onNavigate }: ReaderNotesProps) 
                         if (e.key === "Enter" && (e.ctrlKey || e.metaKey))
                           handleCreate();
                       }}
-                      placeholder="Ваша заметка…"
+                      placeholder={t("reader.notes.placeholder")}
                       className="w-full resize-none rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary/40 min-h-[72px]"
                       rows={3}
                     />
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] text-muted-foreground">
-                        Ctrl+Enter — сохранить
+                        {t("reader.notes.ctrlEnterToSave")}
                       </span>
                       <div className="flex gap-1.5">
                         <button
@@ -200,14 +202,14 @@ export const ReaderNotes = ({ bookId, progress, onNavigate }: ReaderNotesProps) 
                           }}
                           className="px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:bg-muted/60 transition-colors"
                         >
-                          Отмена
+                          {t("reader.notes.cancel")}
                         </button>
                         <button
                           onClick={handleCreate}
                           disabled={!newText.trim() || saving}
                           className="px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-primary hover:bg-primary/90 disabled:opacity-50 transition-colors"
                         >
-                          Сохранить
+                          {t("reader.notes.save")}
                         </button>
                       </div>
                     </div>
@@ -225,12 +227,12 @@ export const ReaderNotes = ({ bookId, progress, onNavigate }: ReaderNotesProps) 
                     stroke={1.2}
                     className="mb-2 opacity-40"
                   />
-                  <p className="text-sm">Нет заметок</p>
+                  <p className="text-sm">{t("reader.notes.empty")}</p>
                   <button
                     onClick={openCreate}
                     className="mt-3 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
                   >
-                    Добавить первую заметку
+                    {t("reader.notes.addFirst")}
                   </button>
                 </div>
               ) : (
@@ -260,7 +262,7 @@ export const ReaderNotes = ({ bookId, progress, onNavigate }: ReaderNotesProps) 
                                       : "bg-muted/60 text-muted-foreground"
                                   }`}
                                   title={
-                                    canNavigate ? "Перейти к месту" : undefined
+                                    canNavigate ? t("reader.notes.jumpTo") : undefined
                                   }
                                 >
                                   {parsed.label}
@@ -273,14 +275,14 @@ export const ReaderNotes = ({ bookId, progress, onNavigate }: ReaderNotesProps) 
                               <button
                                 onClick={() => startEdit(note)}
                                 className="p-1 rounded text-muted-foreground/60 hover:text-foreground hover:bg-muted/50 transition-colors"
-                                title="Редактировать"
+                                title={t("reader.notes.edit")}
                               >
                                 <IconEdit size={13} stroke={1.5} />
                               </button>
                               <button
                                 onClick={() => handleDelete(note.id)}
                                 className="p-1 rounded text-muted-foreground/60 hover:text-red-500 hover:bg-red-50 transition-colors"
-                                title="Удалить"
+                                title={t("reader.notes.delete")}
                               >
                                 <IconTrash size={13} stroke={1.5} />
                               </button>

@@ -40,6 +40,12 @@ const EventDetail = () => {
   }
 
   const locale = i18n.language === "kk" ? "kk-KZ" : "ru-RU";
+  const title =
+    i18n.language === "kk" && event.title_kk ? event.title_kk : event.title;
+  const description =
+    i18n.language === "kk" && event.description_kk
+      ? event.description_kk
+      : event.description;
 
   const formatDate = (iso: string) =>
     new Date(iso).toLocaleDateString(locale, {
@@ -84,7 +90,7 @@ const EventDetail = () => {
               >
                 <img
                   src={event.cover_url}
-                  alt={event.title}
+                  alt={title}
                   className="w-full md:w-[360px] max-h-[220px] md:max-h-none rounded-xl shadow-2xl shadow-black/30 object-cover aspect-[16/9]"
                 />
               </motion.div>
@@ -98,7 +104,7 @@ const EventDetail = () => {
               className="flex-1"
             >
               <h1 className="text-2xl md:text-3xl font-bold text-white mb-4 leading-tight">
-                {event.title}
+                {title}
               </h1>
 
               <div className="space-y-2 text-white/60">
@@ -122,7 +128,7 @@ const EventDetail = () => {
       {/* Description */}
       <div className="container mx-auto px-4 lg:px-8 py-10">
         <div className="max-w-3xl">
-          {event.description ? (
+          {description ? (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -130,7 +136,7 @@ const EventDetail = () => {
             >
               <h2 className="text-lg font-semibold text-foreground mb-4">{t("events.descriptionTitle")}</h2>
               <p className="text-foreground/75 leading-relaxed whitespace-pre-line">
-                {event.description}
+                {description}
               </p>
             </motion.div>
           ) : (

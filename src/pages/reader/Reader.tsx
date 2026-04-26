@@ -78,7 +78,7 @@ const Reader = () => {
           shelfStatusRef.current = "reading";
         }
       })
-      .catch(() => { if (!cancelled) setError("Книга не найдена"); })
+      .catch(() => { if (!cancelled) setError(t("reader.bookNotFound")); })
       .finally(() => { if (!cancelled) setLoading(false); });
 
     return () => { cancelled = true; };
@@ -150,12 +150,12 @@ const Reader = () => {
     return (
       <div className="fixed inset-0 z-[100] flex items-center justify-center bg-white">
         <div className="text-center space-y-3">
-          <p className="text-sm text-muted-foreground">{error || "Файл недоступен"}</p>
+          <p className="text-sm text-muted-foreground">{error || t("reader.fileUnavailable")}</p>
           <button
             onClick={() => navigate(-1)}
             className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 transition-colors"
           >
-            Назад
+            {t("reader.back")}
           </button>
         </div>
       </div>
@@ -197,13 +197,13 @@ const Reader = () => {
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-white">
       <div className="text-center space-y-3">
         <p className="text-sm text-muted-foreground">
-          Формат «{book.file.format}» не поддерживается
+          {t("reader.formatNotSupported", { format: book.file.format })}
         </p>
         <button
           onClick={() => navigate(-1)}
           className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 transition-colors"
         >
-          Назад
+          {t("reader.back")}
         </button>
       </div>
     </div>

@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { IconPlus, IconMessage, IconTrash } from "@tabler/icons-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
@@ -8,6 +9,7 @@ import type { AiConversation } from "@/lib/api/types";
 import { TypingDots } from "./TypingDots";
 
 export function ConversationList({ onSelect }: { onSelect: (id: string) => void }) {
+  const { t, i18n } = useTranslation();
   const [conversations, setConversations] = useState<AiConversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -18,11 +20,11 @@ export function ConversationList({ onSelect }: { onSelect: (id: string) => void 
       const convs = await aiApi.listConversations();
       setConversations(convs || []);
     } catch {
-      toast.error("Не удалось загрузить чаты. Попробуйте позже.");
+      toast.error(t("chat.loadFailed"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     load();
@@ -34,7 +36,7 @@ export function ConversationList({ onSelect }: { onSelect: (id: string) => void 
       const conv = await aiApi.createConversation();
       onSelect(conv.id);
     } catch {
-      toast.error("Не удалось создать чат. Попробуйте позже.");
+      toast.error(t("chat.createFailed"));
     } finally {
       setCreating(false);
     }
@@ -46,7 +48,7 @@ export function ConversationList({ onSelect }: { onSelect: (id: string) => void 
       await aiApi.deleteConversation(id);
       setConversations((prev) => prev.filter((c) => c.id !== id));
     } catch {
-      toast.error("Не удалось удалить чат.");
+      toast.error(t("chat.deleteFailed"));
     }
   };
 
@@ -61,7 +63,7 @@ export function ConversationList({ onSelect }: { onSelect: (id: string) => void 
           className="w-full gap-2 border-dashed border-border/80 text-foreground/70 shadow-none transition-all duration-150 hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
         >
           {creating ? <TypingDots /> : <IconPlus size={15} stroke={2} />}
-          Новый чат
+          {t("chat.newChat")}
         </Button>
       </div>
 
@@ -75,9 +77,9 @@ export function ConversationList({ onSelect }: { onSelect: (id: string) => void 
             <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-muted">
               <IconMessage size={18} className="text-muted-foreground" stroke={1.5} />
             </div>
-            <p className="text-sm text-muted-foreground">Нет бесед</p>
+            <p className="text-sm text-muted-foreground">{t("chat.noConversations")}</p>
             <p className="mt-0.5 text-xs text-muted-foreground/60">
-              Начните новый чат с ассистентом
+              {t("chat.startNew")}
             </p>
           </div>
         ) : (
@@ -99,10 +101,13 @@ export function ConversationList({ onSelect }: { onSelect: (id: string) => void 
                     {c.title}
                   </p>
                   <p className="mt-0.5 text-[11px] text-muted-foreground/60">
-                    {new Date(c.updated_at || c.created_at).toLocaleDateString("ru-RU", {
-                      day: "numeric",
-                      month: "short",
-                    })}
+                    {new Date(c.updated_at || c.created_at).toLocaleDateString(
+                      i18n.language === "kk" ? "kk-KZ" : "ru-RU",
+                      {
+                        day: "numeric",
+                        month: "short",
+                      },
+                    )}
                   </p>
                 </div>
                 <button

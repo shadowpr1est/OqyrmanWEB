@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { IconSend } from "@tabler/icons-react";
 import { motion } from "framer-motion";
 import { AiMark } from "@/components/shared/AiMark";
@@ -9,6 +10,7 @@ import { TypingDots } from "./TypingDots";
 import { MessageBubble } from "./MessageBubble";
 
 export function ChatView({ conversationId: convId }: { conversationId: string }) {
+  const { t } = useTranslation();
   const [messages, setMessages] = useState<AiMessage[]>([]);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
@@ -93,7 +95,7 @@ export function ChatView({ conversationId: convId }: { conversationId: string })
                 id: crypto.randomUUID(),
                 conversation_id: convId,
                 role: "assistant",
-                content: chunk.content || "Произошла ошибка.",
+                content: chunk.content || t("chat.errorOccurred"),
                 created_at: new Date().toISOString(),
               },
             ]);
@@ -109,7 +111,7 @@ export function ChatView({ conversationId: convId }: { conversationId: string })
             id: crypto.randomUUID(),
             conversation_id: convId,
             role: "assistant",
-            content: "Не удалось получить ответ. Попробуйте позже.",
+            content: t("chat.errorTryLater"),
             created_at: new Date().toISOString(),
           },
         ]);
@@ -150,7 +152,7 @@ export function ChatView({ conversationId: convId }: { conversationId: string })
             <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-b from-primary/10 to-primary/5">
               <AiMark size={26} />
             </div>
-            <p className="text-sm font-medium text-foreground/80">Чем могу помочь?</p>
+            <p className="text-sm font-medium text-foreground/80">{t("chat.howCanIHelp")}</p>
             {suggestedPrompts.length > 0 ? (
               <div className="mt-4 flex flex-col gap-2 w-full px-1">
                 {suggestedPrompts.slice(0, 4).map((prompt) => (
@@ -165,7 +167,7 @@ export function ChatView({ conversationId: convId }: { conversationId: string })
               </div>
             ) : (
               <p className="mt-1 text-xs text-muted-foreground/60">
-                Спросите про книги, рекомендации или события
+                {t("chat.askHint")}
               </p>
             )}
           </div>
@@ -209,7 +211,7 @@ export function ChatView({ conversationId: convId }: { conversationId: string })
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Написать сообщение..."
+            placeholder={t("chat.inputPlaceholder")}
             disabled={streaming}
             rows={1}
             className="flex-1 resize-none bg-transparent px-2 py-1.5 text-sm leading-snug text-foreground placeholder:text-muted-foreground/50 focus:outline-none disabled:opacity-40"

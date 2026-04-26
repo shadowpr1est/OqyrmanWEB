@@ -431,6 +431,10 @@
     "children-literature": "Детская литература",
     "non-fiction": "Нон-фикшн",
     "self-help": "Саморазвитие",
+    "self-development": "Саморазвитие",
+    "kazakh-history": "Казахская история",
+    "kazakh-poetry": "Казахская поэзия",
+    "world-classic": "Мировая классика",
     "business": "Бизнес",
     "science": "Наука",
     "drama": "Драма",
@@ -526,7 +530,79 @@
   },
   "reader": {
     "loadingBook": "Загрузка книги…",
-    "noFile": "У этой книги нет файла для чтения"
+    "noFile": "У этой книги нет файла для чтения",
+    "back": "Назад",
+    "bookNotFound": "Книга не найдена",
+    "fileUnavailable": "Файл недоступен",
+    "formatNotSupported": "Формат «{{format}}» не поддерживается",
+    "settings": {
+      "title": "Настройки",
+      "fontFamily": "Шрифт",
+      "fontSize": "Размер шрифта",
+      "lineHeight": "Межстрочный интервал"
+    },
+    "ai": {
+      "assistant": "AI Ассистент",
+      "close": "Закрыть"
+    },
+    "notes": {
+      "title": "Заметки",
+      "open": "Заметки",
+      "newNote": "Новая заметка",
+      "close": "Закрыть",
+      "currentPosition": "— текущая позиция",
+      "placeholder": "Ваша заметка…",
+      "ctrlEnterToSave": "Ctrl+Enter — сохранить",
+      "cancel": "Отмена",
+      "save": "Сохранить",
+      "empty": "Нет заметок",
+      "addFirst": "Добавить первую заметку",
+      "edit": "Редактировать",
+      "delete": "Удалить",
+      "jumpTo": "Перейти к месту"
+    },
+    "pdf": {
+      "fitPage": "По странице",
+      "fitWidth": "По ширине",
+      "loadFailed": "Не удалось загрузить PDF",
+      "pageOf": "стр. {{page}} / {{total}}",
+      "page": "стр. {{page}}"
+    },
+    "selection": {
+      "ask": "Спросить AI",
+      "translate": "Перевести",
+      "translation": "Перевод",
+      "actionsAria": "Действия ИИ над выделением",
+      "close": "Закрыть",
+      "closeEsc": "Закрыть (Esc)",
+      "assistant": "Ассистент",
+      "errorGeneric": "Не удалось получить ответ",
+      "errorTryLater": "Не удалось получить ответ. Попробуйте позже.",
+      "retry": "Повторить",
+      "thinking": "Думаю над ответом…",
+      "position": "Позиция: {{progress}}%",
+      "continueInChat": "Продолжить в чате",
+      "inChat": "В чат",
+      "copy": "Скопировать",
+      "copied": "Скопировано",
+      "saveToNotes": "В заметки",
+      "saving": "Сохраняю…",
+      "saved": "Сохранено",
+      "noteLabelAi": "ИИ"
+    }
+  },
+  "chat": {
+    "newChat": "Новый чат",
+    "loadFailed": "Не удалось загрузить чаты. Попробуйте позже.",
+    "createFailed": "Не удалось создать чат. Попробуйте позже.",
+    "deleteFailed": "Не удалось удалить чат.",
+    "noConversations": "Нет бесед",
+    "startNew": "Начните новый чат с ассистентом",
+    "howCanIHelp": "Чем могу помочь?",
+    "askHint": "Спросите про книги, рекомендации или события",
+    "inputPlaceholder": "Написать сообщение...",
+    "errorOccurred": "Произошла ошибка.",
+    "errorTryLater": "Не удалось получить ответ. Попробуйте позже."
   },
   "common": {
     "loading": "Загрузка...",

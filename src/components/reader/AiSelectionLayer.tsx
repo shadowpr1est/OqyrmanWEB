@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   IconLanguage,
@@ -17,11 +18,6 @@ import { formatPosition, type PositionKind } from "@/lib/notePosition";
 import { openChatConversation } from "@/lib/aiChatBus";
 
 type AiReaderAction = "ask" | "translate";
-
-const ACTION_LABELS: Record<AiReaderAction, string> = {
-  ask: "Спросить AI",
-  translate: "Перевести",
-};
 
 const ACTION_ICONS: Record<AiReaderAction, React.ReactNode> = {
   ask: <IconSparkles size={15} stroke={2} />,
@@ -54,6 +50,11 @@ export const AiSelectionLayer = ({
   selection,
   onDismiss,
 }: Props) => {
+  const { t } = useTranslation();
+  const ACTION_LABELS: Record<AiReaderAction, string> = {
+    ask: t("reader.selection.ask"),
+    translate: t("reader.selection.translate"),
+  };
   const [activeAction, setActiveAction] = useState<AiReaderAction | null>(null);
   const [resultOpen, setResultOpen] = useState(false);
   const [streaming, setStreaming] = useState(false);
@@ -99,7 +100,7 @@ export const AiSelectionLayer = ({
             if (chunk.type === "chunk" && chunk.content) {
               setStreamText((prev) => prev + chunk.content);
             } else if (chunk.type === "error") {
-              setError(chunk.content || "Не удалось получить ответ");
+              setError(chunk.content || t("reader.selection.errorGeneric"));
             }
           },
           abort.signal,
@@ -107,7 +108,7 @@ export const AiSelectionLayer = ({
         );
       } catch (err) {
         if ((err as Error).name !== "AbortError") {
-          setError("Не удалось получить ответ. Попробуйте позже.");
+          setError(t("reader.selection.errorTryLater"));
         }
       } finally {
         setStreaming(false);
@@ -177,7 +178,7 @@ export const AiSelectionLayer = ({
     if (!sel || !streamText || savedState !== "idle") return;
     setSavedState("saving");
     try {
-      const label = activeAction ? ACTION_LABELS[activeAction] : "ИИ";
+      const label = activeAction ? ACTION_LABELS[activeAction] : t("reader.selection.noteLabelAi");
       const content = [
         `📌 «${sel.text}»`,
         ``,
@@ -248,13 +249,13 @@ export const AiSelectionLayer = ({
             onMouseDown={(e) => e.preventDefault()}
             className="z-[120] flex items-center gap-0.5 rounded-2xl border border-border/60 bg-white/95 p-1 shadow-[0_10px_32px_-8px_rgba(0,0,0,0.22),0_2px_0_0_rgba(255,255,255,0.8)_inset] backdrop-blur-md"
             role="toolbar"
-            aria-label="Действия ИИ над выделением"
+            aria-label={t("reader.selection.actionsAria")}
           >
             {(["ask", "translate"] as AiReaderAction[]).map((action) => (
               <PopoverButton
                 key={action}
                 icon={ACTION_ICONS[action]}
-                label={action === "translate" ? "Перевод" : ACTION_LABELS[action]}
+                label={action === "translate" ? t("reader.selection.translation") : ACTION_LABELS[action]}
                 onClick={() => runAction(action)}
               />
             ))}
@@ -262,7 +263,7 @@ export const AiSelectionLayer = ({
             <button
               onClick={onDismiss}
               className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-muted/40 text-muted-foreground transition-all hover:bg-muted/70 hover:text-foreground active:scale-90"
-              aria-label="Закрыть"
+              aria-label={t("reader.selection.close")}
             >
               <IconX size={14} stroke={2} />
             </button>
@@ -308,7 +309,7 @@ export const AiSelectionLayer = ({
                       {activeAction ? ACTION_LABELS[activeAction] : "AI"}
                     </span>
                     <span className="text-[10.5px] font-medium uppercase tracking-wider text-muted-foreground">
-                      Ассистент
+                      {t("reader.selection.assistant")}
                     </span>
                   </div>
                 </div>
@@ -316,7 +317,7 @@ export const AiSelectionLayer = ({
                   ref={closeButtonRef}
                   onClick={closeResult}
                   className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-                  aria-label="Закрыть (Esc)"
+                  aria-label={t("reader.selection.closeEsc")}
                 >
                   <IconX size={16} stroke={1.8} />
                 </button>
@@ -343,7 +344,7 @@ export const AiSelectionLayer = ({
                       onClick={retry}
                       className="inline-flex items-center gap-1.5 rounded-lg border border-border/70 bg-white px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted/40"
                     >
-                      <IconRefresh size={13} stroke={1.8} /> Повторить
+                      <IconRefresh size={13} stroke={1.8} /> {t("reader.selection.retry")}
                     </button>
                   </div>
                 ) : streaming && !streamText ? (
@@ -366,15 +367,15 @@ export const AiSelectionLayer = ({
               {/* Footer */}
               <div className="flex items-center justify-between gap-2 border-t border-border/40 bg-muted/20 px-5 py-3">
                 <span className="text-[11px] text-muted-foreground">
-                  Позиция: {progress}%
+                  {t("reader.selection.position", { progress })}
                 </span>
                 <div className="flex items-center gap-1.5">
                   <button
                     onClick={continueInChat}
                     disabled={!streamText || streaming || continuing}
                     className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
-                    aria-label="Продолжить в чате"
-                    title="Продолжить в чате"
+                    aria-label={t("reader.selection.continueInChat")}
+                    title={t("reader.selection.continueInChat")}
                   >
                     {continuing ? (
                       <motion.span
@@ -385,13 +386,13 @@ export const AiSelectionLayer = ({
                     ) : (
                       <IconMessageCircle size={13} stroke={1.8} />
                     )}
-                    В чат
+                    {t("reader.selection.inChat")}
                   </button>
                   <button
                     onClick={copyResponse}
                     disabled={!streamText || streaming}
                     className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
-                    aria-label="Копировать"
+                    aria-label={t("reader.selection.copy")}
                   >
                     <AnimatePresence mode="wait" initial={false}>
                       {copied ? (
@@ -403,7 +404,7 @@ export const AiSelectionLayer = ({
                           transition={{ duration: 0.14 }}
                           className="inline-flex items-center gap-1.5 text-primary"
                         >
-                          <IconCheck size={13} stroke={2} /> Скопировано
+                          <IconCheck size={13} stroke={2} /> {t("reader.selection.copied")}
                         </motion.span>
                       ) : (
                         <motion.span
@@ -414,7 +415,7 @@ export const AiSelectionLayer = ({
                           transition={{ duration: 0.14 }}
                           className="inline-flex items-center gap-1.5"
                         >
-                          <IconCopy size={13} stroke={1.8} /> Скопировать
+                          <IconCopy size={13} stroke={1.8} /> {t("reader.selection.copy")}
                         </motion.span>
                       )}
                     </AnimatePresence>
@@ -436,7 +437,7 @@ export const AiSelectionLayer = ({
                           transition={{ duration: 0.16 }}
                           className="inline-flex items-center gap-1.5"
                         >
-                          <IconCheck size={13} stroke={2.2} /> Сохранено
+                          <IconCheck size={13} stroke={2.2} /> {t("reader.selection.saved")}
                         </motion.span>
                       ) : savedState === "saving" ? (
                         <motion.span
@@ -455,7 +456,7 @@ export const AiSelectionLayer = ({
                               ease: "linear",
                             }}
                           />
-                          Сохраняю…
+                          {t("reader.selection.saving")}
                         </motion.span>
                       ) : (
                         <motion.span
@@ -465,7 +466,7 @@ export const AiSelectionLayer = ({
                           exit={{ opacity: 0 }}
                           className="inline-flex items-center gap-1.5"
                         >
-                          <IconBookmark size={13} stroke={1.8} /> В заметки
+                          <IconBookmark size={13} stroke={1.8} /> {t("reader.selection.saveToNotes")}
                         </motion.span>
                       )}
                     </AnimatePresence>
@@ -480,31 +481,34 @@ export const AiSelectionLayer = ({
   );
 };
 
-const ThinkingIndicator = () => (
-  <div className="flex items-center gap-2.5 py-2 text-sm text-muted-foreground">
-    <span className="inline-flex items-center gap-1">
-      {[0, 1, 2].map((i) => (
-        <motion.span
-          key={i}
-          className="h-1.5 w-1.5 rounded-full bg-primary/60"
-          animate={{ opacity: [0.25, 1, 0.25], y: [0, -2, 0] }}
-          transition={{
-            duration: 1,
-            repeat: Infinity,
-            delay: i * 0.15,
-            ease: "easeInOut",
-          }}
-        />
-      ))}
-    </span>
-    <motion.span
-      animate={{ opacity: [0.6, 1, 0.6] }}
-      transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
-    >
-      Думаю над ответом…
-    </motion.span>
-  </div>
-);
+const ThinkingIndicator = () => {
+  const { t } = useTranslation();
+  return (
+    <div className="flex items-center gap-2.5 py-2 text-sm text-muted-foreground">
+      <span className="inline-flex items-center gap-1">
+        {[0, 1, 2].map((i) => (
+          <motion.span
+            key={i}
+            className="h-1.5 w-1.5 rounded-full bg-primary/60"
+            animate={{ opacity: [0.25, 1, 0.25], y: [0, -2, 0] }}
+            transition={{
+              duration: 1,
+              repeat: Infinity,
+              delay: i * 0.15,
+              ease: "easeInOut",
+            }}
+          />
+        ))}
+      </span>
+      <motion.span
+        animate={{ opacity: [0.6, 1, 0.6] }}
+        transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
+      >
+        {t("reader.selection.thinking")}
+      </motion.span>
+    </div>
+  );
+};
 
 const PopoverButton = ({
   icon,

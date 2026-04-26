@@ -9,7 +9,9 @@ import { kk } from "date-fns/locale/kk";
 interface Event {
   id: number;
   title: string;
+  title_kk?: string;
   description: string;
+  description_kk?: string;
   location?: string;
   starts_at: string;
 }
@@ -51,8 +53,12 @@ export const EventsSection = () => {
                     <Calendar size={16} />
                     {format(new Date(ev.starts_at), "d MMMM yyyy, HH:mm", { locale: dateLocale })}
                   </div>
-                  <h3 className="font-semibold text-foreground mb-2">{ev.title}</h3>
-                  <p className="text-sm text-muted-foreground line-clamp-2">{ev.description}</p>
+                  <h3 className="font-semibold text-foreground mb-2">
+                    {i18n.language === "kk" && ev.title_kk ? ev.title_kk : ev.title}
+                  </h3>
+                  <p className="text-sm text-muted-foreground line-clamp-2">
+                    {i18n.language === "kk" && ev.description_kk ? ev.description_kk : ev.description}
+                  </p>
                   {ev.location && (
                     <div className="flex items-center gap-1.5 mt-3 text-xs text-muted-foreground">
                       <MapPin size={14} />
