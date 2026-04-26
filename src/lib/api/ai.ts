@@ -13,6 +13,9 @@ export const aiApi = {
       body: JSON.stringify({ preferences }),
     }),
 
+  recommendBooks: () =>
+    apiFetch<{ items: import("./types").Book[] }>("/ai/recommend-books"),
+
   suggestedPrompts: () =>
     apiFetch<AiSuggestedPrompts>("/ai/prompts"),
 

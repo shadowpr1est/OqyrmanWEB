@@ -4,8 +4,9 @@ import { motion } from "framer-motion";
 import {
   IconChevronRight,
   IconBook,
+  IconSparkles,
 } from "@tabler/icons-react";
-import { booksApi, readingSessionsApi } from "@/lib/api";
+import { booksApi, readingSessionsApi, aiApi } from "@/lib/api";
 import { fadeLeft, fadeRight, fadeUp } from "@/lib/motion";
 import type { Book, ReadingSession } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
@@ -36,6 +37,7 @@ const FEATURED_GENRES = [
 const BooksCatalog = () => {
   const { user } = useAuth();
   const [sessions, setSessions] = useState<ReadingSession[]>([]);
+  const [recommendedBooks, setRecommendedBooks] = useState<Book[] | null>(null);
   const [genreBooks, setGenreBooks] = useState<Record<string, Book[]>>({});
   const [authorBooks, setAuthorBooks] = useState<Record<string, Book[]>>({});
 
@@ -46,6 +48,27 @@ const BooksCatalog = () => {
       .list()
       .then((res) => setSessions((res.items || []).filter((s) => s.status === "reading")))
       .catch(() => {});
+  }, [user]);
+
+  /* Fetch AI book recommendations (cached in sessionStorage for 6h) */
+  useEffect(() => {
+    if (!user) return;
+    const cacheKey = `ai-recs-${user.id}`;
+    const raw = sessionStorage.getItem(cacheKey);
+    if (raw) {
+      try {
+        const { books, exp } = JSON.parse(raw);
+        if (Date.now() < exp) { setRecommendedBooks(books); return; }
+      } catch {}
+    }
+    aiApi
+      .recommendBooks()
+      .then((res) => {
+        const books = res.items || [];
+        sessionStorage.setItem(cacheKey, JSON.stringify({ books, exp: Date.now() + 6 * 60 * 60 * 1000 }));
+        setRecommendedBooks(books);
+      })
+      .catch(() => setRecommendedBooks([]));
   }, [user]);
 
   /* Fetch books per genre */
@@ -190,6 +213,40 @@ const BooksCatalog = () => {
                     </div>
                   </div>
                 </Link>
+              ))}
+            </div>
+          </Section>
+        )}
+
+        {/* ── AI Recommendations ── */}
+        {user && recommendedBooks !== null && recommendedBooks.length > 0 && (
+          <Section
+            title="Рекомендации для вас"
+            icon={<IconSparkles size={20} className="text-amber-500" />}
+          >
+            <HorizontalScroll>
+              {recommendedBooks.map((book) => (
+                <div key={book.id} className="w-[160px] flex-shrink-0">
+                  <BookCard book={book} />
+                </div>
+              ))}
+            </HorizontalScroll>
+          </Section>
+        )}
+
+        {/* ── AI Recommendations skeleton (loading) ── */}
+        {user && recommendedBooks === null && (
+          <Section
+            title="Рекомендации для вас"
+            icon={<IconSparkles size={20} className="text-amber-500" />}
+          >
+            <div className="flex gap-4 overflow-hidden">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="w-[160px] flex-shrink-0">
+                  <div className="w-full aspect-[2/3] rounded-xl bg-muted animate-pulse" />
+                  <div className="mt-2 h-3 w-3/4 rounded bg-muted animate-pulse" />
+                  <div className="mt-1.5 h-3 w-1/2 rounded bg-muted animate-pulse" />
+                </div>
               ))}
             </div>
           </Section>
