@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { IconMapPin, IconCheck, IconX } from "@tabler/icons-react";
+import { toast } from "sonner";
 import { libraryBooksApi } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { ReservationModal } from "@/components/books/ReservationModal";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface BookAvailabilityProps {
   bookId: string | number;
@@ -14,6 +16,18 @@ interface BookAvailabilityProps {
 
 export const BookAvailability = ({ bookId, bookTitle }: BookAvailabilityProps) => {
   const [reserveOpen, setReserveOpen] = useState(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleReserveClick = () => {
+    if (!user?.phone) {
+      toast.error("Добавьте номер телефона в профиле перед бронированием", {
+        action: { label: "Профиль", onClick: () => navigate("/profile") },
+      });
+      return;
+    }
+    setReserveOpen(true);
+  };
 
   const { data: libraryBooks, isLoading } = useQuery({
     queryKey: ["library-books", "book", bookId],
@@ -80,7 +94,7 @@ export const BookAvailability = ({ bookId, bookTitle }: BookAvailabilityProps) =
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => setReserveOpen(true)}
+                onClick={handleReserveClick}
                 className="flex-shrink-0"
               >
                 Забронировать

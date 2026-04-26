@@ -143,6 +143,16 @@ export function BookActions({ book }: BookActionsProps) {
 
   const [reserveOpen, setReserveOpen] = useState(false);
 
+  const handleReserveClick = () => {
+    if (!user?.phone) {
+      toast.error("Добавьте номер телефона в профиле перед бронированием", {
+        action: { label: "Профиль", onClick: () => navigate("/profile") },
+      });
+      return;
+    }
+    setReserveOpen(true);
+  };
+
   const shelfBusy =
     addToShelf.isPending || removeFromShelf.isPending || updateShelfStatus.isPending;
 
@@ -252,7 +262,7 @@ export function BookActions({ book }: BookActionsProps) {
             Эта книга есть в библиотеках вашего города
           </div>
           <button
-            onClick={() => setReserveOpen(true)}
+            onClick={handleReserveClick}
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border-2 border-primary text-primary text-sm font-semibold hover:bg-primary/5 transition-colors w-fit"
           >
             <IconBuildingBank size={16} />
