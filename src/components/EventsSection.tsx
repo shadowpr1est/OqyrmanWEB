@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { AnimateIn } from "@/components/AnimateIn";
 import { Calendar, MapPin, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
+import { kk } from "date-fns/locale/kk";
 
 interface Event {
   id: number;
@@ -13,6 +15,7 @@ interface Event {
 }
 
 export const EventsSection = () => {
+  const { t, i18n } = useTranslation();
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -24,11 +27,13 @@ export const EventsSection = () => {
       .finally(() => setLoading(false));
   }, []);
 
+  const dateLocale = i18n.language === "kk" ? kk : ru;
+
   return (
     <section id="events" className="py-20 md:py-28">
       <div className="container mx-auto px-4 lg:px-8">
         <AnimateIn className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground">Ближайшие события</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground">{t("eventsSection.title")}</h2>
         </AnimateIn>
 
         {loading ? (
@@ -36,7 +41,7 @@ export const EventsSection = () => {
             <Loader2 className="animate-spin text-primary" size={32} />
           </div>
         ) : events.length === 0 ? (
-          <p className="text-center text-muted-foreground">Нет предстоящих событий</p>
+          <p className="text-center text-muted-foreground">{t("eventsSection.empty")}</p>
         ) : (
           <div className="grid sm:grid-cols-2 gap-6 max-w-4xl mx-auto">
             {events.map((ev, i) => (
@@ -44,7 +49,7 @@ export const EventsSection = () => {
                 <div className="p-6 rounded-2xl border border-border bg-background hover:border-primary/30 transition-colors">
                   <div className="flex items-center gap-2 text-sm text-primary font-medium mb-3">
                     <Calendar size={16} />
-                    {format(new Date(ev.starts_at), "d MMMM yyyy, HH:mm", { locale: ru })}
+                    {format(new Date(ev.starts_at), "d MMMM yyyy, HH:mm", { locale: dateLocale })}
                   </div>
                   <h3 className="font-semibold text-foreground mb-2">{ev.title}</h3>
                   <p className="text-sm text-muted-foreground line-clamp-2">{ev.description}</p>

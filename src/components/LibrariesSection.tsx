@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { AnimateIn } from "@/components/AnimateIn";
 import { MapPin, Phone, Loader2 } from "lucide-react";
 
@@ -10,6 +11,7 @@ interface Library {
 }
 
 export const LibrariesSection = () => {
+  const { t } = useTranslation();
   const [libraries, setLibraries] = useState<Library[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -25,7 +27,7 @@ export const LibrariesSection = () => {
     <section id="libraries" className="py-20 md:py-28 bg-surface">
       <div className="container mx-auto px-4 lg:px-8">
         <AnimateIn className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground">Наши библиотеки в Алматы</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground">{t("librariesSection.title")}</h2>
         </AnimateIn>
 
         {loading ? (

@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useRef, lazy, Suspense } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { booksApi, readingSessionsApi, wishlistApi } from "@/lib/api";
 import type { Book } from "@/lib/api";
 import type { ShelfStatus } from "@/lib/api/types";
@@ -7,16 +8,20 @@ import type { ShelfStatus } from "@/lib/api/types";
 const EpubReader = lazy(() => import("@/components/reader/EpubReader").then(m => ({ default: m.EpubReader })));
 const PdfReader = lazy(() => import("@/components/reader/PdfReader").then(m => ({ default: m.PdfReader })));
 
-const ReaderSpinner = () => (
-  <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#faf9f6]">
-    <div className="flex flex-col items-center gap-3">
-      <div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-      <p className="text-sm text-muted-foreground">Загрузка книги…</p>
+const ReaderSpinner = () => {
+  const { t } = useTranslation();
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#faf9f6]">
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm text-muted-foreground">{t("reader.loadingBook")}</p>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const Reader = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [book, setBook] = useState<Book | null>(null);
@@ -43,7 +48,7 @@ const Reader = () => {
       .then(([bookData, session, shelf]) => {
         if (cancelled) return;
         if (!bookData.file?.file_url) {
-          setError("У этой книги нет файла для чтения");
+          setError(t("reader.noFile"));
           return;
         }
         setBook(bookData);

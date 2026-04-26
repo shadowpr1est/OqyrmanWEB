@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { IconX, IconArrowLeft } from "@tabler/icons-react";
 import { AiMark } from "@/components/shared/AiMark";
 import { motion, AnimatePresence } from "framer-motion";
@@ -7,9 +8,10 @@ import { onOpenChatConversation } from "@/lib/aiChatBus";
 import { ConversationList } from "@/components/ai/ConversationList";
 import { ChatView } from "@/components/ai/ChatView";
 
-// ── Widget Root ─────────────────────────────────────────────────────────────
+// ── Widget Root ────────────────────────────────────────────────────
 
 export function AiChatWidget() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [initialConv, setInitialConv] = useState<string | null>(null);
@@ -38,7 +40,7 @@ export function AiChatWidget() {
             transition={{ type: "spring", stiffness: 400, damping: 25 }}
             onClick={() => setOpen(true)}
             className="fixed bottom-[4.5rem] lg:bottom-6 right-6 z-[110] flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-b from-primary-light to-primary text-white shadow-[0_4px_20px_rgba(0,0,0,0.15),0_2px_0_0_rgba(255,255,255,0.15)_inset] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_6px_24px_rgba(0,0,0,0.2),0_2px_0_0_rgba(255,255,255,0.15)_inset] active:translate-y-0 active:scale-95"
-            aria-label="AI ассистент"
+            aria-label={t("aiWidget.ariaLabel")}
           >
             <AiMark size={26} mono className="text-white" />
           </motion.button>
@@ -73,6 +75,7 @@ function ChatPanel({
   onClose: () => void;
   initialConversationId?: string | null;
 }) {
+  const { t } = useTranslation();
   const [view, setView] = useState<View>(
     initialConversationId ? "chat" : "conversations",
   );
@@ -120,7 +123,7 @@ function ChatPanel({
             <AiMark size={16} animated={false} />
           </div>
           <span className="text-sm font-semibold tracking-tight text-foreground">
-            AI Ассистент
+            {t("aiWidget.title")}
           </span>
         </div>
         <button

@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { IconQrcode, IconPhone } from "@tabler/icons-react";
 import { Link } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
@@ -19,6 +20,7 @@ interface ReaderCardProps {
 }
 
 export function ReaderCard({ open, onOpenChange }: ReaderCardProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
 
   const hasPhone = !!user?.phone;
@@ -36,7 +38,7 @@ export function ReaderCard({ open, onOpenChange }: ReaderCardProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm p-0 overflow-hidden rounded-2xl border-0 shadow-2xl">
-        <DialogTitle className="sr-only">Читательский билет</DialogTitle>
+        <DialogTitle className="sr-only">{t("readerCard.title")}</DialogTitle>
 
         {/* Header */}
         <div className="bg-gradient-to-br from-primary to-primary-light px-6 pt-6 pb-10 text-center relative">
@@ -47,7 +49,7 @@ export function ReaderCard({ open, onOpenChange }: ReaderCardProps) {
             </span>
           </div>
           <p className="text-xs text-white/70 uppercase tracking-widest">
-            Читательский билет
+            {t("readerCard.title")}
           </p>
         </div>
 
@@ -93,7 +95,7 @@ export function ReaderCard({ open, onOpenChange }: ReaderCardProps) {
                 </div>
               )}
               <p className="text-xs text-muted-foreground mt-3">
-                Покажите QR-код для получения книги
+                {t("readerCard.showQrHint")}
               </p>
             </div>
           ) : (
@@ -102,13 +104,13 @@ export function ReaderCard({ open, onOpenChange }: ReaderCardProps) {
                 <IconPhone size={28} className="text-primary" />
               </div>
               <p className="text-sm font-medium text-foreground mb-1">
-                Укажите номер телефона
+                {t("readerCard.addPhoneTitle")}
               </p>
               <p className="text-xs text-muted-foreground mb-4 max-w-[240px]">
-                Для активации читательского билета необходимо добавить номер телефона в профиле
+                {t("readerCard.addPhoneDesc")}
               </p>
               <Button asChild size="sm" onClick={() => onOpenChange(false)}>
-                <Link to="/profile">Перейти в профиль</Link>
+                <Link to="/profile">{t("readerCard.goToProfile")}</Link>
               </Button>
             </div>
           )}
