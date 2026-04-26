@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import {
   IconBell,
   IconCheck,
+  IconChecks,
   IconBookmark,
   IconBook,
   IconClock,
@@ -107,7 +108,7 @@ const NotificationPopoverItem = ({
 };
 
 export const NotificationBell = () => {
-  const { notifications, unreadCount, markRead } = useNotifications();
+  const { notifications, unreadCount, markRead, markAllRead, markingAll } = useNotifications();
   const [open, setOpen] = useState(false);
 
   const recent = notifications.slice(0, 6);
@@ -143,9 +144,14 @@ export const NotificationBell = () => {
         <div className="flex items-center justify-between px-4 py-3 border-b border-border/40">
           <h3 className="text-sm font-semibold text-foreground">Уведомления</h3>
           {unreadCount > 0 && (
-            <span className="text-xs text-muted-foreground">
-              {unreadCount} новых
-            </span>
+            <button
+              onClick={markAllRead}
+              disabled={markingAll}
+              className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 disabled:opacity-50 transition-colors"
+            >
+              <IconChecks size={14} />
+              {markingAll ? "..." : "Прочитать все"}
+            </button>
           )}
         </div>
 

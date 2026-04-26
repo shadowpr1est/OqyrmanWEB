@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import {
   IconBell,
   IconCheck,
+  IconChecks,
   IconTrash,
   IconBellOff,
   IconBookmark,
@@ -124,7 +125,7 @@ const NotificationItem = ({
 };
 
 const Notifications = () => {
-  const { notifications, unreadCount, isLoading, markRead, deleteNotification } =
+  const { notifications, unreadCount, isLoading, markRead, deleteNotification, markAllRead, markingAll } =
     useNotifications();
 
   return (
@@ -132,6 +133,16 @@ const Notifications = () => {
       <PageHeader
         title="Уведомления"
         subtitle={unreadCount > 0 ? `${unreadCount} непрочитанных` : "Все прочитано"}
+        action={unreadCount > 0 ? (
+          <button
+            onClick={() => { markAllRead(); toast.success("Все уведомления прочитаны"); }}
+            disabled={markingAll}
+            className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-primary border border-primary/30 hover:bg-primary/5 transition-colors disabled:opacity-50"
+          >
+            <IconChecks size={16} />
+            {markingAll ? "..." : "Прочитать все"}
+          </button>
+        ) : undefined}
       />
 
       {isLoading ? (

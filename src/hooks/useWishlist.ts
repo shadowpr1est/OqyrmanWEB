@@ -38,6 +38,7 @@ export function useToggleWishlist(bookId: string | number) {
     onSuccess: () => {
       qc.setQueryData(["wishlist", bookId, "exists"], { exists: false, status: null });
       qc.invalidateQueries({ queryKey: ["wishlist"] });
+      qc.invalidateQueries({ queryKey: ["reading-session", bookId] });
     },
   });
 

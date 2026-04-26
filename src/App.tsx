@@ -37,7 +37,13 @@ const Notifications = lazy(() => import("./pages/notifications/Notifications"));
 const Reader = lazy(() => import("./pages/reader/Reader"));
 
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60_000,
+    },
+  },
+});
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string;
 
 const ScrollToTop = () => {

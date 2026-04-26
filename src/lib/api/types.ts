@@ -77,13 +77,13 @@ export interface Genre {
 // ─── Libraries ──────────────────────────────────────────────────────────────
 
 export interface Library {
-  id: number;
+  id: string;
   name: string;
   address: string;
   lat: number;
   lng: number;
   phone: string;
-  image_url: string;
+  photo_url: string;
 }
 
 export interface LibraryBook {

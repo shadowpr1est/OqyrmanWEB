@@ -75,10 +75,10 @@ const Libraries = () => {
             >
               <div className="relative h-full rounded-2xl border border-border bg-white overflow-hidden transition-all duration-300 hover:border-primary/30 hover:shadow-xl hover:shadow-black/[0.04]">
                 {/* Image */}
-                {lib.image_url ? (
+                {lib.photo_url ? (
                   <div className="aspect-[16/9] overflow-hidden">
                     <img
-                      src={optimizedUrl(lib.image_url, 500)}
+                      src={optimizedUrl(lib.photo_url, 500)}
                       alt={lib.name}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                       loading="lazy"
@@ -139,9 +139,9 @@ const Libraries = () => {
               >
                 {/* Hero image */}
                 <div className="relative">
-                  {selected.image_url ? (
+                  {selected.photo_url ? (
                     <img
-                      src={optimizedUrl(selected.image_url, 800)}
+                      src={optimizedUrl(selected.photo_url, 800)}
                       alt={selected.name}
                       className="w-full h-48 object-cover"
                     />

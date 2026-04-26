@@ -6,9 +6,10 @@ import {
   IconBook,
   IconSparkles,
 } from "@tabler/icons-react";
+import { useQuery } from "@tanstack/react-query";
 import { booksApi, readingSessionsApi, aiApi } from "@/lib/api";
 import { fadeLeft, fadeRight, fadeUp } from "@/lib/motion";
-import type { Book, ReadingSession } from "@/lib/api";
+import type { Book } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { BookCard } from "@/components/books/BookCard";
 import { HorizontalScroll } from "@/components/shared/HorizontalScroll";
@@ -34,23 +35,64 @@ const FEATURED_GENRES = [
 
 /* ════════════════════════════════════════════════════════════════════════════ */
 
+const SECTION_STALE = 5 * 60_000; // genre/author sections rarely change
+
+const GenreSection = ({ genre }: { genre: typeof FEATURED_GENRES[number] }) => {
+  const { data } = useQuery({
+    queryKey: ["books", "by-genre", genre.id],
+    queryFn: () => booksApi.getByGenre(genre.id, { limit: 10 }),
+    staleTime: SECTION_STALE,
+  });
+  const books = (data?.items ?? []).slice(0, 10);
+  if (!books.length) return null;
+  return (
+    <Section title={genre.name} linkTo={`/books?genre=${genre.id}`} linkLabel="Все">
+      <HorizontalScroll>
+        {books.map((book) => (
+          <div key={book.id} className="w-[160px] flex-shrink-0">
+            <BookCard book={book} />
+          </div>
+        ))}
+      </HorizontalScroll>
+    </Section>
+  );
+};
+
+const AuthorSection = ({ author }: { author: typeof FEATURED_AUTHORS[number] }) => {
+  const { data } = useQuery({
+    queryKey: ["books", "by-author", author.id],
+    queryFn: () => booksApi.getByAuthor(author.id, { limit: 10 }),
+    staleTime: SECTION_STALE,
+  });
+  const books = (data?.items ?? []).slice(0, 10);
+  if (!books.length) return null;
+  return (
+    <Section title={author.name} linkTo={`/authors/${author.id}`} linkLabel="Все книги">
+      <HorizontalScroll>
+        {books.map((book) => (
+          <div key={book.id} className="w-[160px] flex-shrink-0">
+            <BookCard book={book} />
+          </div>
+        ))}
+      </HorizontalScroll>
+    </Section>
+  );
+};
+
 const BooksCatalog = () => {
   const { user } = useAuth();
-  const [sessions, setSessions] = useState<ReadingSession[]>([]);
+
+  const { data: sessionsData } = useQuery({
+    queryKey: ["reading-sessions"],
+    queryFn: readingSessionsApi.list,
+    enabled: !!user,
+    staleTime: 30_000,
+    select: (data) => (data.items || []).filter((s) => s.status === "reading"),
+  });
+  const sessions = sessionsData ?? [];
+
+  /* AI recommendations — sessionStorage cache (6h) used as queryFn */
   const [recommendedBooks, setRecommendedBooks] = useState<Book[] | null>(null);
-  const [genreBooks, setGenreBooks] = useState<Record<string, Book[]>>({});
-  const [authorBooks, setAuthorBooks] = useState<Record<string, Book[]>>({});
-
-  /* Fetch reading sessions */
-  useEffect(() => {
-    if (!user) return;
-    readingSessionsApi
-      .list()
-      .then((res) => setSessions((res.items || []).filter((s) => s.status === "reading")))
-      .catch(() => {});
-  }, [user]);
-
-  /* Fetch AI book recommendations (cached in sessionStorage for 6h) */
   useEffect(() => {
     if (!user) return;
     const cacheKey = `ai-recs-${user.id}`;
@@ -70,26 +112,6 @@ const BooksCatalog = () => {
       })
       .catch(() => setRecommendedBooks([]));
   }, [user]);
-
-  /* Fetch books per genre */
-  useEffect(() => {
-    FEATURED_GENRES.forEach((g) => {
-      booksApi
-        .getByGenre(g.id, { limit: 10 })
-        .then((res) => setGenreBooks((prev) => ({ ...prev, [g.id]: (res.items || []).slice(0, 10) })))
-        .catch(() => {});
-    });
-  }, []);
-
-  /* Fetch books per author */
-  useEffect(() => {
-    FEATURED_AUTHORS.forEach((a) => {
-      booksApi
-        .getByAuthor(a.id, { limit: 10 })
-        .then((res) => setAuthorBooks((prev) => ({ ...prev, [a.id]: (res.items || []).slice(0, 10) })))
-        .catch(() => {});
-    });
-  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -258,38 +280,10 @@ const BooksCatalog = () => {
           const maxLen = Math.max(FEATURED_GENRES.length, FEATURED_AUTHORS.length);
           for (let i = 0; i < maxLen; i++) {
             if (i < FEATURED_GENRES.length) {
-              const g = FEATURED_GENRES[i];
-              const books = genreBooks[g.id];
-              if (books && books.length > 0) {
-                sections.push(
-                  <Section key={`g-${g.id}`} title={g.name} linkTo={`/books?genre=${g.id}`} linkLabel="Все">
-                    <HorizontalScroll>
-                      {books.map((book) => (
-                        <div key={book.id} className="w-[160px] flex-shrink-0">
-                          <BookCard book={book} />
-                        </div>
-                      ))}
-                    </HorizontalScroll>
-                  </Section>
-                );
-              }
+              sections.push(<GenreSection key={`g-${FEATURED_GENRES[i].id}`} genre={FEATURED_GENRES[i]} />);
             }
             if (i < FEATURED_AUTHORS.length) {
-              const a = FEATURED_AUTHORS[i];
-              const books = authorBooks[a.id];
-              if (books && books.length > 0) {
-                sections.push(
-                  <Section key={`a-${a.id}`} title={a.name} linkTo={`/authors/${a.id}`} linkLabel="Все книги">
-                    <HorizontalScroll>
-                      {books.map((book) => (
-                        <div key={book.id} className="w-[160px] flex-shrink-0">
-                          <BookCard book={book} />
-                        </div>
-                      ))}
-                    </HorizontalScroll>
-                  </Section>
-                );
-              }
+              sections.push(<AuthorSection key={`a-${FEATURED_AUTHORS[i].id}`} author={FEATURED_AUTHORS[i]} />);
             }
           }
           return sections;

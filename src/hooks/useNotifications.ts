@@ -50,12 +50,26 @@ export function useNotifications() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["notifications"] }),
   });
 
+  const [markingAll, setMarkingAll] = useState(false);
+
+  const markAllRead = async () => {
+    const unread = notifications.filter((n) => !n.is_read);
+    if (unread.length === 0) return;
+    setMarkingAll(true);
+    await Promise.all(unread.map((n) => notificationsApi.markRead(n.id)));
+    await qc.invalidateQueries({ queryKey: ["notifications"] });
+    setSseCount(0);
+    setMarkingAll(false);
+  };
+
   return {
     notifications,
     unreadCount,
     isLoading,
     markRead: markReadMutation.mutate,
     deleteNotification: deleteMutation.mutate,
+    markAllRead,
+    markingAll,
   };
 }
 

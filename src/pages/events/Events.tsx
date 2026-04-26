@@ -24,7 +24,8 @@ const Events = () => {
     queryFn: () => eventsApi.list({ limit: 50 }),
   });
 
-  const events = data?.items || [];
+  const now = Date.now();
+  const events = (data?.items || []).filter((e) => new Date(e.ends_at).getTime() > now);
 
   return (
     <div className="container mx-auto px-4 lg:px-8 py-8">

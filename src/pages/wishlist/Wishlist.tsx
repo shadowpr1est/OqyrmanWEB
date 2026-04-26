@@ -1,13 +1,13 @@
-import { useState } from "react";
 import { motion } from "framer-motion";
-import { IconHeart } from "@tabler/icons-react";
-import { useWishlist } from "@/hooks/useWishlist";
+import { IconHeart, IconX } from "@tabler/icons-react";
+import { useWishlist, useToggleWishlist } from "@/hooks/useWishlist";
 import { BookCard } from "@/components/books/BookCard";
 import { BookGridSkeleton } from "@/components/books/BookCardSkeleton";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { PageHeader } from "@/components/shared/PageHeader";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import type { Book } from "@/lib/api";
 import type { WishlistItem, ShelfStatus } from "@/lib/api/types";
 
@@ -32,6 +32,28 @@ function toBook(item: WishlistItem): Book {
   };
 }
 
+const WishlistCard = ({ item }: { item: WishlistItem }) => {
+  const { remove } = useToggleWishlist(item.book.id);
+  return (
+    <div className="relative group/card">
+      <BookCard book={toBook(item)} />
+      <button
+        onClick={(e) => {
+          e.preventDefault();
+          remove.mutate(undefined, {
+            onSuccess: () => toast.success("Удалено с полки"),
+          });
+        }}
+        disabled={remove.isPending}
+        className="absolute top-2 right-2 z-10 p-1 rounded-full bg-black/50 text-white opacity-0 group-hover/card:opacity-100 hover:bg-red-500 transition-all disabled:opacity-40"
+        title="Убрать с полки"
+      >
+        <IconX size={14} />
+      </button>
+    </div>
+  );
+};
+
 const tabs: { label: string; value: ShelfStatus | undefined }[] = [
   { label: "Все", value: undefined },
   { label: "Хочу прочитать", value: "want_to_read" },
@@ -40,7 +62,11 @@ const tabs: { label: string; value: ShelfStatus | undefined }[] = [
 ];
 
 const Wishlist = () => {
-  const [activeTab, setActiveTab] = useState<ShelfStatus | undefined>(undefined);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = (searchParams.get("shelf") as ShelfStatus) || undefined;
+  const setActiveTab = (value: ShelfStatus | undefined) => {
+    setSearchParams(value ? { shelf: value } : {}, { replace: true });
+  };
   const { data, isLoading } = useWishlist(activeTab);
   const items = data || [];
 
@@ -94,7 +120,7 @@ const Wishlist = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.03 }}
             >
-              <BookCard book={toBook(item)} />
+              <WishlistCard item={item} />
             </motion.div>
           ))}
         </motion.div>
