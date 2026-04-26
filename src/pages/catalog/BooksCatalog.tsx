@@ -35,6 +35,53 @@ const FEATURED_GENRES = [
 
 /* ════════════════════════════════════════════════════════════════════════════ */
 
+const COVER_SLOTS = [
+  { style: "absolute top-0 left-0 -rotate-6 z-0", fallbackGradient: "from-amber-200 to-amber-400" },
+  { style: "absolute top-4 left-[90px] rotate-3 z-10", fallbackGradient: "from-rose-200 to-rose-400" },
+  { style: "absolute top-10 left-[170px] -rotate-2 z-0", fallbackGradient: "from-sky-200 to-sky-400" },
+];
+
+function HeroCoverStack() {
+  const { data } = useQuery({
+    queryKey: ["books", "hero-covers"],
+    queryFn: () => booksApi.list({ limit: 3 }),
+    staleTime: 10 * 60_000,
+  });
+  const books = data?.items ?? [];
+
+  return (
+    <motion.div
+      className="flex-1 hidden lg:flex items-center justify-center"
+      {...fadeRight}
+      transition={{ ...fadeRight.transition, delay: 0.15 }}
+    >
+      <div className="relative w-[300px] h-[280px]">
+        {COVER_SLOTS.map((slot, i) => {
+          const book = books[i];
+          return (
+            <div
+              key={i}
+              className={`${slot.style} w-[130px] h-[190px] rounded-xl shadow-2xl border-2 border-white/20 overflow-hidden`}
+            >
+              {book?.cover_url ? (
+                <img
+                  src={book.cover_url}
+                  alt={book.title}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className={`w-full h-full bg-gradient-to-br ${slot.fallbackGradient} flex items-center justify-center`}>
+                  <span className="text-white/50 font-bold text-xs text-center px-3">{book?.title ?? ""}</span>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </motion.div>
+  );
+}
+
 const SECTION_STALE = 5 * 60_000; // genre/author sections rarely change
 
 const GenreSection = ({ genre }: { genre: typeof FEATURED_GENRES[number] }) => {
@@ -155,24 +202,7 @@ const BooksCatalog = () => {
             </motion.div>
 
             {/* Right — floating book covers */}
-            <motion.div
-              className="flex-1 hidden lg:flex items-center justify-center"
-              {...fadeRight}
-              transition={{ ...fadeRight.transition, delay: 0.15 }}
-            >
-              <div className="relative w-[300px] h-[280px]">
-                {/* Decorative book covers */}
-                <div className="absolute top-0 left-0 w-[130px] h-[190px] rounded-xl bg-gradient-to-br from-amber-200 to-amber-400 shadow-2xl -rotate-6 border-2 border-white/20 flex items-center justify-center">
-                  <span className="text-amber-900/60 font-bold text-xs text-center px-3">Абай<br/>Қара сөз</span>
-                </div>
-                <div className="absolute top-4 left-[90px] w-[130px] h-[190px] rounded-xl bg-gradient-to-br from-rose-200 to-rose-400 shadow-2xl rotate-3 border-2 border-white/20 flex items-center justify-center z-10">
-                  <span className="text-rose-900/60 font-bold text-xs text-center px-3">Достоевский<br/>Преступление и наказание</span>
-                </div>
-                <div className="absolute top-10 left-[170px] w-[130px] h-[190px] rounded-xl bg-gradient-to-br from-sky-200 to-sky-400 shadow-2xl -rotate-2 border-2 border-white/20 flex items-center justify-center">
-                  <span className="text-sky-900/60 font-bold text-xs text-center px-3">Ауэзов<br/>Путь Абая</span>
-                </div>
-              </div>
-            </motion.div>
+            <HeroCoverStack />
           </div>
 
           {/* Stats bar */}
