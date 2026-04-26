@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { formatDate, formatDateShort } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 function daysUntil(iso: string): number {
   const diff = new Date(iso).setHours(0, 0, 0, 0) - new Date().setHours(0, 0, 0, 0);
@@ -38,6 +39,7 @@ function daysUntil(iso: string): number {
 /* ── Loan Card (active — книга на руках) ──────────────────────────────────── */
 
 const LoanCard = ({ reservation }: { reservation: Reservation }) => {
+  const { t } = useTranslation();
   const [extendOpen, setExtendOpen] = useState(false);
   const qc = useQueryClient();
 
@@ -45,9 +47,9 @@ const LoanCard = ({ reservation }: { reservation: Reservation }) => {
     mutationFn: () => reservationsApi.extend(reservation.id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["reservations"] });
-      toast.success("Срок продлён на 7 дней");
+      toast.success(t("reservations.extendSuccess"));
     },
-    onError: () => toast.error("Не удалось продлить"),
+    onError: () => toast.error(t("reservations.extendError")),
   });
 
   const book = reservation.book;
@@ -64,12 +66,10 @@ const LoanCard = ({ reservation }: { reservation: Reservation }) => {
 
   const daysLabel =
     days < 0
-      ? "Просрочено"
+      ? t("reservations.overdue")
       : days === 0
-      ? "Сегодня последний день"
-      : days === 1
-      ? "Остался 1 день"
-      : `Осталось ${days} ${days < 5 ? "дня" : "дней"}`;
+      ? t("reservations.today")
+      : t("reservations.daysLeft", { count: days });
 
   return (
     <motion.div
@@ -100,7 +100,7 @@ const LoanCard = ({ reservation }: { reservation: Reservation }) => {
                   {book.title}
                 </Link>
               ) : (
-                `Книга #${reservation.id}`
+                `#${reservation.id}`
               )}
             </h3>
             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold flex-shrink-0 border ${urgency.badge} ${urgency.label}`}>
@@ -112,7 +112,7 @@ const LoanCard = ({ reservation }: { reservation: Reservation }) => {
           {library && <p className="text-sm text-muted-foreground mb-2">{library.name}</p>}
 
           <p className="text-xs text-muted-foreground mb-3">
-            Вернуть до{" "}
+            {t("reservations.returnBy")}{" "}
             <span className={`font-medium ${urgency.text}`}>{formatDate(reservation.due_date)}</span>
           </p>
 
@@ -127,10 +127,10 @@ const LoanCard = ({ reservation }: { reservation: Reservation }) => {
                 onClick={() => setExtendOpen(true)}
               >
                 <IconRefresh size={14} />
-                {extendMutation.isPending ? "Продлеваем..." : "Продлить на 7 дней"}
+                {extendMutation.isPending ? t("reservations.extending") : t("reservations.extendDays")}
               </Button>
             ) : (
-              <span className="text-xs text-muted-foreground self-center">Продление использовано</span>
+              <span className="text-xs text-muted-foreground self-center">{t("reservations.extendUsed")}</span>
             )}
           </div>
         </div>
@@ -139,14 +139,14 @@ const LoanCard = ({ reservation }: { reservation: Reservation }) => {
       <AlertDialog open={extendOpen} onOpenChange={setExtendOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Продлить срок возврата?</AlertDialogTitle>
+            <AlertDialogTitle>{t("reservations.extendTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Срок возврата книги будет продлён на 7 дней. Продление можно использовать только один раз.
+              {t("reservations.extendDesc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Отмена</AlertDialogCancel>
-            <AlertDialogAction onClick={() => extendMutation.mutate()}>Продлить</AlertDialogAction>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction onClick={() => extendMutation.mutate()}>{t("reservations.extend")}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -157,22 +157,27 @@ const LoanCard = ({ reservation }: { reservation: Reservation }) => {
 /* ── Pending Card (бронирование — ещё не забрал) ──────────────────────────── */
 
 const PendingCard = ({ reservation }: { reservation: Reservation }) => {
+  const { t } = useTranslation();
   const qc = useQueryClient();
 
   const cancelMutation = useMutation({
     mutationFn: () => reservationsApi.cancel(reservation.id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["reservations"] });
-      toast.success("Бронь отменена");
+      toast.success(t("reservations.cancelSuccess"));
     },
-    onError: () => toast.error("Не удалось отменить"),
+    onError: () => toast.error(t("reservations.cancelError")),
   });
 
   const book = reservation.book;
   const library = reservation.library;
   const days = daysUntil(reservation.due_date);
   const daysLabel =
-    days <= 0 ? "Истекла" : days === 1 ? "Последний день" : `${days} ${days < 5 ? "дня" : "дней"} на получение`;
+    days <= 0
+      ? t("reservations.pickupExpired")
+      : days === 1
+      ? t("reservations.pickupLastDay")
+      : t("reservations.pickupDays", { count: days });
 
   return (
     <motion.div
@@ -199,19 +204,19 @@ const PendingCard = ({ reservation }: { reservation: Reservation }) => {
                 {book.title}
               </Link>
             ) : (
-              `Бронь #${reservation.id}`
+              `#${reservation.id}`
             )}
           </h3>
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium flex-shrink-0 bg-amber-100 text-amber-700 border border-amber-200">
             <IconClock size={11} />
-            Ожидает получения
+            {t("reservations.pending")}
           </span>
         </div>
 
         {library && <p className="text-sm text-muted-foreground mb-2">{library.name}</p>}
 
         <p className="text-xs text-muted-foreground mb-3">
-          Заберите до{" "}
+          {t("reservations.pickupDeadline")}{" "}
           <span className="font-medium text-amber-700">{formatDate(reservation.due_date)}</span>
           <span className="ml-2 text-amber-600">· {daysLabel}</span>
         </p>
@@ -226,7 +231,7 @@ const PendingCard = ({ reservation }: { reservation: Reservation }) => {
             onClick={() => cancelMutation.mutate()}
           >
             <IconX size={14} className="mr-1" />
-            {cancelMutation.isPending ? "Отменяем..." : "Отменить"}
+            {cancelMutation.isPending ? t("reservations.cancelling") : t("reservations.cancelBtn")}
           </Button>
         </div>
       </div>
@@ -237,6 +242,7 @@ const PendingCard = ({ reservation }: { reservation: Reservation }) => {
 /* ── History Card (completed / cancelled) ─────────────────────────────────── */
 
 const HistoryCard = ({ reservation }: { reservation: Reservation }) => {
+  const { t } = useTranslation();
   const book = reservation.book;
   const library = reservation.library;
   const isCancelled = reservation.status === "cancelled";
@@ -254,14 +260,14 @@ const HistoryCard = ({ reservation }: { reservation: Reservation }) => {
             {book?.title ?? `#${reservation.id}`}
           </p>
           <span className={`text-xs px-2 py-0.5 rounded-md flex-shrink-0 ${isCancelled ? "bg-red-50 text-red-500" : "bg-gray-100 text-gray-500"}`}>
-            {isCancelled ? "Отменена" : "Возвращена"}
+            {isCancelled ? t("reservations.status.cancelled") : t("reservations.status.completed")}
           </span>
         </div>
         {library && <p className="text-xs text-muted-foreground">{library.name}</p>}
         <p className="text-xs text-muted-foreground mt-0.5">
           {reservation.returned_at
-            ? `Возвращена ${formatDateShort(reservation.returned_at)}`
-            : `Создана ${formatDateShort(reservation.reserved_at)}`}
+            ? t("reservations.returnedDate", { date: formatDateShort(reservation.returned_at) })
+            : t("reservations.createdDate", { date: formatDateShort(reservation.reserved_at) })}
         </p>
       </div>
     </div>
@@ -291,6 +297,7 @@ const SectionHeader = ({
 /* ── Page ──────────────────────────────────────────────────────────────────── */
 
 const Reservations = () => {
+  const { t } = useTranslation();
   const [historyOpen, setHistoryOpen] = useState(true);
 
   const { data, isLoading } = useQuery({
@@ -309,8 +316,8 @@ const Reservations = () => {
   return (
     <div className="container mx-auto px-4 lg:px-8 py-8">
       <PageHeader
-        title="Мои книги"
-        subtitle={activeCount > 0 ? `${activeCount} активных` : "Нет активных книг"}
+        title={t("reservations.myBooksTitle")}
+        subtitle={activeCount > 0 ? t("reservations.activeCount", { count: activeCount }) : t("reservations.noActive")}
       />
 
       {isLoading ? (
@@ -322,11 +329,11 @@ const Reservations = () => {
       ) : activeCount === 0 && history.length === 0 ? (
         <EmptyState
           icon={IconBookmark}
-          title="Нет бронирований"
-          description="Забронируйте книгу в каталоге — и она появится здесь"
+          title={t("reservations.noBookings")}
+          description={t("reservations.noBookingsDesc")}
           action={
             <Button variant="outline" size="sm" asChild>
-              <Link to="/catalog">Перейти в каталог</Link>
+              <Link to="/catalog">{t("reservations.toCatalog")}</Link>
             </Button>
           }
         />
@@ -335,7 +342,7 @@ const Reservations = () => {
           {/* На руках */}
           {loans.length > 0 && (
             <section>
-              <SectionHeader icon={IconBook2} title="На руках" count={loans.length} color="text-emerald-600" />
+              <SectionHeader icon={IconBook2} title={t("reservations.active")} count={loans.length} color="text-emerald-600" />
               <div className="space-y-3">
                 {loans.map((r) => (
                   <LoanCard key={r.id} reservation={r} />
@@ -347,7 +354,7 @@ const Reservations = () => {
           {/* Бронирования */}
           {pending.length > 0 && (
             <section>
-              <SectionHeader icon={IconClock} title="Забронированы" count={pending.length} color="text-amber-600" />
+              <SectionHeader icon={IconClock} title={t("reservations.booked")} count={pending.length} color="text-amber-600" />
               <div className="space-y-3">
                 {pending.map((r) => (
                   <PendingCard key={r.id} reservation={r} />
@@ -364,7 +371,7 @@ const Reservations = () => {
                 onClick={() => setHistoryOpen((v) => !v)}
               >
                 {historyOpen ? <IconChevronUp size={15} /> : <IconChevronDown size={15} />}
-                История · {history.length}
+                {t("reservations.history")} · {history.length}
               </button>
               {historyOpen && (
                 <div className="space-y-2">

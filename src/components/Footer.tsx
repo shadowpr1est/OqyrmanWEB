@@ -1,14 +1,18 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import { IconBrandGithub, IconBook, IconMapPin, IconStar, IconCode, IconMail, IconBrandTelegram, IconPhone } from "@tabler/icons-react";
 
-const navLinks = [
-  { label: "Каталог", to: "/catalog", icon: IconBook },
-  { label: "Библиотеки", to: "/libraries", icon: IconMapPin },
-  { label: "Возможности", to: "/#features", icon: IconStar },
-];
+export const Footer = () => {
+  const { t } = useTranslation();
 
-export const Footer = () => (
+  const navLinks = [
+    { label: t("nav.catalog"), to: "/catalog", icon: IconBook },
+    { label: t("nav.libraries"), to: "/libraries", icon: IconMapPin },
+    { label: t("footer.features"), to: "/#features", icon: IconStar },
+  ];
+
+  return (
   <footer className="relative bg-[#0a1f17] overflow-hidden">
     {/* Background texture */}
     <div
@@ -47,8 +51,7 @@ export const Footer = () => (
             <span className="text-xl font-bold text-white">Oqyrman</span>
           </Link>
           <p className="text-white/50 text-sm leading-relaxed max-w-sm mb-6">
-            Цифровая библиотечная платформа Казахстана. Объединяем читателей
-            и библиотеки в единую современную экосистему.
+            {t("footer.description")}
           </p>
 
           {/* Social / external links */}
@@ -79,7 +82,7 @@ export const Footer = () => (
           className="md:col-span-3"
         >
           <h4 className="text-xs font-semibold text-white/30 uppercase tracking-widest mb-5">
-            Навигация
+            {t("footer.nav")}
           </h4>
           <div className="flex flex-col gap-3">
             {navLinks.map((l) => (
@@ -104,7 +107,7 @@ export const Footer = () => (
           className="md:col-span-4"
         >
           <h4 className="text-xs font-semibold text-white/30 uppercase tracking-widest mb-5">
-            Контакты
+            {t("footer.contacts")}
           </h4>
           <div className="flex flex-col gap-3">
             <a
@@ -146,10 +149,10 @@ export const Footer = () => (
       {/* Bottom bar */}
       <div className="border-t border-white/[0.06] py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
         <p className="text-xs text-white/30">
-          © {new Date().getFullYear()} Oqyrman. Все права защищены.
+          {t("footer.appRights", { year: new Date().getFullYear() })}
         </p>
         <p className="text-xs text-white/20">
-          Сделано с ❤️ в Казахстане
+          {t("footer.madeWith")} ❤️
         </p>
       </div>
     </div>
@@ -157,4 +160,5 @@ export const Footer = () => (
     {/* Bottom gradient line */}
     <div className="h-1 bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-600" />
   </footer>
-);
+  );
+};

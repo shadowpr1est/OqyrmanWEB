@@ -7,8 +7,10 @@ import { BookCard } from "@/components/books/BookCard";
 import { BookGridSkeleton } from "@/components/books/BookCardSkeleton";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { fadeUpSm, fadeUp, staggerItem } from "@/lib/motion";
+import { useTranslation } from "react-i18next";
 
 const AuthorDetail = () => {
+  const { t, i18n } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const authorId = id!;
   const navigate = useNavigate();
@@ -41,9 +43,9 @@ const AuthorDetail = () => {
   if (!author) {
     return (
       <div className="container mx-auto px-4 py-20 text-center">
-        <p className="text-lg text-muted-foreground">Автор не найден</p>
+        <p className="text-lg text-muted-foreground">{t("author.notFound")}</p>
         <Link to="/catalog" className="text-primary hover:underline text-sm mt-2 inline-block">
-          Вернуться в каталог
+          {t("author.backToCatalog")}
         </Link>
       </div>
     );
@@ -53,7 +55,7 @@ const AuthorDetail = () => {
     const parts: string[] = [];
     if (author.birth_date) parts.push(new Date(author.birth_date).getFullYear().toString());
     if (author.death_date) parts.push(new Date(author.death_date).getFullYear().toString());
-    else if (author.birth_date) parts.push("н.в.");
+    else if (author.birth_date) parts.push(t("author.present"));
     return parts.length > 0 ? parts.join(" — ") : null;
   };
 
@@ -79,7 +81,7 @@ const AuthorDetail = () => {
             onClick={() => navigate(-1)}
             className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-white transition-colors mb-6 -ml-2 px-2 py-1.5 rounded-lg hover:bg-white/10"
           >
-            <IconArrowLeft size={16} /> Назад
+            <IconArrowLeft size={16} /> {t("common.back")}
           </button>
 
           <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
@@ -115,7 +117,7 @@ const AuthorDetail = () => {
               )}
               {books.length > 0 && (
                 <p className="text-white/50 text-sm mb-5">
-                  {books.length} {books.length === 1 ? "книга" : books.length < 5 ? "книги" : "книг"} в каталоге
+                  {t("author.booksInCatalog", { count: books.length })}
                 </p>
               )}
 
@@ -123,7 +125,7 @@ const AuthorDetail = () => {
               {author.bio && (
                 <div className="mt-2 max-w-2xl">
                   <p className="text-white/60 text-sm leading-relaxed whitespace-pre-line">
-                    {author.bio}
+                    {i18n.language === "kk" && author.bio_kk ? author.bio_kk : author.bio}
                   </p>
                 </div>
               )}
@@ -139,7 +141,7 @@ const AuthorDetail = () => {
           transition={{ ...fadeUp.transition, delay: 0.3 }}
         >
           <h2 className="section-title mb-5">
-            Книги автора
+            {t("author.booksTitle")}
           </h2>
 
           {booksLoading ? (
@@ -147,8 +149,8 @@ const AuthorDetail = () => {
           ) : books.length === 0 ? (
             <EmptyState
               icon={IconUser}
-              title="Нет книг"
-              description="Книги этого автора пока не добавлены в каталог"
+              title={t("author.noBooks")}
+              description={t("author.noBooksDesc")}
             />
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">

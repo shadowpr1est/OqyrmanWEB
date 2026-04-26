@@ -1,10 +1,12 @@
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { SearchBar } from "./SearchBar";
 import { NotificationBell } from "./NotificationBell";
 import { UserMenu } from "./UserMenu";
+import { LanguageSwitcher } from "@/components/shared/LanguageSwitcher";
 import {
   IconMenu2,
   IconX,
@@ -12,37 +14,36 @@ import {
   IconBuildingArch,
   IconCalendarEvent,
   IconBookmarks,
+  IconLanguage,
 } from "@tabler/icons-react";
 import { backdropFade, slideDown } from "@/lib/motion";
-
-// Desktop nav — all sections
-const desktopLinks = [
-  { label: "Главная", to: "/catalog" },
-  { label: "Библиотеки", to: "/libraries" },
-  { label: "События", to: "/events" },
-  { label: "Полка", to: "/wishlist" },
-];
-
-// Mobile hamburger — only items not covered by the bottom nav
-const mobileExtraLinks = [
-  { label: "Библиотеки", to: "/libraries", icon: IconBuildingArch },
-  { label: "События", to: "/events", icon: IconCalendarEvent },
-];
-
-// Mobile bottom nav covers these — shown in hamburger only for guests
-const mobileGuestLinks = [
-  { label: "Главная", to: "/catalog", icon: IconHome },
-  { label: "Полка", to: "/wishlist", icon: IconBookmarks },
-];
 
 export const AppNavbar = () => {
   const { user } = useAuth();
   const { pathname } = useLocation();
+  const { t } = useTranslation();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
+
+  const desktopLinks = [
+    { label: t("nav.catalog"), to: "/catalog" },
+    { label: t("nav.libraries"), to: "/libraries" },
+    { label: t("nav.events"), to: "/events" },
+    { label: t("nav.shelf"), to: "/wishlist" },
+  ];
+
+  const mobileExtraLinks = [
+    { label: t("nav.libraries"), to: "/libraries", icon: IconBuildingArch },
+    { label: t("nav.events"), to: "/events", icon: IconCalendarEvent },
+  ];
+
+  const mobileGuestLinks = [
+    { label: t("nav.catalog"), to: "/catalog", icon: IconHome },
+    { label: t("nav.shelf"), to: "/wishlist", icon: IconBookmarks },
+  ];
 
   const mobileLinks = user ? mobileExtraLinks : [...mobileGuestLinks, ...mobileExtraLinks];
 
@@ -86,7 +87,10 @@ export const AppNavbar = () => {
           </div>
 
           {/* Right actions */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-3">
+            <div className="hidden lg:block">
+              <LanguageSwitcher />
+            </div>
             {user ? (
               <>
                 <NotificationBell />
@@ -98,21 +102,20 @@ export const AppNavbar = () => {
                   to="/login"
                   className="px-4 py-2 text-sm font-medium text-foreground/70 hover:text-foreground transition-colors"
                 >
-                  Войти
+                  {t("nav.login")}
                 </Link>
                 <Link
                   to="/register"
                   className="px-4 py-2 rounded-lg text-sm font-bold text-white bg-gradient-to-b from-emerald-500 to-emerald-700 shadow-[0px_2px_0px_0px_rgba(255,255,255,0.3)_inset] hover:-translate-y-0.5 transition-transform"
                 >
-                  Регистрация
+                  {t("nav.register")}
                 </Link>
               </div>
             )}
 
-            {/* Mobile hamburger — Библиотеки + События */}
             <button
               className="lg:hidden p-2 rounded-lg hover:bg-muted/50 transition-colors"
-              aria-label={mobileOpen ? "Закрыть меню" : "Открыть меню"}
+              aria-label={mobileOpen ? t("nav.closeMenu") : t("nav.openMenu")}
               aria-expanded={mobileOpen}
               onClick={() => setMobileOpen(!mobileOpen)}
             >
@@ -126,7 +129,6 @@ export const AppNavbar = () => {
         </div>
       </div>
 
-      {/* Mobile menu */}
       {mobileOpen && (
         <>
           <motion.div
@@ -170,6 +172,14 @@ export const AppNavbar = () => {
                 })}
               </nav>
 
+              <div className="flex items-center justify-between px-1 pt-3 pb-1 mt-1 border-t border-border/60">
+                <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <IconLanguage size={14} stroke={1.5} />
+                  {t("common.language")}
+                </span>
+                <LanguageSwitcher />
+              </div>
+
               {!user && (
                 <div className="flex gap-2.5 mt-3 pt-3 border-t border-border/60">
                   <Link
@@ -177,14 +187,14 @@ export const AppNavbar = () => {
                     onClick={() => setMobileOpen(false)}
                     className="flex-1 text-center px-4 py-2.5 rounded-xl text-sm font-medium border border-border text-foreground/70 transition-colors"
                   >
-                    Войти
+                    {t("nav.login")}
                   </Link>
                   <Link
                     to="/register"
                     onClick={() => setMobileOpen(false)}
                     className="flex-1 text-center px-4 py-2.5 rounded-xl text-sm font-bold text-white bg-gradient-to-b from-primary-light to-primary shadow-[0px_2px_0px_0px_rgba(255,255,255,0.15)_inset]"
                   >
-                    Регистрация
+                    {t("nav.register")}
                   </Link>
                 </div>
               )}

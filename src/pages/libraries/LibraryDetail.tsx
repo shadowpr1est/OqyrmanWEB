@@ -6,8 +6,10 @@ import { librariesApi, libraryBooksApi } from "@/lib/api";
 import { BookCard } from "@/components/books/BookCard";
 import { BookGridSkeleton } from "@/components/books/BookCardSkeleton";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { useTranslation } from "react-i18next";
 
 const LibraryDetail = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const libraryId = Number(id);
 
@@ -38,9 +40,9 @@ const LibraryDetail = () => {
   if (!library) {
     return (
       <div className="container mx-auto px-4 py-20 text-center">
-        <p className="text-lg text-muted-foreground">Библиотека не найдена</p>
+        <p className="text-lg text-muted-foreground">{t("libraries.notFound")}</p>
         <Link to="/libraries" className="text-primary hover:underline text-sm mt-2 inline-block">
-          Все библиотеки
+          {t("libraries.backToAll")}
         </Link>
       </div>
     );
@@ -84,7 +86,7 @@ const LibraryDetail = () => {
       {/* Books in this library */}
       <div className="container mx-auto px-4 lg:px-8 py-10">
         <h2 className="text-xl font-semibold text-foreground mb-6">
-          Книги в библиотеке
+          {t("libraries.booksInLibrary")}
           {libraryBooks && ` (${libraryBooks.length})`}
         </h2>
 
@@ -93,8 +95,8 @@ const LibraryDetail = () => {
         ) : !libraryBooks?.length ? (
           <EmptyState
             icon={IconBook}
-            title="Нет книг"
-            description="В этой библиотеке пока нет книг в системе"
+            title={t("libraries.noBooks")}
+            description={t("libraries.noBooksDesc")}
           />
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 lg:gap-5">
@@ -108,7 +110,7 @@ const LibraryDetail = () => {
                 >
                   <BookCard book={lb.book} />
                   <p className="text-xs text-muted-foreground mt-1">
-                    {lb.available_copies} из {lb.total_copies} доступно
+                    {t("libraries.copiesAvailable", { available: lb.available_copies, total: lb.total_copies })}
                   </p>
                 </motion.div>
               ) : null,

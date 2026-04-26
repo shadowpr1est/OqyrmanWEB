@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { booksApi, genresApi, authorsApi } from "@/lib/api";
 import type { Author, Book, Genre } from "@/lib/api";
+import { useTranslation } from "react-i18next";
 
 export const PAGE_SIZE = 24;
 
@@ -49,6 +50,7 @@ const SORT_OPTIONS = [
 ] as const;
 
 export const useBookFilters = (): BookFiltersState => {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [query, setQuery] = useState(searchParams.get("q") || "");
@@ -145,7 +147,7 @@ export const useBookFilters = (): BookFiltersState => {
         if (!cancelled) {
           setBooks([]);
           setTotal(0);
-          toast.error("Не удалось загрузить книги");
+          toast.error(t("search.loadError"));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -154,7 +156,7 @@ export const useBookFilters = (): BookFiltersState => {
 
     doFetch();
     return () => { cancelled = true; };
-  }, [query, genreIds, authorIds, sort, page]);
+  }, [query, genreIds, authorIds, sort, page, t]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const currentSortLabel = SORT_OPTIONS.find((o) => o.value === sort)?.label ?? "По умолчанию";

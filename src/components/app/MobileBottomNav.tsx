@@ -6,16 +6,19 @@ import {
   IconUser,
 } from "@tabler/icons-react";
 import { useAuth } from "@/contexts/AuthContext";
-
-const items = [
-  { label: "Главная", to: "/catalog", icon: IconHome },
-  { label: "Поиск", to: "/books", icon: IconSearch },
-  { label: "Полка", to: "/wishlist", icon: IconBookmarks },
-  { label: "Профиль", to: "/profile", icon: IconUser },
-];
+import { useTranslation } from "react-i18next";
 
 export const MobileBottomNav = () => {
   const { user } = useAuth();
+  const { t } = useTranslation();
+
+  const items = [
+    { label: t("nav.home"), to: "/catalog", icon: IconHome },
+    { label: t("nav.search"), to: "/books", icon: IconSearch },
+    { label: t("nav.shelf"), to: "/wishlist", icon: IconBookmarks },
+    { label: t("nav.profileShort"), to: "/profile", icon: IconUser },
+  ];
+
   if (!user) return null;
 
   return (

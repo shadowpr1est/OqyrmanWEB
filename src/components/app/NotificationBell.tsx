@@ -16,6 +16,7 @@ import { useNotifications } from "@/hooks/useNotifications";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { Notification, NotificationType } from "@/lib/api/types";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 const typeIconMap: Record<NotificationType, React.ElementType> = {
   reservation_success: IconBookmark,
@@ -39,29 +40,12 @@ const typeColorMap: Record<NotificationType, { color: string; bg: string }> = {
   general: { color: "text-foreground/70", bg: "bg-muted/50" },
 };
 
-const formatRelativeTime = (iso: string) => {
-  const d = new Date(iso);
-  const now = new Date();
-  const diff = now.getTime() - d.getTime();
-  const mins = Math.floor(diff / 60000);
-  const hours = Math.floor(diff / 3600000);
-  const days = Math.floor(diff / 86400000);
-
-  if (mins < 1) return "сейчас";
-  if (mins < 60) return `${mins} мин`;
-  if (hours < 24) return `${hours} ч`;
-  if (days < 7) return `${days} дн`;
-  return d.toLocaleDateString("ru", { day: "numeric", month: "short" });
-};
-
 const NotificationPopoverItem = ({
   notification,
   onMarkRead,
-  onClose,
 }: {
   notification: Notification;
   onMarkRead: (id: string) => void;
-  onClose: () => void;
 }) => {
   const Icon = typeIconMap[notification.type] || IconBell;
   const colors = typeColorMap[notification.type] || typeColorMap.general;
@@ -72,33 +56,21 @@ const NotificationPopoverItem = ({
         !notification.is_read ? "bg-primary/[0.02]" : ""
       }`}
     >
-      <div
-        className={`mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg ${colors.bg}`}
-      >
+      <div className={`mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg ${colors.bg}`}>
         <Icon size={15} className={colors.color} stroke={1.8} />
       </div>
       <div className="flex-1 min-w-0">
-        <p
-          className={`text-[13px] leading-snug line-clamp-2 ${
-            notification.is_read
-              ? "text-foreground/60"
-              : "text-foreground font-medium"
-          }`}
-        >
+        <p className={`text-[13px] leading-snug line-clamp-2 ${notification.is_read ? "text-foreground/60" : "text-foreground font-medium"}`}>
           {notification.body}
         </p>
         <p className="text-[11px] text-muted-foreground mt-0.5">
-          {formatRelativeTime(notification.created_at)}
+          {notification.title}
         </p>
       </div>
       {!notification.is_read && (
         <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onMarkRead(notification.id);
-          }}
+          onClick={(e) => { e.stopPropagation(); onMarkRead(notification.id); }}
           className="mt-0.5 flex-shrink-0 p-1 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-          aria-label="Отметить как прочитанное"
         >
           <IconCheck size={14} aria-hidden="true" />
         </button>
@@ -109,6 +81,7 @@ const NotificationPopoverItem = ({
 
 export const NotificationBell = () => {
   const { notifications, unreadCount, markRead, markAllRead, markingAll } = useNotifications();
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
 
   const recent = notifications.slice(0, 6);
@@ -118,7 +91,7 @@ export const NotificationBell = () => {
       <PopoverTrigger asChild>
         <button
           className="relative p-2.5 rounded-xl hover:bg-muted/60 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
-          aria-label={unreadCount > 0 ? `Уведомления — ${unreadCount} непрочитанных` : "Уведомления"}
+          aria-label={unreadCount > 0 ? t("notifications.unreadCount", { count: unreadCount }) : t("notifications.title")}
         >
           <IconBell size={20} stroke={1.5} className="text-foreground/70" aria-hidden="true" />
           <AnimatePresence>
@@ -142,7 +115,7 @@ export const NotificationBell = () => {
         className="w-[min(360px,calc(100vw-2rem))] p-0 rounded-xl shadow-lg border border-border/60"
       >
         <div className="flex items-center justify-between px-4 py-3 border-b border-border/40">
-          <h3 className="text-sm font-semibold text-foreground">Уведомления</h3>
+          <h3 className="text-sm font-semibold text-foreground">{t("notifications.title")}</h3>
           {unreadCount > 0 && (
             <button
               onClick={markAllRead}
@@ -150,7 +123,7 @@ export const NotificationBell = () => {
               className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 disabled:opacity-50 transition-colors"
             >
               <IconChecks size={14} />
-              {markingAll ? "..." : "Прочитать все"}
+              {markingAll ? "..." : t("notifications.readAll")}
             </button>
           )}
         </div>
@@ -159,7 +132,7 @@ export const NotificationBell = () => {
           {recent.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
               <IconBell size={28} stroke={1.2} className="mb-2 opacity-40" />
-              <p className="text-sm">Нет уведомлений</p>
+              <p className="text-sm">{t("notifications.empty")}</p>
             </div>
           ) : (
             <div className="divide-y divide-border/30">
@@ -168,7 +141,6 @@ export const NotificationBell = () => {
                   key={n.id}
                   notification={n}
                   onMarkRead={markRead}
-                  onClose={() => setOpen(false)}
                 />
               ))}
             </div>
@@ -181,7 +153,7 @@ export const NotificationBell = () => {
             onClick={() => setOpen(false)}
             className="block text-center text-xs font-medium text-primary hover:text-primary/80 transition-colors"
           >
-            Все уведомления
+            {t("notifications.seeAll")}
           </Link>
         </div>
       </PopoverContent>

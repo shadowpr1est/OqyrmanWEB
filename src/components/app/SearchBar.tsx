@@ -4,6 +4,7 @@ import { IconSearch, IconBook, IconUser, IconX, IconAdjustmentsHorizontal } from
 import { booksApi, authorsApi } from "@/lib/api";
 import type { Book, Author } from "@/lib/api";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useTranslation } from "react-i18next";
 
 type Tab = "book" | "author";
 
@@ -15,11 +16,11 @@ export const SearchBar = () => {
   const [authors, setAuthors] = useState<Author[]>([]);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const debouncedQuery = useDebounce(query, 300);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Cmd+K shortcut
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
@@ -32,7 +33,6 @@ export const SearchBar = () => {
     return () => document.removeEventListener("keydown", handler);
   }, []);
 
-  // Close on click outside
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
@@ -78,13 +78,11 @@ export const SearchBar = () => {
   const hasQuery = query.length >= 2;
 
   return (
-    <div ref={containerRef} className="relative" role="search" aria-label="Поиск книг и авторов">
-      {/* Search trigger / input */}
+    <div ref={containerRef} className="relative" role="search">
       <div
         role="combobox"
         aria-expanded={open}
         aria-haspopup="listbox"
-        aria-label="Поиск"
         tabIndex={open ? -1 : 0}
         className={`flex items-center gap-2 rounded-xl border transition-all ${
           open
@@ -111,19 +109,18 @@ export const SearchBar = () => {
             ref={inputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={tab === "book" ? "Поиск книг..." : "Поиск авторов..."}
+            placeholder={tab === "book" ? t("search.books") : t("search.authors")}
             aria-autocomplete="list"
             aria-controls="search-results"
             className="flex-1 py-2 pr-2 text-sm bg-transparent outline-none placeholder:text-muted-foreground"
             onKeyDown={(e) => { if (e.key === "Escape") setOpen(false); }}
           />
         ) : (
-          <span className="flex-1 py-2 text-sm text-muted-foreground" aria-hidden="true">Поиск...</span>
+          <span className="flex-1 py-2 text-sm text-muted-foreground" aria-hidden="true">{t("search.placeholder")}</span>
         )}
         {open && query && (
           <button
             onClick={() => setQuery("")}
-            aria-label="Очистить поиск"
             className="pr-3 text-muted-foreground hover:text-foreground"
           >
             <IconX size={14} aria-hidden="true" />
@@ -131,11 +128,9 @@ export const SearchBar = () => {
         )}
       </div>
 
-      {/* Dropdown */}
       {open && (
         <div className="absolute top-full left-0 right-0 mt-1.5 rounded-xl border border-border/60 bg-white shadow-lg overflow-hidden z-50">
-          {/* Tabs */}
-          <div role="tablist" aria-label="Тип поиска" className="flex border-b border-border/60">
+          <div role="tablist" className="flex border-b border-border/60">
             <button
               role="tab"
               aria-selected={tab === "book"}
@@ -147,7 +142,7 @@ export const SearchBar = () => {
               }`}
             >
               <IconBook size={15} aria-hidden="true" />
-              Книга
+              {t("search.bookSingular")}
             </button>
             <button
               role="tab"
@@ -160,25 +155,24 @@ export const SearchBar = () => {
               }`}
             >
               <IconUser size={15} aria-hidden="true" />
-              Автор
+              {t("search.authorSingular")}
             </button>
           </div>
 
-          {/* Results */}
-          <div id="search-results" role="listbox" aria-label="Результаты поиска" className="max-h-[320px] overflow-y-auto">
+          <div id="search-results" role="listbox" className="max-h-[320px] overflow-y-auto">
             {loading && (
-              <div className="px-4 py-6 text-center text-sm text-muted-foreground">Ищем...</div>
+              <div className="px-4 py-6 text-center text-sm text-muted-foreground">{t("search.searching")}</div>
             )}
 
             {!loading && !hasQuery && (
               <div className="px-4 py-6 text-center text-sm text-muted-foreground">
-                Введите минимум 2 символа
+                {t("search.minChars")}
               </div>
             )}
 
             {!loading && hasQuery && results.length === 0 && (
               <div className="px-4 py-6 text-center text-sm text-muted-foreground">
-                Ничего не найдено
+                {t("search.noResults")}
               </div>
             )}
 
@@ -229,17 +223,16 @@ export const SearchBar = () => {
             ))}
           </div>
 
-          {/* Advanced search button */}
           <button
             onClick={() => {
               setOpen(false);
               setQuery("");
               navigate(`/books${query ? `?q=${encodeURIComponent(query)}` : ""}`);
             }}
-            className="flex items-center justify-center gap-1.5 px-4 py-2.5 border-t border-border/60 text-xs font-medium text-primary hover:bg-primary/5 transition-colors"
+            className="flex items-center justify-center gap-1.5 px-4 py-2.5 border-t border-border/60 text-xs font-medium text-primary hover:bg-primary/5 transition-colors w-full"
           >
             <IconAdjustmentsHorizontal size={14} />
-            Расширенный поиск книг
+            {t("search.advancedSearch")}
           </button>
         </div>
       )}

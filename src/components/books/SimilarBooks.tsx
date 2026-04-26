@@ -1,6 +1,7 @@
 import { useSimilarBooks } from "@/hooks/useBooks";
 import { BookCard } from "./BookCard";
 import { HorizontalScroll } from "@/components/shared/HorizontalScroll";
+import { useTranslation } from "react-i18next";
 
 interface SimilarBooksProps {
   bookId: string | number;
@@ -8,6 +9,7 @@ interface SimilarBooksProps {
 
 export const SimilarBooks = ({ bookId }: SimilarBooksProps) => {
   const { data: books, isLoading } = useSimilarBooks(bookId, 10);
+  const { t } = useTranslation();
 
   if (isLoading) {
     return (
@@ -26,7 +28,7 @@ export const SimilarBooks = ({ bookId }: SimilarBooksProps) => {
 
   return (
     <div>
-      <h3 className="text-lg font-semibold text-foreground mb-5">Похожие книги</h3>
+      <h3 className="text-lg font-semibold text-foreground mb-5">{t("book.similarBooks")}</h3>
       <HorizontalScroll>
         {books.slice(0, 10).map((b) => (
           <div key={b.id} className="w-[160px] flex-shrink-0">

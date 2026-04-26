@@ -5,19 +5,21 @@ import { BookCard } from "@/components/books/BookCard";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { useBookFilters } from "@/hooks/useBookFilters";
 import { fadeUp, fadeUpSm, staggerItem, slideDown } from "@/lib/motion";
+import { useTranslation } from "react-i18next";
 
 const SORT_OPTIONS = [
-  { value: "", label: "По умолчанию" },
-  { value: "newest", label: "Новые" },
-  { value: "rating", label: "По рейтингу" },
-  { value: "title", label: "По названию" },
+  { value: "", labelKey: "search.sortDefault" },
+  { value: "newest", labelKey: "search.sortNewest" },
+  { value: "rating", labelKey: "search.sortRating" },
+  { value: "title", labelKey: "search.sortByTitle" },
 ] as const;
 
 const BooksSearch = () => {
+  const { t } = useTranslation();
   const {
     query, genreIds, authorIds, sort, page,
     books, total, loading, genres, authors,
-    totalPages, currentSortLabel, filteredGenres, filteredAuthors, pageRange,
+    totalPages, filteredGenres, filteredAuthors, pageRange,
     genreSearch, authorSearch, setGenreSearch, setAuthorSearch,
     handleSearch, toggleGenre, clearGenres, toggleAuthor, clearAuthors, handleSort, handlePage, clearAll,
   } = useBookFilters();
@@ -28,11 +30,14 @@ const BooksSearch = () => {
 
   const closeAll = () => { setGenreOpen(false); setAuthorOpen(false); setSortOpen(false); };
 
+  const currentSortOption = SORT_OPTIONS.find((o) => o.value === sort);
+  const sortLabel = currentSortOption ? t(currentSortOption.labelKey) : t("search.sortDefault");
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
       <PageHeader
-        title="Каталог книг"
-        subtitle={`${total} ${pluralBooks(total)} в каталоге`}
+        title={t("search.catalogTitle")}
+        subtitle={t("search.booksInCatalog", { count: total })}
       />
 
       {/* Search + filters row */}
@@ -41,7 +46,7 @@ const BooksSearch = () => {
           <IconSearch size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
-            placeholder="поиск книг"
+            placeholder={t("search.books")}
             value={query}
             onChange={(e) => handleSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 transition-shadow"
@@ -58,7 +63,7 @@ const BooksSearch = () => {
               }`}
             >
               <IconFilter size={16} />
-              {genreIds.length > 0 ? `Жанры (${genreIds.length})` : "Жанры"}
+              {genreIds.length > 0 ? t("search.genresCount", { count: genreIds.length }) : t("search.genres")}
             </button>
 
             <AnimatePresence>
@@ -71,7 +76,7 @@ const BooksSearch = () => {
                   <div className="p-2 border-b border-border">
                     <input
                       type="text"
-                      placeholder="Поиск жанра..."
+                      placeholder={t("search.searchGenre")}
                       value={genreSearch}
                       onChange={(e) => setGenreSearch(e.target.value)}
                       className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-1 focus:ring-primary/30"
@@ -80,7 +85,7 @@ const BooksSearch = () => {
                   </div>
                   {genreIds.length > 0 && (
                     <button onClick={() => { clearGenres(); setGenreOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors flex items-center gap-2 border-b border-border">
-                      <IconX size={14} />Сбросить все
+                      <IconX size={14} />{t("search.clearAll")}
                     </button>
                   )}
                   <div className="max-h-60 overflow-y-auto">
@@ -91,7 +96,7 @@ const BooksSearch = () => {
                           <span className={`flex-shrink-0 w-4 h-4 rounded border flex items-center justify-center ${isSelected ? "bg-primary border-primary" : "border-border"}`}>
                             {isSelected && <IconCheck size={12} className="text-white" />}
                           </span>
-                          {g.name}
+                          {t(`genres.${g.slug}`, { defaultValue: g.name })}
                         </button>
                       );
                     })}
@@ -110,7 +115,7 @@ const BooksSearch = () => {
               }`}
             >
               <IconUser size={16} />
-              {authorIds.length > 0 ? `Авторы (${authorIds.length})` : "Авторы"}
+              {authorIds.length > 0 ? t("search.authorsCount", { count: authorIds.length }) : t("search.allAuthors")}
             </button>
 
             <AnimatePresence>
@@ -123,7 +128,7 @@ const BooksSearch = () => {
                   <div className="p-2 border-b border-border">
                     <input
                       type="text"
-                      placeholder="Поиск автора..."
+                      placeholder={t("search.searchAuthor")}
                       value={authorSearch}
                       onChange={(e) => setAuthorSearch(e.target.value)}
                       className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-1 focus:ring-primary/30"
@@ -132,7 +137,7 @@ const BooksSearch = () => {
                   </div>
                   {authorIds.length > 0 && (
                     <button onClick={() => { clearAuthors(); setAuthorOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors flex items-center gap-2 border-b border-border">
-                      <IconX size={14} />Сбросить все
+                      <IconX size={14} />{t("search.clearAll")}
                     </button>
                   )}
                   <div className="max-h-60 overflow-y-auto">
@@ -160,7 +165,7 @@ const BooksSearch = () => {
               className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl border border-border text-sm hover:bg-muted/50 transition-colors"
             >
               <IconSortDescending size={16} />
-              {currentSortLabel}
+              {sortLabel}
             </button>
 
             <AnimatePresence>
@@ -176,7 +181,7 @@ const BooksSearch = () => {
                       onClick={() => { handleSort(opt.value); setSortOpen(false); }}
                       className={`w-full text-left px-4 py-2 text-sm hover:bg-muted/50 transition-colors ${sort === opt.value ? "text-primary font-medium bg-primary/5" : ""}`}
                     >
-                      {opt.label}
+                      {t(opt.labelKey)}
                     </button>
                   ))}
                 </motion.div>
@@ -212,7 +217,7 @@ const BooksSearch = () => {
                   exit={{ opacity: 0, scale: 0.85 }}
                   className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium"
                 >
-                  {genre.name}
+                  {t(`genres.${genre.slug}`, { defaultValue: genre.name })}
                   <button onClick={() => toggleGenre(gid)} className="hover:bg-primary/20 rounded-full p-0.5 transition-colors">
                     <IconX size={12} />
                   </button>
@@ -238,7 +243,7 @@ const BooksSearch = () => {
               );
             })}
             <button onClick={clearAll} className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-red-50 text-red-500 text-xs font-medium hover:bg-red-100 transition-colors">
-              <IconX size={12} />Сбросить все
+              <IconX size={12} />{t("search.clearAll")}
             </button>
           </motion.div>
         )}
@@ -259,8 +264,8 @@ const BooksSearch = () => {
         ) : books.length === 0 ? (
           <motion.div {...fadeUp} className="flex flex-col items-center justify-center py-20 text-muted-foreground">
             <IconSearch size={40} strokeWidth={1.5} className="mb-3 opacity-40" />
-            <p className="text-sm">Книги не найдены</p>
-            {query && <p className="text-xs mt-1">Попробуйте изменить поисковый запрос</p>}
+            <p className="text-sm">{t("search.booksNotFound")}</p>
+            {query && <p className="text-xs mt-1">{t("search.booksSearchHint")}</p>}
           </motion.div>
         ) : (
           <motion.div
@@ -321,13 +326,5 @@ const BooksSearch = () => {
     </div>
   );
 };
-
-function pluralBooks(n: number): string {
-  const mod10 = n % 10;
-  const mod100 = n % 100;
-  if (mod10 === 1 && mod100 !== 11) return "книга";
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return "книги";
-  return "книг";
-}
 
 export default BooksSearch;

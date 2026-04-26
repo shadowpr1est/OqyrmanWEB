@@ -15,8 +15,10 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { staggerItem, backdropFade } from "@/lib/motion";
 import { optimizedUrl } from "@/lib/imageProxy";
 import { formatDate, formatTime } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 const Events = () => {
+  const { t } = useTranslation();
   const [selected, setSelected] = useState<Event | null>(null);
 
   const { data, isLoading } = useQuery({
@@ -29,7 +31,7 @@ const Events = () => {
 
   return (
     <div className="container mx-auto px-4 lg:px-8 py-8">
-      <PageHeader title="Мероприятия" subtitle="События и встречи в библиотеках" />
+      <PageHeader title={t("events.title")} subtitle={t("events.subtitle")} />
 
       {isLoading ? (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
@@ -40,8 +42,8 @@ const Events = () => {
       ) : events.length === 0 ? (
         <EmptyState
           icon={IconCalendarEvent}
-          title="Нет предстоящих мероприятий"
-          description="Следите за обновлениями — скоро здесь появятся события"
+          title={t("events.noUpcoming")}
+          description={t("events.noUpcomingDesc")}
         />
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
@@ -153,7 +155,7 @@ const Events = () => {
                       <IconClock size={18} className="text-primary" />
                     </div>
                     <div>
-                      <p className="text-xs text-muted-foreground">Дата и время</p>
+                      <p className="text-xs text-muted-foreground">{t("events.dateTime")}</p>
                       <p className="text-sm font-medium text-foreground">
                         {formatDate(selected.starts_at)}, {formatTime(selected.starts_at)}
                         {selected.ends_at && ` — ${formatTime(selected.ends_at)}`}
@@ -173,7 +175,7 @@ const Events = () => {
                         <IconMapPin size={18} className="text-primary" />
                       </div>
                       <div className="flex-1">
-                        <p className="text-xs text-muted-foreground">Место проведения</p>
+                        <p className="text-xs text-muted-foreground">{t("events.venueLabel")}</p>
                         <p className="text-sm font-medium text-foreground">{selected.location}</p>
                       </div>
                       <IconExternalLink size={16} className="text-primary" />
@@ -183,14 +185,12 @@ const Events = () => {
                   {/* Description */}
                   {selected.description && (
                     <div>
-                      <p className="text-xs text-muted-foreground mb-1">Описание</p>
+                      <p className="text-xs text-muted-foreground mb-1">{t("events.descriptionLabel")}</p>
                       <p className="text-sm text-foreground/75 leading-relaxed whitespace-pre-line">
                         {selected.description}
                       </p>
                     </div>
                   )}
-
-
                 </div>
               </div>
             </motion.div>

@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { IconMail, IconLock, IconUser, IconPhone, IconEye, IconEyeOff } from "@tabler/icons-react";
 import { AuthCard, LabelInputContainer } from "@/components/auth/AuthCard";
+import { useTranslation } from "react-i18next";
 
 type Step = "form" | "verify";
 
@@ -16,6 +17,7 @@ const Register = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user, setAuthData } = useAuth();
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (user) navigate("/catalog", { replace: true });
@@ -66,23 +68,23 @@ const Register = () => {
       await authApi.register({ name, surname, phone, email, password });
       setStep("verify");
       startCooldown();
-      toast.success("Код подтверждения отправлен на ваш email");
+      toast.success(t("auth.register.successCode"));
     } catch (err) {
       if (err instanceof ApiException) {
         if (err.status === 409) {
           const errCode = err.error?.code;
-          if (errCode === "email_already_taken") setEmailError("Этот email уже зарегистрирован");
-          else if (errCode === "phone_taken") setPhoneError("Этот номер телефона уже зарегистрирован");
+          if (errCode === "email_already_taken") setEmailError(t("auth.register.errorEmailTaken"));
+          else if (errCode === "phone_taken") setPhoneError(t("auth.register.errorPhoneTaken"));
           else if (errCode === "registration_pending") {
             setStep("verify");
             if (resendCooldown <= 0) startCooldown();
-            toast.error("Код уже отправлен. Проверьте email или подождите 3 минуты");
-          } else toast.error(err.error?.message || "Ошибка регистрации");
+            toast.error(t("auth.register.errorCodeSent"));
+          } else toast.error(err.error?.message || t("auth.register.errorConnection"));
         } else {
-          toast.error(err.error?.message || "Ошибка регистрации");
+          toast.error(err.error?.message || t("auth.register.errorConnection"));
         }
       } else {
-        toast.error("Ошибка соединения с сервером");
+        toast.error(t("auth.register.errorConnection"));
       }
     } finally {
       setLoading(false);
@@ -95,23 +97,23 @@ const Register = () => {
     try {
       const data = await authApi.verifyEmail(email, code);
       setAuthData(data.user, data.access_token, data.refresh_token);
-      toast.success("Email подтверждён! Добро пожаловать");
+      toast.success(t("auth.verify.successVerified"));
       navigate("/catalog");
     } catch (err) {
       if (err instanceof ApiException) {
         const errCode = err.error?.code;
         if (errCode === "already_verified") {
-          toast.error("Email уже подтверждён. Войдите в аккаунт");
+          toast.error(t("auth.verify.errorAlreadyVerified"));
           navigate("/login");
         } else if (errCode === "not_found") {
-          toast.error("Пользователь не найден");
+          toast.error(t("auth.verify.errorNotFound"));
         } else if (errCode === "invalid_code") {
-          setCodeError("Неверный или устаревший код. Попробуйте ещё раз");
+          setCodeError(t("auth.verify.errorInvalidCode"));
         } else {
-          toast.error(err.error?.message || "Ошибка подтверждения");
+          toast.error(err.error?.message || t("auth.verify.errorConnection"));
         }
       } else {
-        toast.error("Ошибка соединения с сервером");
+        toast.error(t("auth.verify.errorConnection"));
       }
     } finally {
       setLoading(false);
@@ -124,7 +126,7 @@ const Register = () => {
       setAuthData(data.user, data.access_token, data.refresh_token);
       navigate("/catalog");
     } catch {
-      toast.error("Ошибка входа через Google");
+      toast.error(t("auth.register.errorGoogle"));
     }
   };
 
@@ -133,37 +135,37 @@ const Register = () => {
     try {
       await authApi.resendCode(email);
       startCooldown();
-      toast.success("Код повторно отправлен на ваш email");
+      toast.success(t("auth.verify.successResent"));
     } catch (err) {
       if (err instanceof ApiException) {
         const errCode = err.error?.code;
         if (errCode === "already_verified") {
-          toast.error("Email уже подтверждён. Войдите в аккаунт");
+          toast.error(t("auth.verify.errorAlreadyVerified"));
           navigate("/login");
         } else if (errCode === "not_found") {
-          toast.error("Пользователь не найден");
+          toast.error(t("auth.verify.errorNotFound"));
         } else {
-          toast.error(err.error?.message || "Не удалось отправить код");
+          toast.error(err.error?.message || t("auth.verify.errorConnection"));
         }
       } else {
-        toast.error("Ошибка соединения с сервером");
+        toast.error(t("auth.verify.errorConnection"));
       }
     }
   };
 
   return (
     <AuthCard
-      title={step === "form" ? "Создать аккаунт" : "Подтвердите email"}
+      title={step === "form" ? t("auth.register.title") : t("auth.verify.title")}
       subtitle={
         step === "form"
-          ? "Присоединяйтесь к читателям Казахстана"
-          : `Введите 6-значный код, отправленный на ${email}`
+          ? t("auth.register.subtitle")
+          : t("auth.verify.subtitle", { email })
       }
       footer={
         <>
-          Уже есть аккаунт?{" "}
+          {t("auth.register.haveAccount")}{" "}
           <Link to="/login" className="text-primary font-medium hover:underline">
-            Войти
+            {t("auth.register.loginLink")}
           </Link>
         </>
       }
@@ -173,7 +175,7 @@ const Register = () => {
           <div className="flex justify-center mb-6">
             <GoogleLogin
               onSuccess={(res) => handleGoogleSuccess(res.credential!)}
-              onError={() => toast.error("Ошибка входа через Google")}
+              onError={() => toast.error(t("auth.register.errorGoogle"))}
               theme="outline"
               size="large"
               text="signup_with"
@@ -185,30 +187,30 @@ const Register = () => {
               <span className="w-full border-t border-border" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-muted-foreground">или</span>
+              <span className="bg-white px-2 text-muted-foreground">{t("auth.or")}</span>
             </div>
           </div>
 
           <form onSubmit={handleRegister} className="space-y-5">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <LabelInputContainer>
-                <Label htmlFor="name">Имя</Label>
+                <Label htmlFor="name">{t("auth.register.nameLabel")}</Label>
                 <div className="relative">
                   <IconUser className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground z-10 pointer-events-none" size={18} />
-                  <Input id="name" placeholder="Алишер" className="pl-10" value={name} onChange={(e) => setName(e.target.value)} required />
+                  <Input id="name" placeholder="Әлішер" className="pl-10" value={name} onChange={(e) => setName(e.target.value)} required />
                 </div>
               </LabelInputContainer>
               <LabelInputContainer>
-                <Label htmlFor="surname">Фамилия</Label>
+                <Label htmlFor="surname">{t("auth.register.surnameLabel")}</Label>
                 <div className="relative">
                   <IconUser className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground z-10 pointer-events-none" size={18} />
-                  <Input id="surname" placeholder="Иванов" className="pl-10" value={surname} onChange={(e) => setSurname(e.target.value)} required />
+                  <Input id="surname" placeholder="Арғынбек" className="pl-10" value={surname} onChange={(e) => setSurname(e.target.value)} required />
                 </div>
               </LabelInputContainer>
             </div>
 
             <LabelInputContainer>
-              <Label htmlFor="phone">Телефон</Label>
+              <Label htmlFor="phone">{t("auth.register.phoneLabel")}</Label>
               <div className="relative">
                 <IconPhone className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground z-10 pointer-events-none" size={18} />
                 <Input
@@ -225,7 +227,7 @@ const Register = () => {
             </LabelInputContainer>
 
             <LabelInputContainer>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t("auth.register.emailLabel")}</Label>
               <div className="relative">
                 <IconMail className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground z-10 pointer-events-none" size={18} />
                 <Input
@@ -242,13 +244,13 @@ const Register = () => {
             </LabelInputContainer>
 
             <LabelInputContainer>
-              <Label htmlFor="password">Пароль</Label>
+              <Label htmlFor="password">{t("auth.register.passwordLabel")}</Label>
               <div className="relative">
                 <IconLock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground z-10 pointer-events-none" size={18} />
-                <Input id="password" type={showPassword ? "text" : "password"} placeholder="Минимум 8 символов" className="pl-10 pr-10" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} />
+                <Input id="password" type={showPassword ? "text" : "password"} placeholder={t("auth.register.passwordPlaceholder")} className="pl-10 pr-10" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} />
                 <button
                   type="button"
-                  aria-label={showPassword ? "Скрыть пароль" : "Показать пароль"}
+                  aria-label={showPassword ? t("auth.register.hidePassword") : t("auth.register.showPassword")}
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground z-10"
                 >
@@ -258,14 +260,14 @@ const Register = () => {
             </LabelInputContainer>
 
             <Button type="submit" className="w-full h-10 font-medium" disabled={loading}>
-              {loading ? "Регистрация..." : "Зарегистрироваться"}
+              {loading ? t("auth.register.loading") : t("auth.register.submit")}
             </Button>
           </form>
         </>
       ) : (
         <form onSubmit={handleVerify} className="space-y-5">
           <LabelInputContainer>
-            <Label htmlFor="code">Код подтверждения</Label>
+            <Label htmlFor="code">{t("auth.verify.codeLabel")}</Label>
             <Input
               id="code"
               placeholder="123456"
@@ -278,10 +280,10 @@ const Register = () => {
             {codeError && <p className="text-xs text-red-500 mt-0.5">{codeError}</p>}
           </LabelInputContainer>
           <Button type="submit" className="w-full h-10 font-medium" disabled={loading || code.length !== 6}>
-            {loading ? "Проверяем..." : "Подтвердить"}
+            {loading ? t("auth.verify.loading") : t("auth.verify.submit")}
           </Button>
           <Button type="button" variant="ghost" className="w-full text-sm" onClick={handleResend} disabled={resendCooldown > 0}>
-            {resendCooldown > 0 ? `Повторно через ${resendCooldown} сек` : "Отправить код повторно"}
+            {resendCooldown > 0 ? t("auth.verify.resendIn", { seconds: resendCooldown }) : t("auth.verify.resend")}
           </Button>
           <button
             type="button"
@@ -295,7 +297,7 @@ const Register = () => {
             }}
             className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors text-center"
           >
-            ← Назад
+            {t("auth.verify.back")}
           </button>
         </form>
       )}

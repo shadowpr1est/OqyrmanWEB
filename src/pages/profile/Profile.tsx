@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,12 +46,13 @@ function phoneToRaw(formatted: string): string {
 const Profile = () => {
   const { user, signOut } = useAuth();
   const qc = useQueryClient();
+  const { t } = useTranslation();
 
   if (!user) return null;
 
   return (
     <div className="container mx-auto max-w-2xl px-4 lg:px-8 py-8">
-      <PageHeader title="Мой профиль" />
+      <PageHeader title={t("profile.title")} />
 
       <div className="space-y-8">
         <ProfileSection user={user} qc={qc} />
@@ -78,6 +80,7 @@ function ProfileSection({
   user: NonNullable<ReturnType<typeof useAuth>["user"]>;
   qc: ReturnType<typeof useQueryClient>;
 }) {
+  const { t } = useTranslation();
   const { updateUser } = useAuth();
   const [name, setName] = useState(user.name);
   const [surname, setSurname] = useState(user.surname);
@@ -97,9 +100,9 @@ function ProfileSection({
       }),
     onSuccess: (updated) => {
       updateUser(updated);
-      toast.success("Профиль обновлён");
+      toast.success(t("profile.updateSuccess"));
     },
-    onError: () => toast.error("Ошибка обновления"),
+    onError: () => toast.error(t("profile.updateError")),
   });
 
   const avatarMutation = useMutation({
@@ -107,9 +110,9 @@ function ProfileSection({
     onSuccess: (updated) => {
       updateUser(updated);
       qc.invalidateQueries({ queryKey: ["user"] });
-      toast.success("Аватар обновлён");
+      toast.success(t("profile.avatarSuccess"));
     },
-    onError: () => toast.error("Ошибка загрузки"),
+    onError: () => toast.error(t("profile.avatarError")),
   });
 
   const initials = `${user.name[0]}${user.surname[0]}`.toUpperCase();
@@ -168,20 +171,20 @@ function ProfileSection({
       <div className="space-y-5">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label>Имя</Label>
+            <Label>{t("profile.name")}</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label>Фамилия</Label>
+            <Label>{t("profile.surname")}</Label>
             <Input value={surname} onChange={(e) => setSurname(e.target.value)} />
           </div>
         </div>
         <div className="space-y-2">
-          <Label>Email</Label>
+          <Label>{t("profile.email")}</Label>
           <Input value={user.email} disabled className="opacity-60" />
         </div>
         <div className="space-y-2">
-          <Label>Телефон</Label>
+          <Label>{t("profile.phone")}</Label>
           <Input
             value={phone}
             onChange={handlePhoneChange}
@@ -193,7 +196,7 @@ function ProfileSection({
           onClick={() => updateMutation.mutate()}
           disabled={updateMutation.isPending || !isDirty}
         >
-          {updateMutation.isPending ? "Сохраняем..." : "Сохранить"}
+          {updateMutation.isPending ? t("profile.saving") : t("profile.save")}
         </Button>
       </div>
     </motion.div>
@@ -203,17 +206,18 @@ function ProfileSection({
 // ─── Change Password ──────────────────────────────────────────────────────────
 
 function ChangePassword() {
+  const { t } = useTranslation();
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
 
   const mutation = useMutation({
     mutationFn: () => userApi.changePassword(oldPassword, newPassword),
     onSuccess: () => {
-      toast.success("Пароль изменён");
+      toast.success(t("profile.passwordSuccess"));
       setOldPassword("");
       setNewPassword("");
     },
-    onError: () => toast.error("Неверный текущий пароль"),
+    onError: () => toast.error(t("profile.passwordWrong")),
   });
 
   return (
@@ -224,11 +228,11 @@ function ChangePassword() {
     >
       <div className="flex items-center gap-2 mb-5">
         <IconLock size={18} stroke={1.5} className="text-muted-foreground" />
-        <h2 className="text-lg font-semibold text-foreground">Смена пароля</h2>
+        <h2 className="text-lg font-semibold text-foreground">{t("profile.changePasswordTitle")}</h2>
       </div>
       <div className="max-w-sm space-y-5">
         <div className="space-y-2">
-          <Label>Текущий пароль</Label>
+          <Label>{t("profile.currentPassword")}</Label>
           <Input
             type="password"
             value={oldPassword}
@@ -236,10 +240,10 @@ function ChangePassword() {
           />
         </div>
         <div className="space-y-2">
-          <Label>Новый пароль</Label>
+          <Label>{t("profile.newPassword")}</Label>
           <Input
             type="password"
-            placeholder="Минимум 8 символов"
+            placeholder={t("profile.passwordPlaceholder")}
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             minLength={8}
@@ -249,7 +253,7 @@ function ChangePassword() {
           onClick={() => mutation.mutate()}
           disabled={mutation.isPending || oldPassword.length < 1 || newPassword.length < 8}
         >
-          {mutation.isPending ? "Сохраняем..." : "Изменить пароль"}
+          {mutation.isPending ? t("profile.saving") : t("profile.changePassword")}
         </Button>
       </div>
     </motion.div>
@@ -259,19 +263,21 @@ function ChangePassword() {
 // ─── Delete Account ───────────────────────────────────────────────────────────
 
 function DeleteAccount({ signOut }: { signOut: () => Promise<void> }) {
+  const { t } = useTranslation();
   const [confirmText, setConfirmText] = useState("");
   const [open, setOpen] = useState(false);
 
   const mutation = useMutation({
     mutationFn: () => userApi.deleteMe(),
     onSuccess: async () => {
-      toast.success("Аккаунт удалён");
+      toast.success(t("profile.deleteSuccess"));
       await signOut();
     },
-    onError: () => toast.error("Ошибка удаления аккаунта"),
+    onError: () => toast.error(t("profile.deleteConfirmDesc")),
   });
 
-  const confirmed = confirmText === "УДАЛИТЬ";
+  const deleteWord = t("profile.deleteWord");
+  const confirmed = confirmText === deleteWord;
 
   return (
     <motion.div
@@ -281,17 +287,16 @@ function DeleteAccount({ signOut }: { signOut: () => Promise<void> }) {
     >
       <div className="flex items-center gap-2 mb-3">
         <IconTrash size={18} stroke={1.5} className="text-destructive" />
-        <h2 className="text-lg font-semibold text-foreground">Удалить аккаунт</h2>
+        <h2 className="text-lg font-semibold text-foreground">{t("profile.deleteAccount")}</h2>
       </div>
       <p className="text-sm text-muted-foreground mb-5">
-        Это действие необратимо. Все ваши данные, бронирования, отзывы и история
-        чтения будут удалены навсегда.
+        {t("profile.deleteAccountDesc2")}
       </p>
 
       <AlertDialog open={open} onOpenChange={setOpen}>
         <AlertDialogTrigger asChild>
           <Button variant="outline" className="border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive">
-            Удалить аккаунт
+            {t("profile.deleteAccount")}
           </Button>
         </AlertDialogTrigger>
         <AlertDialogContent>
@@ -299,28 +304,27 @@ function DeleteAccount({ signOut }: { signOut: () => Promise<void> }) {
             <div className="mx-auto w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center mb-2">
               <IconAlertTriangle size={24} className="text-destructive" />
             </div>
-            <AlertDialogTitle className="text-center">Удалить аккаунт?</AlertDialogTitle>
+            <AlertDialogTitle className="text-center">{t("profile.deleteConfirmTitle")}</AlertDialogTitle>
             <AlertDialogDescription className="text-center">
-              Это действие нельзя отменить. Все данные вашего аккаунта будут
-              безвозвратно удалены.
+              {t("profile.deleteConfirmDesc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
 
           <div className="space-y-2 py-2">
             <Label className="text-sm text-muted-foreground">
-              Введите <span className="font-semibold text-foreground">УДАЛИТЬ</span> для подтверждения
+              {t("profile.deleteConfirmLabel", { word: deleteWord })}
             </Label>
             <Input
               value={confirmText}
               onChange={(e) => setConfirmText(e.target.value)}
-              placeholder="УДАЛИТЬ"
+              placeholder={deleteWord}
               autoComplete="off"
             />
           </div>
 
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setConfirmText("")}>
-              Отмена
+              {t("common.cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               disabled={!confirmed || mutation.isPending}
@@ -330,7 +334,7 @@ function DeleteAccount({ signOut }: { signOut: () => Promise<void> }) {
               }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {mutation.isPending ? "Удаляем..." : "Удалить навсегда"}
+              {mutation.isPending ? t("profile.deleting") : t("profile.deletePermanent")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

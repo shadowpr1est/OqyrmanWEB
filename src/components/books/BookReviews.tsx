@@ -9,12 +9,14 @@ import { Rating } from "@/components/shared/Rating";
 import { Button } from "@/components/ui/button";
 import { ReviewForm } from "@/components/books/ReviewForm";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 interface BookReviewsProps {
   bookId: string | number;
 }
 
 export const BookReviews = ({ bookId }: BookReviewsProps) => {
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const qc = useQueryClient();
   const [showForm, setShowForm] = useState(false);
@@ -40,9 +42,9 @@ export const BookReviews = ({ bookId }: BookReviewsProps) => {
       setShowForm(false);
       setRating(0);
       setBody("");
-      toast.success("Отзыв добавлен");
+      toast.success(t("book.reviewAdded"));
     },
-    onError: () => toast.error("Не удалось добавить отзыв"),
+    onError: () => toast.error(t("book.reviewAddError")),
   });
 
   const updateMutation = useMutation({
@@ -52,9 +54,9 @@ export const BookReviews = ({ bookId }: BookReviewsProps) => {
       qc.invalidateQueries({ queryKey: ["reviews", bookId] });
       qc.invalidateQueries({ queryKey: ["books", bookId] });
       setEditingId(null);
-      toast.success("Отзыв обновлён");
+      toast.success(t("book.reviewUpdated"));
     },
-    onError: () => toast.error("Не удалось обновить отзыв"),
+    onError: () => toast.error(t("book.reviewUpdateError")),
   });
 
   const deleteMutation = useMutation({
@@ -62,9 +64,9 @@ export const BookReviews = ({ bookId }: BookReviewsProps) => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["reviews", bookId] });
       qc.invalidateQueries({ queryKey: ["books", bookId] });
-      toast.success("Отзыв удалён");
+      toast.success(t("book.reviewDeleted"));
     },
-    onError: () => toast.error("Не удалось удалить отзыв"),
+    onError: () => toast.error(t("book.reviewDeleteError")),
   });
 
   const reviews = data?.items || [];
@@ -85,11 +87,11 @@ export const BookReviews = ({ bookId }: BookReviewsProps) => {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-foreground">
-          Отзывы {reviews.length > 0 && `(${data?.total || reviews.length})`}
+          {t("book.reviews")} {reviews.length > 0 && `(${data?.total || reviews.length})`}
         </h3>
         {user && !showForm && (
           <Button variant="outline" size="sm" onClick={() => setShowForm(true)}>
-            Написать отзыв
+            {t("book.writeReview")}
           </Button>
         )}
       </div>
@@ -126,7 +128,7 @@ export const BookReviews = ({ bookId }: BookReviewsProps) => {
       ) : reviews.length === 0 ? (
         <div className="flex flex-col items-center gap-2 py-10 text-muted-foreground">
           <IconMessage size={32} stroke={1.5} className="opacity-40" />
-          <p className="text-sm">Пока нет отзывов. Будьте первым!</p>
+          <p className="text-sm">{t("book.noReviews")}</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -134,7 +136,7 @@ export const BookReviews = ({ bookId }: BookReviewsProps) => {
             const isOwn = user?.id === r.user_id;
             const isEditing = editingId === r.id;
             const initial = r.user_name?.[0] || r.user_surname?.[0] || "?";
-            const displayName = [r.user_name, r.user_surname].filter(Boolean).join(" ") || "Пользователь";
+            const displayName = [r.user_name, r.user_surname].filter(Boolean).join(" ") || t("book.anonymousUser");
 
             return (
               <motion.div
@@ -159,13 +161,13 @@ export const BookReviews = ({ bookId }: BookReviewsProps) => {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground truncate">
                       {displayName}
-                      {isOwn && <span className="text-xs text-primary ml-1.5">(вы)</span>}
+                      {isOwn && <span className="text-xs text-primary ml-1.5">{t("book.you")}</span>}
                     </p>
                     {!isEditing && (
                       <div className="flex items-center gap-2">
                         <Rating value={r.rating} size={12} />
                         <span className="text-xs text-muted-foreground">
-                          {new Date(r.created_at).toLocaleDateString("ru")}
+                          {new Date(r.created_at).toLocaleDateString(i18n.language === "kk" ? "kk-KZ" : "ru-RU")}
                         </span>
                       </div>
                     )}
@@ -177,7 +179,6 @@ export const BookReviews = ({ bookId }: BookReviewsProps) => {
                       <button
                         onClick={() => startEdit(r)}
                         className="p-1.5 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors"
-                        title="Редактировать"
                       >
                         <IconPencil size={15} />
                       </button>
@@ -185,7 +186,6 @@ export const BookReviews = ({ bookId }: BookReviewsProps) => {
                         onClick={() => deleteMutation.mutate(r.id)}
                         disabled={deleteMutation.isPending}
                         className="p-1.5 rounded-md text-muted-foreground hover:text-red-500 hover:bg-red-50 transition-colors"
-                        title="Удалить"
                       >
                         <IconTrash size={15} />
                       </button>

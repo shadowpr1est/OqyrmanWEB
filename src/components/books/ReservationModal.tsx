@@ -19,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { reservationsApi } from "@/lib/api";
 import type { LibraryBook } from "@/lib/api/types";
+import { useTranslation } from "react-i18next";
 
 interface ReservationModalProps {
   open: boolean;
@@ -33,6 +34,7 @@ export const ReservationModal = ({
   libraryBooks,
   bookTitle,
 }: ReservationModalProps) => {
+  const { t } = useTranslation();
   const [selectedId, setSelectedId] = useState<string | number | null>(null);
   const qc = useQueryClient();
 
@@ -49,11 +51,11 @@ export const ReservationModal = ({
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["library-books"] });
       qc.invalidateQueries({ queryKey: ["reservations"] });
-      toast.success("Книга забронирована! Заберите до " + dueDateFormatted);
+      toast.success(t("book.reserveModal.success", { date: dueDateFormatted }));
       onOpenChange(false);
       setSelectedId(null);
     },
-    onError: () => toast.error("Не удалось забронировать"),
+    onError: () => toast.error(t("book.reserveModal.error")),
   });
 
   const handleClose = (value: boolean) => {
@@ -75,7 +77,7 @@ export const ReservationModal = ({
               <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
                 <IconBuildingBank size={18} className="text-primary" />
               </div>
-              Забронировать книгу
+              {t("book.reserveModal.title")}
             </DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground mt-1.5">
               <span className="font-medium text-foreground/70">{bookTitle}</span>
@@ -86,7 +88,7 @@ export const ReservationModal = ({
           <div className="mt-4 flex items-center gap-2 px-3 py-2.5 rounded-lg bg-amber-50/80 border border-amber-200/60">
             <IconCalendarEvent size={16} className="text-amber-600 flex-shrink-0" />
             <p className="text-xs text-amber-800">
-              Заберите книгу до <span className="font-semibold">{dueDateFormatted}</span>
+              {t("book.reserveModal.pickupBy")} <span className="font-semibold">{dueDateFormatted}</span>
             </p>
           </div>
         </div>
@@ -94,7 +96,7 @@ export const ReservationModal = ({
         {/* Library list */}
         <div className="px-6 py-4">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
-            Выберите библиотеку
+            {t("book.reserveModal.chooseLibrary")}
           </p>
 
           <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1">
@@ -138,7 +140,7 @@ export const ReservationModal = ({
                       <p className={`text-sm font-semibold transition-colors ${
                         isSelected ? "text-primary" : "text-foreground"
                       }`}>
-                        {lb.library?.name || `Библиотека #${lb.library_id}`}
+                        {lb.library?.name || `#${lb.library_id}`}
                       </p>
                       {lb.library?.address && (
                         <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
@@ -163,7 +165,7 @@ export const ReservationModal = ({
 
           {available.length === 0 && (
             <p className="text-sm text-muted-foreground text-center py-6">
-              Нет доступных экземпляров
+              {t("book.reserveModal.noAvailable")}
             </p>
           )}
         </div>
@@ -176,7 +178,7 @@ export const ReservationModal = ({
             onClick={() => handleClose(false)}
             disabled={reserveMutation.isPending}
           >
-            Отмена
+            {t("book.reserveModal.cancel")}
           </Button>
           <Button
             className="flex-1 bg-primary hover:bg-primary-dark text-white"
@@ -186,10 +188,10 @@ export const ReservationModal = ({
             {reserveMutation.isPending ? (
               <span className="flex items-center gap-2">
                 <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Бронируем...
+                {t("book.reserveModal.reserving")}
               </span>
             ) : (
-              "Подтвердить"
+              t("book.reserveModal.confirm")
             )}
           </Button>
         </div>

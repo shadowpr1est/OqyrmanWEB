@@ -9,10 +9,12 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { IconMail, IconLock, IconEye, IconEyeOff } from "@tabler/icons-react";
 import { AuthCard, LabelInputContainer } from "@/components/auth/AuthCard";
+import { useTranslation } from "react-i18next";
 
 const Login = () => {
   const navigate = useNavigate();
   const { user, setAuthData } = useAuth();
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -35,19 +37,19 @@ const Login = () => {
       if (err instanceof ApiException) {
         const errCode = err.error?.code;
         if (errCode === "email_not_verified") {
-          toast.error("Подтвердите email перед входом");
+          toast.error(t("auth.login.errorVerify"));
           navigate(`/register?verify=${encodeURIComponent(email)}`);
         } else if (errCode === "too_many_requests") {
-          toast.error("Аккаунт заблокирован. Попробуйте через 15 минут");
+          toast.error(t("auth.login.errorLocked"));
         } else if (errCode === "invalid_credentials") {
-          setFormError("Неверный email или пароль");
+          setFormError(t("auth.login.errorCredentials"));
         } else if (errCode === "validation_error") {
-          setFormError(err.error?.message || "Проверьте введённые данные");
+          setFormError(err.error?.message || t("auth.login.errorCredentials"));
         } else {
-          toast.error(err.error?.message || "Ошибка входа");
+          toast.error(err.error?.message || t("auth.login.errorCredentials"));
         }
       } else {
-        toast.error("Ошибка соединения с сервером");
+        toast.error(t("auth.login.errorConnection"));
       }
     } finally {
       setLoading(false);
@@ -60,19 +62,19 @@ const Login = () => {
       setAuthData(data.user, data.access_token, data.refresh_token);
       navigate("/catalog");
     } catch {
-      toast.error("Ошибка входа через Google");
+      toast.error(t("auth.login.errorGoogle"));
     }
   };
 
   return (
     <AuthCard
-      title="Войти в аккаунт"
-      subtitle="Добро пожаловать обратно"
+      title={t("auth.login.title")}
+      subtitle={t("auth.login.subtitle")}
       footer={
         <>
-          Нет аккаунта?{" "}
+          {t("auth.login.noAccount")}{" "}
           <Link to="/register" className="text-primary font-medium hover:underline">
-            Зарегистрироваться
+            {t("auth.login.registerLink")}
           </Link>
         </>
       }
@@ -80,7 +82,7 @@ const Login = () => {
       <div className="flex justify-center mb-6">
         <GoogleLogin
           onSuccess={(res) => handleGoogleSuccess(res.credential!)}
-          onError={() => toast.error("Ошибка входа через Google")}
+          onError={() => toast.error(t("auth.login.errorGoogle"))}
           theme="outline"
           size="large"
           text="signin_with"
@@ -92,13 +94,13 @@ const Login = () => {
           <span className="w-full border-t border-border" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-white px-2 text-muted-foreground">или</span>
+          <span className="bg-white px-2 text-muted-foreground">{t("auth.or")}</span>
         </div>
       </div>
 
       <form onSubmit={handleLogin} className="space-y-5">
         <LabelInputContainer>
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{t("auth.login.emailLabel")}</Label>
           <div className="relative">
             <IconMail className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground z-10 pointer-events-none" size={18} />
             <Input id="email" type="email" placeholder="mail@example.com" className="pl-10" value={email} onChange={(e) => { setEmail(e.target.value); setFormError(null); }} required />
@@ -107,8 +109,8 @@ const Login = () => {
 
         <LabelInputContainer>
           <div className="flex items-center justify-between">
-            <Label htmlFor="password">Пароль</Label>
-            <Link to="/forgot-password" className="text-xs text-primary hover:underline">Забыли пароль?</Link>
+            <Label htmlFor="password">{t("auth.login.passwordLabel")}</Label>
+            <Link to="/forgot-password" className="text-xs text-primary hover:underline">{t("auth.login.forgotPassword")}</Link>
           </div>
           <div className="relative">
             <IconLock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground z-10 pointer-events-none" size={18} />
@@ -123,7 +125,7 @@ const Login = () => {
             />
             <button
               type="button"
-              aria-label={showPassword ? "Скрыть пароль" : "Показать пароль"}
+              aria-label={showPassword ? t("auth.login.hidePassword") : t("auth.login.showPassword")}
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground z-10"
             >
@@ -136,7 +138,7 @@ const Login = () => {
         </LabelInputContainer>
 
         <Button type="submit" className="w-full h-10 font-medium" disabled={loading}>
-          {loading ? "Входим..." : "Войти"}
+          {loading ? t("auth.login.loading") : t("auth.login.submit")}
         </Button>
       </form>
     </AuthCard>

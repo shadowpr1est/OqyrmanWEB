@@ -3,8 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { IconCalendarEvent, IconMapPin, IconClock, IconArrowLeft } from "@tabler/icons-react";
 import { eventsApi } from "@/lib/api";
+import { useTranslation } from "react-i18next";
 
 const EventDetail = () => {
+  const { t, i18n } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const eventId = Number(id);
 
@@ -29,23 +31,25 @@ const EventDetail = () => {
   if (!event) {
     return (
       <div className="container mx-auto px-4 py-20 text-center">
-        <p className="text-lg text-muted-foreground">Мероприятие не найдено</p>
+        <p className="text-lg text-muted-foreground">{t("events.notFound")}</p>
         <Link to="/events" className="text-primary hover:underline text-sm mt-2 inline-block">
-          Все мероприятия
+          {t("events.backToAll")}
         </Link>
       </div>
     );
   }
 
+  const locale = i18n.language === "kk" ? "kk-KZ" : "ru-RU";
+
   const formatDate = (iso: string) =>
-    new Date(iso).toLocaleDateString("ru", {
+    new Date(iso).toLocaleDateString(locale, {
       day: "numeric",
       month: "long",
       year: "numeric",
     });
 
   const formatTime = (iso: string) =>
-    new Date(iso).toLocaleTimeString("ru", { hour: "2-digit", minute: "2-digit" });
+    new Date(iso).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
 
   return (
     <div>
@@ -67,7 +71,7 @@ const EventDetail = () => {
             to="/events"
             className="inline-flex items-center gap-1.5 text-sm text-white/50 hover:text-white transition-colors mb-6"
           >
-            <IconArrowLeft size={16} /> Все мероприятия
+            <IconArrowLeft size={16} /> {t("events.backToAll")}
           </Link>
 
           <div className="flex flex-col md:flex-row gap-8">
@@ -124,13 +128,13 @@ const EventDetail = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
-              <h2 className="text-lg font-semibold text-foreground mb-4">Описание</h2>
+              <h2 className="text-lg font-semibold text-foreground mb-4">{t("events.descriptionTitle")}</h2>
               <p className="text-foreground/75 leading-relaxed whitespace-pre-line">
                 {event.description}
               </p>
             </motion.div>
           ) : (
-            <p className="text-muted-foreground">Описание отсутствует</p>
+            <p className="text-muted-foreground">{t("events.noDescription")}</p>
           )}
         </div>
       </div>

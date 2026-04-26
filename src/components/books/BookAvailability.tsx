@@ -8,6 +8,7 @@ import { libraryBooksApi } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { ReservationModal } from "@/components/books/ReservationModal";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTranslation } from "react-i18next";
 
 interface BookAvailabilityProps {
   bookId: string | number;
@@ -18,11 +19,12 @@ export const BookAvailability = ({ bookId, bookTitle }: BookAvailabilityProps) =
   const [reserveOpen, setReserveOpen] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleReserveClick = () => {
     if (!user?.phone) {
-      toast.error("Добавьте номер телефона в профиле перед бронированием", {
-        action: { label: "Профиль", onClick: () => navigate("/profile") },
+      toast.error(t("book.reserveModal.phoneRequired"), {
+        action: { label: t("book.reserveModal.phoneRequiredBtn"), onClick: () => navigate("/profile") },
       });
       return;
     }
@@ -52,7 +54,7 @@ export const BookAvailability = ({ bookId, bookTitle }: BookAvailabilityProps) =
   if (!items.length) {
     return (
       <p className="text-sm text-muted-foreground text-center py-6">
-        Книга пока недоступна в библиотеках
+        {t("book.notInLibraries")}
       </p>
     );
   }
@@ -81,12 +83,12 @@ export const BookAvailability = ({ bookId, bookTitle }: BookAvailabilityProps) =
                 className="text-sm font-medium text-foreground hover:text-primary transition-colors"
               >
                 <IconMapPin size={14} className="inline mr-1 text-muted-foreground" />
-                {lb.library?.name || `Библиотека #${lb.library_id}`}
+                {lb.library?.name || `#${lb.library_id}`}
               </Link>
               <p className="text-xs text-muted-foreground">
                 {hasAvailable
-                  ? `${lb.available_copies} из ${lb.total_copies} доступно`
-                  : "Нет свободных экземпляров"}
+                  ? t("book.copiesAvailable", { available: lb.available_copies, total: lb.total_copies })
+                  : t("book.noCopies")}
               </p>
             </div>
 
@@ -97,7 +99,7 @@ export const BookAvailability = ({ bookId, bookTitle }: BookAvailabilityProps) =
                 onClick={handleReserveClick}
                 className="flex-shrink-0"
               >
-                Забронировать
+                {t("book.available")}
               </Button>
             )}
           </motion.div>

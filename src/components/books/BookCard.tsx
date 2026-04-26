@@ -55,7 +55,7 @@ export const BookCard = ({ book }: BookCardProps) => (
         )}
         <div className="flex items-center gap-2">
           {book.genre && (
-            <GenreBadge name={book.genre.name} interactive={false} />
+            <GenreBadge name={book.genre.name} slug={book.genre.slug} interactive={false} />
           )}
           {book.year > 0 && (
             <span className="text-xs text-muted-foreground">{book.year}</span>

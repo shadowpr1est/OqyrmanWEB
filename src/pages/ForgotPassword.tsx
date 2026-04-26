@@ -8,12 +8,14 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { IconMail, IconLock, IconEye, IconEyeOff } from "@tabler/icons-react";
 import { AuthCard, LabelInputContainer } from "@/components/auth/AuthCard";
+import { useTranslation } from "react-i18next";
 
 type Step = "email" | "reset";
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [step, setStep] = useState<Step>("email");
 
   useEffect(() => {
@@ -32,7 +34,7 @@ const ForgotPassword = () => {
     try {
       await authApi.forgotPassword(email);
       setStep("reset");
-      toast.success("Если этот email зарегистрирован, код отправлен");
+      toast.success(t("auth.forgot.successSent"));
     } catch {
       setStep("reset");
     } finally {
@@ -45,16 +47,15 @@ const ForgotPassword = () => {
     setLoading(true);
     try {
       await authApi.resetPassword(email, code, newPassword);
-      toast.success("Пароль успешно изменён");
+      toast.success(t("auth.forgot.successReset"));
       navigate("/login");
     } catch (err) {
       if (err instanceof ApiException) {
         const errCode = err.error?.code;
-        if (errCode === "invalid_code") toast.error("Неверный или устаревший код");
-        else if (errCode === "validation_error") toast.error(err.error?.message || "Пароль должен содержать минимум 8 символов, заглавную букву и цифру");
-        else toast.error(err.error?.message || "Ошибка сброса пароля");
+        if (errCode === "invalid_code") toast.error(t("auth.forgot.errorInvalidCode"));
+        else toast.error(err.error?.message || t("auth.forgot.errorInvalidCode"));
       } else {
-        toast.error("Ошибка соединения с сервером");
+        toast.error(t("auth.forgot.errorConnection"));
       }
     } finally {
       setLoading(false);
@@ -64,43 +65,43 @@ const ForgotPassword = () => {
   const handleResend = async () => {
     try {
       await authApi.resendResetCode(email);
-      toast.success("Код повторно отправлен");
+      toast.success(t("auth.verify.successResent"));
     } catch {
-      toast.error("Не удалось отправить код");
+      toast.error(t("auth.forgot.errorResend"));
     }
   };
 
   return (
     <AuthCard
-      title="Восстановить пароль"
+      title={t("auth.forgot.title")}
       subtitle={
         step === "email"
-          ? "Введите email — мы отправим код подтверждения"
-          : `Введите код из письма на ${email}`
+          ? t("auth.forgot.subtitleEmail")
+          : t("auth.forgot.subtitleCode", { email })
       }
       footer={
         <Link to="/login" className="text-primary font-medium hover:underline">
-          Вернуться ко входу
+          {t("auth.forgot.backToLogin")}
         </Link>
       }
     >
       {step === "email" ? (
         <form onSubmit={handleSendCode} className="space-y-5">
           <LabelInputContainer>
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t("auth.forgot.emailLabel")}</Label>
             <div className="relative">
               <IconMail className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground z-10 pointer-events-none" size={18} />
               <Input id="email" type="email" placeholder="mail@example.com" className="pl-10" value={email} onChange={(e) => setEmail(e.target.value)} required />
             </div>
           </LabelInputContainer>
           <Button type="submit" className="w-full h-10 font-medium" disabled={loading}>
-            {loading ? "Отправляем..." : "Отправить код"}
+            {loading ? t("auth.forgot.loading") : t("auth.forgot.submit")}
           </Button>
         </form>
       ) : (
         <form onSubmit={handleReset} className="space-y-5">
           <LabelInputContainer>
-            <Label htmlFor="code">Код из письма</Label>
+            <Label htmlFor="code">{t("auth.forgot.codeLabel")}</Label>
             <Input
               id="code"
               placeholder="123456"
@@ -113,13 +114,13 @@ const ForgotPassword = () => {
           </LabelInputContainer>
 
           <LabelInputContainer>
-            <Label htmlFor="password">Новый пароль</Label>
+            <Label htmlFor="password">{t("auth.forgot.newPasswordLabel")}</Label>
             <div className="relative">
               <IconLock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground z-10 pointer-events-none" size={18} />
               <Input
                 id="password"
                 type={showPassword ? "text" : "password"}
-                placeholder="Минимум 8 символов"
+                placeholder={t("auth.forgot.newPasswordPlaceholder")}
                 className="pl-10 pr-10"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
@@ -128,7 +129,7 @@ const ForgotPassword = () => {
               />
               <button
                 type="button"
-                aria-label={showPassword ? "Скрыть пароль" : "Показать пароль"}
+                aria-label={showPassword ? t("auth.forgot.hidePassword") : t("auth.forgot.showPassword")}
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground z-10"
               >
@@ -138,10 +139,10 @@ const ForgotPassword = () => {
           </LabelInputContainer>
 
           <Button type="submit" className="w-full h-10 font-medium" disabled={loading || code.length !== 6 || newPassword.length < 8}>
-            {loading ? "Сохраняем..." : "Сохранить пароль"}
+            {loading ? t("auth.forgot.saving") : t("auth.forgot.savePassword")}
           </Button>
           <Button type="button" variant="ghost" className="w-full text-sm" onClick={handleResend}>
-            Отправить код повторно
+            {t("auth.forgot.resend")}
           </Button>
         </form>
       )}

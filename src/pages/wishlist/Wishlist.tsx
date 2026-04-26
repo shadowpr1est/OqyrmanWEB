@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import type { Book } from "@/lib/api";
 import type { WishlistItem, ShelfStatus } from "@/lib/api/types";
+import { useTranslation } from "react-i18next";
 
 function toBook(item: WishlistItem): Book {
   const b = item.book;
@@ -33,6 +34,7 @@ function toBook(item: WishlistItem): Book {
 }
 
 const WishlistCard = ({ item }: { item: WishlistItem }) => {
+  const { t } = useTranslation();
   const { remove } = useToggleWishlist(item.book.id);
   return (
     <div className="relative group/card">
@@ -41,12 +43,12 @@ const WishlistCard = ({ item }: { item: WishlistItem }) => {
         onClick={(e) => {
           e.preventDefault();
           remove.mutate(undefined, {
-            onSuccess: () => toast.success("Удалено с полки"),
+            onSuccess: () => toast.success(t("wishlist.removeSuccess")),
           });
         }}
         disabled={remove.isPending}
         className="absolute top-2 right-2 z-10 p-1 rounded-full bg-black/50 text-white opacity-0 group-hover/card:opacity-100 hover:bg-red-500 transition-all disabled:opacity-40"
-        title="Убрать с полки"
+        title={t("wishlist.removeTitle")}
       >
         <IconX size={14} />
       </button>
@@ -54,14 +56,8 @@ const WishlistCard = ({ item }: { item: WishlistItem }) => {
   );
 };
 
-const tabs: { label: string; value: ShelfStatus | undefined }[] = [
-  { label: "Все", value: undefined },
-  { label: "Хочу прочитать", value: "want_to_read" },
-  { label: "Читаю", value: "reading" },
-  { label: "Прочитано", value: "finished" },
-];
-
 const Wishlist = () => {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = (searchParams.get("shelf") as ShelfStatus) || undefined;
   const setActiveTab = (value: ShelfStatus | undefined) => {
@@ -70,11 +66,18 @@ const Wishlist = () => {
   const { data, isLoading } = useWishlist(activeTab);
   const items = data || [];
 
+  const tabs: { label: string; value: ShelfStatus | undefined }[] = [
+    { label: t("wishlist.all"), value: undefined },
+    { label: t("wishlist.wantToRead"), value: "want_to_read" },
+    { label: t("wishlist.reading"), value: "reading" },
+    { label: t("wishlist.finished"), value: "finished" },
+  ];
+
   return (
     <div className="container mx-auto px-4 lg:px-8 py-8">
       <PageHeader
-        title="Полка"
-        subtitle={items.length > 0 ? `${items.length} книг в вашем списке` : "Сохраняйте понравившиеся книги"}
+        title={t("wishlist.title")}
+        subtitle={items.length > 0 ? t("wishlist.booksCount", { count: items.length }) : t("wishlist.subtitle")}
       />
 
       {/* Tabs */}
@@ -99,11 +102,11 @@ const Wishlist = () => {
       ) : items.length === 0 ? (
         <EmptyState
           icon={IconHeart}
-          title="Список пуст"
-          description="Нажмите на странице книги, чтобы добавить её в избранное"
+          title={t("wishlist.empty")}
+          description={t("wishlist.emptySubtitle")}
           action={
             <Button variant="outline" size="sm" asChild>
-              <Link to="/catalog">Перейти в каталог</Link>
+              <Link to="/catalog">{t("reservations.toCatalog")}</Link>
             </Button>
           }
         />

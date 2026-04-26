@@ -16,12 +16,14 @@ import { SimilarBooks } from "@/components/books/SimilarBooks";
 import { BookActions } from "@/components/books/BookActions";
 import { optimizedUrl } from "@/lib/imageProxy";
 import { fadeLeft, fadeUpSm } from "@/lib/motion";
+import { useTranslation } from "react-i18next";
 
 const BookDetail = () => {
   const { id } = useParams<{ id: string }>();
   const bookId = id!;
   const navigate = useNavigate();
   const { data: book, isLoading } = useBook(bookId);
+  const { t, i18n } = useTranslation();
 
   if (isLoading) {
     return (
@@ -39,9 +41,9 @@ const BookDetail = () => {
   if (!book) {
     return (
       <div className="container mx-auto px-4 py-20 text-center">
-        <p className="text-lg text-muted-foreground">Книга не найдена</p>
+        <p className="text-lg text-muted-foreground">{t("book.notFound")}</p>
         <Link to="/catalog" className="text-primary hover:underline text-sm mt-2 inline-block">
-          Вернуться в каталог
+          {t("book.backToCatalog")}
         </Link>
       </div>
     );
@@ -55,7 +57,7 @@ const BookDetail = () => {
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6 -ml-2 px-2 py-1.5 rounded-lg hover:bg-muted/60"
         >
           <IconArrowLeft size={16} />
-          Назад
+          {t("common.back")}
         </button>
 
         {/* ── Top section: Cover + Info ── */}
@@ -89,7 +91,7 @@ const BookDetail = () => {
 
             {book.genre && (
               <div className="mb-2">
-                <GenreBadge name={book.genre.name} id={book.genre.id} />
+                <GenreBadge name={book.genre.name} slug={book.genre.slug} id={book.genre.id} />
               </div>
             )}
 
@@ -111,7 +113,7 @@ const BookDetail = () => {
               )}
               {book.file && book.total_pages > 0 && (
                 <span className="flex items-center gap-1">
-                  <IconFileText size={14} /> {book.total_pages} стр.
+                  <IconFileText size={14} /> {book.total_pages} {t("common.pages")}
                 </span>
               )}
               {book.language && (
@@ -138,9 +140,9 @@ const BookDetail = () => {
             transition={{ ...fadeUpSm.transition, delay: 0.2 }}
             className="mb-10"
           >
-            <h2 className="section-title mb-3">Описание</h2>
+            <h2 className="section-title mb-3">{t("book.description")}</h2>
             <p className="text-sm text-foreground/75 leading-relaxed whitespace-pre-line max-w-3xl">
-              {book.description}
+              {i18n.language === "kk" && book.description_kk ? book.description_kk : book.description}
             </p>
           </motion.section>
         )}
@@ -175,7 +177,7 @@ const BookDetail = () => {
                 </p>
                 {book.author.bio && (
                   <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                    {book.author.bio}
+                    {i18n.language === "kk" && book.author.bio_kk ? book.author.bio_kk : book.author.bio}
                   </p>
                 )}
               </div>
@@ -206,6 +208,16 @@ const BookDetail = () => {
   );
 };
 
+function ErrorFallback() {
+  const { t } = useTranslation();
+  return (
+    <div className="container mx-auto px-4 py-20 text-center">
+      <p className="text-lg text-red-500 font-semibold mb-2">{t("book.loadError")}</p>
+      <p className="text-sm text-muted-foreground">{t("book.loadErrorDesc")}</p>
+    </div>
+  );
+}
+
 class BookDetailErrorBoundary extends Component<
   { children: ReactNode },
   { error: Error | null }
@@ -224,12 +236,7 @@ class BookDetailErrorBoundary extends Component<
 
   render() {
     if (this.state.error) {
-      return (
-        <div className="container mx-auto px-4 py-20 text-center">
-          <p className="text-lg text-red-500 font-semibold mb-2">Ошибка при загрузке страницы</p>
-          <p className="text-sm text-muted-foreground">Попробуйте обновить страницу</p>
-        </div>
-      );
+      return <ErrorFallback />;
     }
     return this.props.children;
   }

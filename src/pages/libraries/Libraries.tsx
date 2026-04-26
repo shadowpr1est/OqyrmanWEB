@@ -17,6 +17,7 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { staggerItem, backdropFade } from "@/lib/motion";
 import { optimizedUrl } from "@/lib/imageProxy";
+import { useTranslation } from "react-i18next";
 
 /* Fix default marker icons for leaflet + bundler */
 const defaultIcon = new L.Icon({
@@ -34,6 +35,7 @@ function twoGisUrl(lat: number, lng: number) {
 }
 
 const Libraries = () => {
+  const { t } = useTranslation();
   const [selected, setSelected] = useState<Library | null>(null);
 
   const { data, isLoading } = useQuery({
@@ -46,8 +48,8 @@ const Libraries = () => {
   return (
     <div className="container mx-auto px-4 lg:px-8 py-8">
       <PageHeader
-        title="Библиотеки"
-        subtitle={libraries.length > 0 ? `${data?.total || libraries.length} библиотек в системе` : "Загрузка..."}
+        title={t("libraries.title")}
+        subtitle={libraries.length > 0 ? t("libraries.totalCount", { count: data?.total || libraries.length }) : t("common.loading")}
       />
 
       {isLoading ? (
@@ -59,8 +61,8 @@ const Libraries = () => {
       ) : libraries.length === 0 ? (
         <EmptyState
           icon={IconBuilding}
-          title="Библиотеки не найдены"
-          description="Скоро здесь появятся библиотеки"
+          title={t("libraries.empty")}
+          description={t("libraries.emptyDesc")}
         />
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
@@ -179,7 +181,7 @@ const Libraries = () => {
                           <IconPhone size={18} className="text-primary" />
                         </div>
                         <div>
-                          <p className="text-xs text-muted-foreground">Телефон</p>
+                          <p className="text-xs text-muted-foreground">{t("libraries.phone")}</p>
                           <p className="text-sm font-medium text-foreground">{selected.phone}</p>
                         </div>
                       </a>
@@ -195,8 +197,8 @@ const Libraries = () => {
                         <IconExternalLink size={18} className="text-primary" />
                       </div>
                       <div className="flex-1">
-                        <p className="text-xs text-muted-foreground">Маршрут</p>
-                        <p className="text-sm font-medium text-foreground">Открыть в 2ГИС</p>
+                        <p className="text-xs text-muted-foreground">{t("libraries.route")}</p>
+                        <p className="text-sm font-medium text-foreground">{t("libraries.openIn2gis")}</p>
                       </div>
                     </a>
                   </div>

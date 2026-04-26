@@ -10,28 +10,31 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { reservationsApi } from "@/lib/api";
 import type { Reservation } from "@/lib/api/types";
+import { useTranslation } from "react-i18next";
 
 interface ReservationInfoCardProps {
   reservation: Reservation;
 }
 
-const statusConfig = {
-  pending: {
-    label: "Ожидает получения",
-    color: "text-amber-700",
-    bg: "bg-amber-50 border-amber-200",
-    icon: IconClock,
-  },
-  active: {
-    label: "На руках",
-    color: "text-primary",
-    bg: "bg-emerald-50 border-emerald-200",
-    icon: IconCheck,
-  },
-} as const;
-
 export const ReservationInfoCard = ({ reservation }: ReservationInfoCardProps) => {
+  const { t } = useTranslation();
   const qc = useQueryClient();
+
+  const statusConfig = {
+    pending: {
+      label: t("reservations.pending"),
+      color: "text-amber-700",
+      bg: "bg-amber-50 border-amber-200",
+      icon: IconClock,
+    },
+    active: {
+      label: t("reservations.active"),
+      color: "text-primary",
+      bg: "bg-emerald-50 border-emerald-200",
+      icon: IconCheck,
+    },
+  } as const;
+
   const config = statusConfig[reservation.status as "pending" | "active"];
   const StatusIcon = config.icon;
 
@@ -47,18 +50,18 @@ export const ReservationInfoCard = ({ reservation }: ReservationInfoCardProps) =
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["reservations"] });
       qc.invalidateQueries({ queryKey: ["library-books"] });
-      toast.success("Бронь отменена");
+      toast.success(t("reservations.cancelSuccess"));
     },
-    onError: () => toast.error("Не удалось отменить бронь"),
+    onError: () => toast.error(t("reservations.cancelError")),
   });
 
   const extendMutation = useMutation({
     mutationFn: () => reservationsApi.extend(reservation.id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["reservations"] });
-      toast.success("Срок продлён на 7 дней");
+      toast.success(t("reservations.extendSuccess"));
     },
-    onError: () => toast.error("Не удалось продлить"),
+    onError: () => toast.error(t("reservations.extendError")),
   });
 
   const canExtend = reservation.status === "active" && reservation.extended_count === 0;
@@ -83,7 +86,7 @@ export const ReservationInfoCard = ({ reservation }: ReservationInfoCardProps) =
       <div className="flex items-center gap-2 text-sm text-foreground/80 mb-3">
         <IconCalendarEvent size={14} className="text-muted-foreground flex-shrink-0" />
         <span>
-          {reservation.status === "pending" ? "Заберите до" : "Вернуть до"}{" "}
+          {reservation.status === "pending" ? t("reservations.pickupDeadline") : t("reservations.returnBy")}{" "}
           <span className="font-medium">{dueDateFormatted}</span>
         </span>
       </div>
@@ -97,7 +100,7 @@ export const ReservationInfoCard = ({ reservation }: ReservationInfoCardProps) =
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-200 bg-white text-red-600 text-xs font-medium hover:bg-red-50 transition-colors"
           >
             <IconX size={13} />
-            {cancelMutation.isPending ? "Отменяем..." : "Отменить бронь"}
+            {cancelMutation.isPending ? t("reservations.cancelling") : t("reservations.cancel")}
           </button>
         )}
 
@@ -108,13 +111,13 @@ export const ReservationInfoCard = ({ reservation }: ReservationInfoCardProps) =
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-primary/30 bg-white text-primary text-xs font-medium hover:bg-accent transition-colors"
           >
             <IconRefresh size={13} />
-            {extendMutation.isPending ? "Продлеваем..." : "Продлить на 7 дней"}
+            {extendMutation.isPending ? t("reservations.extending") : t("reservations.extendDays")}
           </button>
         )}
 
         {reservation.status === "active" && reservation.extended_count > 0 && (
           <span className="text-xs text-muted-foreground px-2 py-1.5">
-            Продление использовано
+            {t("reservations.extendUsed")}
           </span>
         )}
       </div>

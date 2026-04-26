@@ -24,12 +24,14 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import type { Book } from "@/lib/api/types";
+import { useTranslation } from "react-i18next";
 
 interface BookActionsProps {
   book: Book;
 }
 
 export function BookActions({ book }: BookActionsProps) {
+  const { t } = useTranslation();
   const bookId = String(book.id);
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -50,9 +52,9 @@ export function BookActions({ book }: BookActionsProps) {
       readingSessionsApi.upsert({ book_id: bookId, progress: 100, status: "finished" }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["reading-session", bookId] });
-      toast.success("Отмечено как прочитано!");
+      toast.success(t("book.markedAsRead"));
     },
-    onError: () => toast.error("Не удалось обновить статус"),
+    onError: () => toast.error(t("book.updateStatusError")),
   });
 
   const removeFinished = useMutation({
@@ -62,9 +64,9 @@ export function BookActions({ book }: BookActionsProps) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["reading-session", bookId] });
-      toast.success("Статус убран");
+      toast.success(t("book.statusRemoved"));
     },
-    onError: () => toast.error("Не удалось обновить статус"),
+    onError: () => toast.error(t("book.updateStatusError")),
   });
 
   const { data: wishlistData } = useQuery({
@@ -82,7 +84,7 @@ export function BookActions({ book }: BookActionsProps) {
       qc.setQueryData(["wishlist", bookId, "exists"], { exists: true, status });
       qc.invalidateQueries({ queryKey: ["wishlist"] });
     },
-    onError: () => toast.error("Не удалось добавить"),
+    onError: () => toast.error(t("book.updateStatusError")),
   });
 
   const updateShelfStatus = useMutation({
@@ -92,7 +94,7 @@ export function BookActions({ book }: BookActionsProps) {
       qc.setQueryData(["wishlist", bookId, "exists"], { exists: true, status });
       qc.invalidateQueries({ queryKey: ["wishlist"] });
     },
-    onError: () => toast.error("Не удалось обновить статус"),
+    onError: () => toast.error(t("book.updateStatusError")),
   });
 
   const removeFromShelf = useMutation({
@@ -100,9 +102,9 @@ export function BookActions({ book }: BookActionsProps) {
     onSuccess: () => {
       qc.setQueryData(["wishlist", bookId, "exists"], { exists: false, status: null });
       qc.invalidateQueries({ queryKey: ["wishlist"] });
-      toast.success("Убрано с полки");
+      toast.success(t("wishlist.removeSuccess"));
     },
-    onError: () => toast.error("Не удалось убрать"),
+    onError: () => toast.error(t("book.updateStatusError")),
   });
 
   const [reviewOpen, setReviewOpen] = useState(false);
@@ -118,9 +120,9 @@ export function BookActions({ book }: BookActionsProps) {
       setReviewOpen(false);
       setReviewRating(0);
       setReviewBody("");
-      toast.success("Отзыв добавлен!");
+      toast.success(t("book.reviewAdded"));
     },
-    onError: () => toast.error("Не удалось добавить отзыв"),
+    onError: () => toast.error(t("book.reviewAddError")),
   });
 
   const { data: libraryBooks } = useQuery({
@@ -145,8 +147,8 @@ export function BookActions({ book }: BookActionsProps) {
 
   const handleReserveClick = () => {
     if (!user?.phone) {
-      toast.error("Добавьте номер телефона в профиле перед бронированием", {
-        action: { label: "Профиль", onClick: () => navigate("/profile") },
+      toast.error(t("book.reserveModal.phoneRequired"), {
+        action: { label: t("book.reserveModal.phoneRequiredBtn"), onClick: () => navigate("/profile") },
       });
       return;
     }
@@ -166,7 +168,7 @@ export function BookActions({ book }: BookActionsProps) {
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-dark transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
           >
             <IconDeviceDesktop size={16} />
-            Читать онлайн
+            {t("book.readOnline")}
           </button>
         </div>
       )}
@@ -175,7 +177,7 @@ export function BookActions({ book }: BookActionsProps) {
         <div className="flex items-center gap-2 mb-4 px-3 py-2 rounded-lg bg-blue-50 border border-blue-200 w-fit">
           <IconProgress size={16} className="text-blue-600" />
           <span className="text-sm text-blue-700 font-medium">
-            Вы читаете • {session.progress ?? 0}%
+            {t("book.readingNow", { progress: session.progress ?? 0 })}
           </span>
         </div>
       )}
@@ -195,7 +197,7 @@ export function BookActions({ book }: BookActionsProps) {
           }`}
         >
           {shelfStatus === "want_to_read" ? <IconCheck size={15} /> : <IconBookmark size={15} />}
-          Хочу прочитать
+          {t("book.wantToRead")}
         </button>
 
         <button
@@ -219,19 +221,19 @@ export function BookActions({ book }: BookActionsProps) {
           }`}
         >
           {shelfStatus === "finished" ? <IconCheck size={15} /> : <IconBook size={15} />}
-          Уже прочитано
+          {t("book.alreadyRead")}
         </button>
 
         <Dialog open={reviewOpen} onOpenChange={setReviewOpen}>
           <DialogTrigger asChild>
             <button className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-border text-sm font-medium text-muted-foreground hover:border-amber-400 hover:text-amber-600 transition-colors">
               <IconStar size={15} />
-              Оценить книгу
+              {t("book.rateBook")}
             </button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Оценить книгу</DialogTitle>
+              <DialogTitle>{t("book.rateBook")}</DialogTitle>
             </DialogHeader>
             <div className="pt-2">
               <ReviewForm
@@ -259,14 +261,14 @@ export function BookActions({ book }: BookActionsProps) {
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2 text-sm text-emerald-700">
             <div className="w-2 h-2 rounded-full bg-emerald-500" />
-            Эта книга есть в библиотеках вашего города
+            {t("book.inLibraries")}
           </div>
           <button
             onClick={handleReserveClick}
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border-2 border-primary text-primary text-sm font-semibold hover:bg-primary/5 transition-colors w-fit"
           >
             <IconBuildingBank size={16} />
-            Забронировать в библиотеке
+            {t("book.reserveInLibrary")}
           </button>
           <ReservationModal
             open={reserveOpen}
@@ -276,7 +278,7 @@ export function BookActions({ book }: BookActionsProps) {
           />
         </div>
       ) : libraryBooks && libraryBooks.length === 0 ? (
-        <p className="text-xs text-muted-foreground">Книга пока недоступна в библиотеках</p>
+        <p className="text-xs text-muted-foreground">{t("book.notInLibraries")}</p>
       ) : null}
     </>
   );

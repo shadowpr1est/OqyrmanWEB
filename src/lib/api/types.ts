@@ -32,6 +32,7 @@ export interface Book {
   id: string | number;
   title: string;
   description: string;
+  description_kk?: string;
   cover_url: string;
   isbn: string;
   year: number;
@@ -61,6 +62,7 @@ export interface Author {
   id: string;
   name: string;
   bio: string;
+  bio_kk?: string;
   birth_date?: string;
   death_date?: string;
   photo_url: string;

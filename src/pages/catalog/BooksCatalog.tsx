@@ -13,6 +13,7 @@ import type { Book } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { BookCard } from "@/components/books/BookCard";
 import { HorizontalScroll } from "@/components/shared/HorizontalScroll";
+import { useTranslation } from "react-i18next";
 
 /* ── Featured authors for "By Author" sections ── */
 const FEATURED_AUTHORS = [
@@ -82,9 +83,10 @@ function HeroCoverStack() {
   );
 }
 
-const SECTION_STALE = 5 * 60_000; // genre/author sections rarely change
+const SECTION_STALE = 5 * 60_000;
 
 const GenreSection = ({ genre }: { genre: typeof FEATURED_GENRES[number] }) => {
+  const { t } = useTranslation();
   const { data } = useQuery({
     queryKey: ["books", "by-genre", genre.id],
     queryFn: () => booksApi.getByGenre(genre.id, { limit: 10 }),
@@ -93,7 +95,7 @@ const GenreSection = ({ genre }: { genre: typeof FEATURED_GENRES[number] }) => {
   const books = (data?.items ?? []).slice(0, 10);
   if (!books.length) return null;
   return (
-    <Section title={genre.name} linkTo={`/books?genre=${genre.id}`} linkLabel="Все">
+    <Section title={t(`genres.${genre.slug}`, { defaultValue: genre.name })} linkTo={`/books?genre=${genre.id}`} linkLabel={t("common.seeAll")}>
       <HorizontalScroll>
         {books.map((book) => (
           <div key={book.id} className="w-[160px] flex-shrink-0">
@@ -106,6 +108,7 @@ const GenreSection = ({ genre }: { genre: typeof FEATURED_GENRES[number] }) => {
 };
 
 const AuthorSection = ({ author }: { author: typeof FEATURED_AUTHORS[number] }) => {
+  const { t } = useTranslation();
   const { data } = useQuery({
     queryKey: ["books", "by-author", author.id],
     queryFn: () => booksApi.getByAuthor(author.id, { limit: 10 }),
@@ -114,7 +117,7 @@ const AuthorSection = ({ author }: { author: typeof FEATURED_AUTHORS[number] }) 
   const books = (data?.items ?? []).slice(0, 10);
   if (!books.length) return null;
   return (
-    <Section title={author.name} linkTo={`/authors/${author.id}`} linkLabel="Все книги">
+    <Section title={author.name} linkTo={`/authors/${author.id}`} linkLabel={t("catalog.allBooks")}>
       <HorizontalScroll>
         {books.map((book) => (
           <div key={book.id} className="w-[160px] flex-shrink-0">
@@ -127,6 +130,7 @@ const AuthorSection = ({ author }: { author: typeof FEATURED_AUTHORS[number] }) 
 };
 
 const BooksCatalog = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
 
   const { data: sessionsData } = useQuery({
@@ -187,17 +191,17 @@ const BooksCatalog = () => {
             >
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/10 text-emerald-200 text-xs font-medium mb-5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                200+ книг доступно
+                {t("catalog.heroBadge")}
               </div>
               <h1 className="font-display text-3xl lg:text-4xl xl:text-5xl font-extrabold text-white leading-[1.15] mb-4 tracking-tight">
-                Читай. Открывай.
+                {t("catalog.heroTitle1")}
                 <br />
                 <span className="bg-gradient-to-r from-emerald-300 to-teal-200 bg-clip-text text-transparent">
-                  Вдохновляйся.
+                  {t("catalog.heroTitle2")}
                 </span>
               </h1>
               <p className="text-emerald-100/70 text-sm md:text-base max-w-md mb-2 leading-relaxed">
-                Казахские и мировые авторы в одном месте. Бронируй книги в ближайшей библиотеке и следи за своим прогрессом.
+                {t("catalog.heroSubtitle")}
               </p>
             </motion.div>
 
@@ -212,9 +216,9 @@ const BooksCatalog = () => {
             transition={{ ...fadeUp.transition, delay: 0.3 }}
           >
             {[
-              { value: "200+", label: "Книг" },
-              { value: "50+", label: "Авторов" },
-              { value: "10+", label: "Библиотек" },
+              { value: "200+", label: t("catalog.statBooks") },
+              { value: "50+", label: t("catalog.statAuthors") },
+              { value: "10+", label: t("catalog.statLibraries") },
             ].map((stat) => (
               <div key={stat.label}>
                 <p className="text-xl md:text-2xl font-bold text-white">{stat.value}</p>
@@ -228,7 +232,7 @@ const BooksCatalog = () => {
       <div className="container mx-auto px-4 lg:px-8 py-10 space-y-12">
         {/* ── Continue Reading ── */}
         {user && sessions.length > 0 && (
-          <Section title="Продолжить чтение" icon={<IconBook size={20} />}>
+          <Section title={t("catalog.continueReading")} icon={<IconBook size={20} />}>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {sessions.map((s) => (
                 <Link
@@ -273,7 +277,7 @@ const BooksCatalog = () => {
         {/* ── AI Recommendations ── */}
         {user && recommendedBooks !== null && recommendedBooks.length > 0 && (
           <Section
-            title="Рекомендации для вас"
+            title={t("catalog.recommendations")}
             icon={<IconSparkles size={20} className="text-amber-500" />}
           >
             <HorizontalScroll>
@@ -289,7 +293,7 @@ const BooksCatalog = () => {
         {/* ── AI Recommendations skeleton (loading) ── */}
         {user && recommendedBooks === null && (
           <Section
-            title="Рекомендации для вас"
+            title={t("catalog.recommendations")}
             icon={<IconSparkles size={20} className="text-amber-500" />}
           >
             <div className="flex gap-4 overflow-hidden">
@@ -350,7 +354,7 @@ function Section({
             to={linkTo}
             className="flex items-center gap-1 text-sm font-medium text-primary hover:underline"
           >
-            {linkLabel || "Все"}
+            {linkLabel}
             <IconChevronRight size={16} />
           </Link>
         )}
